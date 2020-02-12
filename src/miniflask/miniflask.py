@@ -12,11 +12,14 @@ from importlib import import_module
 import argparse
 
 # coloring
+highlight_error = lambda: fg('red')+attr('bold')+"Error:"+attr('reset')+" "
 highlight_name = lambda x: fg('blue')+attr('bold')+x+attr('reset')
-highlight_loading = lambda x: "Load Module ... "+fg('green')+attr('bold')+x+attr('reset')
+highlight_module = lambda x: fg('green')+attr('bold')+x+attr('reset')
+highlight_loading = lambda x: "Load Module ... "+highlight_module(x)
 highlight_loaded_none = lambda x: fg('red')+x+attr('reset')
 highlight_loaded = lambda x, y: attr('underlined')+x+attr('reset')+" "+fg('green')+attr('bold')+", ".join(y)+attr('reset')
-
+highlight_event = lambda x: fg('light_yellow')+x+attr('reset')
+highlight_blue_line = lambda x: fg('blue')+attr('bold')+x+attr('reset')
 
 # ================ #
 # MiniFlask Kernel #
@@ -83,10 +86,8 @@ class miniflask():
                     if len(events) > 0:
                         for e in events:
                             unique_flag = "!" if e[1] else ">"
-                            if is_last:
-                                print(prepend+"     "+unique_flag+" "+fg('light_yellow')+e[0]+attr('reset'))
-                            else:
-                                print(prepend+"│    "+unique_flag+" "+fg('light_yellow')+e[0]+attr('reset'))
+                            tree_symb = "     " if is_last else "│    "
+                            print(prepend+tree_symb+unique_flag+" "+highlight_event(e[0]))
                 continue
             self.showModules(path.join(dir,d),prepend=prepend+"    " if is_last else "│   ", id_pre=module_id, with_event=with_event)
 
@@ -103,7 +104,7 @@ class miniflask():
     # get unique id of a moodule
     def getModuleId(self, module):
         if not module in self.modules_avail:
-            raise ValueError("Module "+module+" not known.")
+            raise ValueError(highlight_error()+"Module '%s' not known." % highlight_module(module))
         return self.modules_avail[module][1]
     
     # loads module (once)
@@ -120,7 +121,7 @@ class miniflask():
 
         # check if module exists or is already loaded
         if not module in self.modules_avail:
-            raise ValueError("Module "+module+" not known.")
+            raise ValueError(highlight_error()+"Module '%s' not known." % module)
         if module in self.modules_loaded:
             return
 
@@ -128,7 +129,7 @@ class miniflask():
         print(highlight_loading(self.modules_avail[module][1]))
         mod = import_module(self.modules_avail[module][1])
         if not hasattr(mod,"register"):
-            raise ValueError("Module "+module+" does not register itself.")
+            raise ValueError(highlight_error()+"Module '%s' does not register itself." % module)
 
         # remember loaded modules
         self.modules_loaded[self.modules_avail[module][1]] = mod
@@ -141,7 +142,8 @@ class miniflask():
 
         # check if is unique event. if yes, check if event already registered
         if name in self.events and (unique or self.events_unique[name]):
-            raise ValueError("Event "+name+" is unique, and thus, cannot be imported twice.")
+            print(self.events[name])
+            raise ValueError(highlight_error()+"Event '%s' is unique, and thus, cannot be imported twice.\n\t(Imported by '%s')" % (highlight_event(name),highlight_module("blub")))
 
         # register event
         self.events_unique[name] = unique
@@ -162,16 +164,18 @@ class miniflask():
         self.halt_parse = True
 
     def parse_args(self):
-        try:
-            parser = argparse.ArgumentParser()
-            parser.add_argument('cmds')
-            args, unknown = parser.parse_known_args(self.args)
+        self.halt_parse = False
 
-            cmds = args.cmds.split(',')
-            for cmd in cmds:
-                if self.halt_parse:
-                    break
+        parser = argparse.ArgumentParser()
+        parser.add_argument('cmds')
+        args, unknown = parser.parse_known_args(self.args)
+
+        cmds = args.cmds.split(',')
+        for cmd in cmds:
+            if self.halt_parse:
+                break
+            try:
                 self.load(cmd)
-        finally:
-            pass
-            # self.halt_parse = False
+            except Exception as e:
+                print(e)
+        print(highlight_blue_line("-"*50))

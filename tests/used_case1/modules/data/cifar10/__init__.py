@@ -1,4 +1,3 @@
-import module3
 
 def dataset(state, event):
     print("this is cifar10")

@@ -12,18 +12,3 @@ if not mf.halt_parse:
         mf.event.main()
     else:
         print("There is nothing to do.")
-
-
-# calling events
-# event.main_loop()
-
-# getting/setting variables
-# state["model.resnet.num_filters"]
-
-# event
-# -> calling events / event groups
-
-# miniflask object
-# -> parse args
-# -> load modules
-# -> register new events
