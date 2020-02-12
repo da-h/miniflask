@@ -3,15 +3,15 @@ def dummy_fn(*args,**kwargs):
 
 class miniflask_dummy():
     def __init__(self, *args, **kwargs):
-        self.events = {}
+        self.event_objs = {}
         self.modules_avail = {}
         self.modules_loaded = {}
 
     def getEvents(self):
-        return list(zip(self.events.keys(),self.events.values()))
+        return list(zip(self.event_objs.keys(),self.event_objs.values()))
 
     def register_event(self,name,fn,unique=False):
-        self.events[name] = unique
+        self.event_objs[name] = unique
     def register_defaults(self,*args):
         pass
 

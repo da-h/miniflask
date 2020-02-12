@@ -1,5 +1,5 @@
 # package modules
-from .event import event
+from .event import event, event_obj
 from .dummy import miniflask_dummy
 from .util import getModulesAvail
 from .modules import registerPredefined
@@ -37,8 +37,7 @@ class miniflask():
 
         # internal
         self.halt_parse = False
-        self.events = {}
-        self.events_unique = {}
+        self.event_objs = {}
         self.event = event(self)
         self.state = {}
         self.modules_loaded = {}
@@ -135,22 +134,19 @@ class miniflask():
         self.modules_loaded[self.modules_avail[module][1]] = mod
 
         # register events
+        self.current_module = module # TODO: make better ;)
         mod.register(self)
+        self.current_module = None
 
     # saves function to a given (event-)name
     def register_event(self,name,fn,unique=False):
 
         # check if is unique event. if yes, check if event already registered
-        if name in self.events and (unique or self.events_unique[name]):
-            print(self.events[name])
-            raise ValueError(highlight_error()+"Event '%s' is unique, and thus, cannot be imported twice.\n\t(Imported by '%s')" % (highlight_event(name),highlight_module("blub")))
+        if name in self.event_objs and (unique or self.event_objs[name].unique):
+            raise ValueError(highlight_error()+"Event '%s' is unique, and thus, cannot be imported twice.\n\t(Imported by %s)" % (highlight_event(name),", ".join(["'"+highlight_module(e)+"'" for e in self.event_objs[name].modules])))
 
         # register event
-        self.events_unique[name] = unique
-        if name in self.events:
-            self.events[name].append(fn)
-        else:
-            self.events[name] = fn
+        self.event_objs[name] = event_obj(fn, unique, self.current_module)
 
     # overwrite state defaults
     def register_defaults(self, defaults):
