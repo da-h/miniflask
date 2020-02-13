@@ -26,19 +26,20 @@ highlight_blue_line = lambda x: fg('blue')+attr('bold')+x+attr('reset')
 # ================ #
 
 class miniflask():
-    def __init__(self, modules_dir, args=None):
+    def __init__(self, modules_dir):
 
         # module dir to be read from
         self.modules_dir = modules_dir
         sys.path.insert(0,self.modules_dir)
 
         # arguments from cli-stdin
-        self.args = args
+        self.settings_parser = argparse.ArgumentParser()
 
         # internal
         self.halt_parse = False
         self.event_objs = {}
-        self.event = event(self)
+        self.event = event(self, optional=False)
+        self.event_optional = event(self, optional=True)
         self.state = {}
         self.modules_loaded = {}
         self.modules_avail = getModulesAvail(self.modules_dir)
@@ -105,7 +106,7 @@ class miniflask():
         if not module in self.modules_avail:
             raise ValueError(highlight_error()+"Module '%s' not known." % highlight_module(module))
         return self.modules_avail[module][1]
-    
+
     # loads module (once)
     def load(self, module, verbose=True):
 
@@ -150,8 +151,20 @@ class miniflask():
 
     # overwrite state defaults
     def register_defaults(self, defaults):
+        prefix = self.current_module+"."
+        for key, val in defaults.items():
+            varname = prefix+key
+            if isinstance(val,bool):
+                self.settings_parser.add_argument('--'+varname, dest=varname, action='store_true')#, help=S("_"+varname,alt=""))
+                self.settings_parser.add_argument('--no-'+varname, dest=varname, action='store_false')
+                # self.settings_parser.set_defaults(**{varname:S(varname)})
+            elif isinstance(val,int):
+                self.settings_parser.add_argument( "--"+varname, type=int, default=val) #, help=S("_"+varname,alt=""))
+            elif isinstance(val,str):
+                self.settings_parser.add_argument( "--"+varname, type=str, default=val) #, help=S("_"+varname,alt=""))
+            elif isinstance(val,float):
+                self.settings_parser.add_argument( "--"+varname, type=float, default=val) #, help=S("_"+varname,alt=""))
         self.state.update(defaults)
-
 
     # ======= #
     # runtime #
@@ -159,12 +172,15 @@ class miniflask():
     def stop_parse(self):
         self.halt_parse = True
 
-    def parse_args(self):
+    def parse_args(self, argv=None):
         self.halt_parse = False
+
+        if not argv:
+            argv = sys.argv#[1:]
 
         parser = argparse.ArgumentParser()
         parser.add_argument('cmds')
-        args, unknown = parser.parse_known_args(self.args)
+        args = parser.parse_args(argv[1:2])
 
         cmds = args.cmds.split(',')
         for cmd in cmds:
@@ -174,4 +190,9 @@ class miniflask():
                 self.load(cmd)
             except Exception as e:
                 print(e)
+
+        settings_args = self.settings_parser.parse_args(argv[2:])
+        for varname, val in vars(settings_args).items():
+            self.state[varname] = val
+
         print(highlight_blue_line("-"*50))

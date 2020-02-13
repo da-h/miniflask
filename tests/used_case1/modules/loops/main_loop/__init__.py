@@ -1,7 +1,7 @@
 import module3
 
 def loop(state, event):
-    for i in range(state["num_runs"]):
+    for i in range(state["loops.main_loop.num_runs"]):
         print(i)
     print(event.dataset())
 
