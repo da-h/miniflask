@@ -1,5 +1,6 @@
 # package modules
 from .event import event, event_obj
+from .state import state
 from .dummy import miniflask_dummy
 from .util import getModulesAvail
 from .modules import registerPredefined
@@ -9,6 +10,7 @@ import sys
 from os import path, listdir
 from colored import fg, bg, attr
 from importlib import import_module
+from copy import copy
 import argparse
 
 # coloring
@@ -27,6 +29,8 @@ highlight_blue_line = lambda x: fg('blue')+attr('bold')+x+attr('reset')
 
 class miniflask():
     def __init__(self, modules_dir):
+        if modules_dir == False:
+            return
 
         # module dir to be read from
         self.modules_dir = modules_dir
@@ -43,6 +47,7 @@ class miniflask():
         self.state = {}
         self.modules_loaded = {}
         self.modules_avail = getModulesAvail(self.modules_dir)
+        self.miniflask_objs = {} # local modified versions of miniflask
         registerPredefined(self.modules_avail)
 
 
@@ -94,7 +99,7 @@ class miniflask():
             self.showModules(path.join(dir,d),prepend=prepend+"    " if is_last else "│   ", id_pre=module_id, with_event=with_event)
 
     # pretty print loaded modules
-    def __repr__(self):
+    def __str__(self):
         if len(self.modules_loaded) == 0:
             return highlight_loaded_none("No Loaded Modules")
         return highlight_loaded("Loaded Modules:", self.modules_loaded.keys())
@@ -138,9 +143,9 @@ class miniflask():
         self.modules_loaded[self.modules_avail[module]] = mod
 
         # register events
-        self.current_module = module # TODO: make better ;)
-        mod.register(self)
-        self.current_module = None
+        mod.miniflask_obj = miniflask_wrapper(module, self)
+        mod.miniflask_obj.module = module
+        mod.register(mod.miniflask_obj)
 
     # saves function to a given (event-)name
     def register_event(self,name,fn,unique=False):
@@ -150,11 +155,11 @@ class miniflask():
             raise ValueError(highlight_error()+"Event '%s' is unique, and thus, cannot be imported twice.\n\t(Imported by %s)" % (highlight_event(name),", ".join(["'"+highlight_module(e)+"'" for e in self.event_objs[name].modules])))
 
         # register event
-        self.event_objs[name] = event_obj(fn, unique, self.current_module)
+        self.event_objs[name] = event_obj(fn, unique, self)
 
     # overwrite state defaults
     def register_defaults(self, defaults):
-        prefix = self.current_module+"."
+        prefix = self.module+"."
         for key, val in defaults.items():
             varname = prefix+key
             if isinstance(val,bool):
@@ -200,3 +205,22 @@ class miniflask():
             self.state[varname] = val
 
         print(highlight_blue_line("-"*50))
+
+
+class miniflask_wrapper(miniflask):
+    def __init__(self,module_name, mf):
+        self.module_name = module_name
+        self.wrapped_class = mf
+
+    def __getattr__(self,attr):
+        orig_attr = self.wrapped_class.__getattribute__(attr)
+        if callable(orig_attr):
+            def hooked(*args, **kwargs):
+                result = orig_attr(*args, **kwargs)
+                # prevent wrapped_class from becoming unwrapped
+                if result == self.wrapped_class:
+                    return self
+                return result
+            return hooked
+        else:
+            return orig_attr
