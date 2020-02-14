@@ -1,7 +1,7 @@
 import module3
 
 def loop(state, event):
-    for i in range(state["loops.main_loop.epoch"]):
+    for i in range(state["epoch"]):
         print("Epoch "+str(i+1))
         for b in event.dataloader():
             print(b)

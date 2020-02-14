@@ -3,11 +3,12 @@ from .dummy import dummy_fn
 class event_obj():
     def __init__(self, fn, unique, module):
         self.unique = unique
-        self.modules = [module]
         if unique:
             self.fn = fn
+            self.modules = module
         else:
             self.fn = [fn]
+            self.modules = [module]
 
 class event():
     def __init__(self, mf, optional=False):
@@ -29,9 +30,9 @@ class event():
         def fn_wrap(*args,**kwargs):
             eobj = self._mf.event_objs[name]
             if eobj.unique:
-                return eobj.fn(self._mf.state,self._mf.event,*args,**kwargs)
+                return eobj.fn(eobj.modules.state,eobj.modules.event,*args,**kwargs)
             else:
-                return [fn(self._mf.state,self._mf.event,*args,**kwargs) for fn in eobj.fn]
+                return [fn(mf.state,mf.event,*args,**kwargs) for fn, mf in zip(eobj.fn,eobj.modules)]
         return fn_wrap
 
 

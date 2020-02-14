@@ -1,6 +1,6 @@
 
 def augment(state, event, ds):
-    return state["data.augment.fn"]+"("+ds+")"
+    return state["fn"]+"("+ds+")"
 
 def register(mf):
     mf.register_defaults({

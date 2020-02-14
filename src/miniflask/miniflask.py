@@ -1,6 +1,5 @@
 # package modules
 from .event import event, event_obj
-from .state import state
 from .dummy import miniflask_dummy
 from .util import getModulesAvail
 from .modules import registerPredefined
@@ -155,7 +154,11 @@ class miniflask():
             raise ValueError(highlight_error()+"Event '%s' is unique, and thus, cannot be imported twice.\n\t(Imported by %s)" % (highlight_event(name),", ".join(["'"+highlight_module(e)+"'" for e in self.event_objs[name].modules])))
 
         # register event
-        self.event_objs[name] = event_obj(fn, unique, self)
+        if event in self.event_objs:
+            self.event_objs[name].fn.append(fn)
+            self.event_objs[name].modules.append(self)
+        else:
+            self.event_objs[name] = event_obj(fn, unique, self)
 
     # overwrite state defaults
     def register_defaults(self, defaults):
@@ -207,10 +210,23 @@ class miniflask():
         print(highlight_blue_line("-"*50))
 
 
+
+class state_wrapper(dict):
+    def __init__(self, module_name, state):
+        self.all = state
+        self.module_name = module_name
+
+    def __getitem__(self, name):
+        return self.all[self.module_name+"."+name]
+
+    def __getattribute__(self, name):
+        return super().__getattribute__(name)
+
 class miniflask_wrapper(miniflask):
     def __init__(self,module_name, mf):
         self.module_name = module_name
         self.wrapped_class = mf
+        self.state = state_wrapper(module_name, mf.state)
 
     def __getattr__(self,attr):
         orig_attr = self.wrapped_class.__getattribute__(attr)
