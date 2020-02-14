@@ -1,5 +1,7 @@
 def dummy_fn(*args,**kwargs):
-    pass
+    if len(args) == 1 and len(kwargs) == 0:
+        return args[0]
+    return *args,kwargs
 
 class miniflask_dummy():
     def __init__(self, *args, **kwargs):

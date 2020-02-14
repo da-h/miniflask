@@ -1,13 +1,14 @@
 import module3
 
 def loop(state, event):
-    for i in range(state["loops.main_loop.num_runs"]):
-        print(i)
-    print(event.dataset())
+    for i in range(state["loops.main_loop.epoch"]):
+        print("Epoch "+str(i+1))
+        for b in event.dataloader():
+            print(b)
 
 def register(mf):
     defaults = {
-        "num_runs": 42
+        "epoch": 2
     }
     mf.register_defaults(defaults)
     mf.register_event("main", loop, unique=True)

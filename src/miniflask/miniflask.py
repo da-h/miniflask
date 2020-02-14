@@ -189,6 +189,7 @@ class miniflask():
         for cmd in cmds:
             if self.halt_parse:
                 break
+
             # try:
             self.load(cmd)
             # except Exception as e:
