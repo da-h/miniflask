@@ -10,9 +10,9 @@ def getModulesAvail(modules_dir):
             continue
         if ".module" not in filenames:
             continue
-        f[module_name_id] = (dirpath,module_name_id)
+        f[module_name_id] = module_name_id
         if module_name_short in f and module_name_short != module_name_id:
             del f[module_name_short]
         else:
-            f[module_name_short] = (dirpath,module_name_id)
+            f[module_name_short] = module_name_id
     return f

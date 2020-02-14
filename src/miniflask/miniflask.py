@@ -57,7 +57,7 @@ class miniflask():
             dummy = miniflask_dummy()
 
         # load module
-        mod = import_module(self.modules_avail[module][1])
+        mod = import_module(self.modules_avail[module])
         if not hasattr(mod,"register"):
             return []
 
@@ -105,7 +105,7 @@ class miniflask():
     def getModuleId(self, module):
         if not module in self.modules_avail:
             raise ValueError(highlight_error()+"Module '%s' not known." % highlight_module(module))
-        return self.modules_avail[module][1]
+        return self.modules_avail[module]
 
     # loads module (once)
     def load(self, module, verbose=True):
@@ -126,13 +126,13 @@ class miniflask():
             return
 
         # load module
-        print(highlight_loading(self.modules_avail[module][1]))
-        mod = import_module(self.modules_avail[module][1])
+        print(highlight_loading(self.modules_avail[module]))
+        mod = import_module(self.modules_avail[module])
         if not hasattr(mod,"register"):
             raise ValueError(highlight_error()+"Module '%s' does not register itself." % module)
 
         # remember loaded modules
-        self.modules_loaded[self.modules_avail[module][1]] = mod
+        self.modules_loaded[self.modules_avail[module]] = mod
 
         # register events
         self.current_module = module # TODO: make better ;)
@@ -186,10 +186,10 @@ class miniflask():
         for cmd in cmds:
             if self.halt_parse:
                 break
-            try:
-                self.load(cmd)
-            except Exception as e:
-                print(e)
+            # try:
+            self.load(cmd)
+            # except Exception as e:
+            #     print(e)
 
         settings_args = self.settings_parser.parse_args(argv[2:])
         for varname, val in vars(settings_args).items():
