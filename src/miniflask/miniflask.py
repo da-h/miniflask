@@ -82,7 +82,7 @@ class miniflask():
                 print(prepend+"├── "+(highlight_name(d) if is_module else d))
             if is_module:
                 if with_event:
-                    events = self.getModuleEvents(d)
+                    events = self.getModuleEvents(module_id)
                     if len(events) > 0:
                         for e in events:
                             unique_flag = "!" if e[1] else ">"
