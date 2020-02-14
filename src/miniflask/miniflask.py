@@ -72,14 +72,16 @@ class miniflask():
             print(highlight_name("."))
         dirs = [d for d in listdir(dir) if path.isdir(path.join(dir,d)) and not d.startswith("_")]
         for i, d in enumerate(dirs):
-            is_last = False
             is_module = path.exists(path.join(dir,d,".module"))
             module_id = id_pre + "." + d if id_pre != "" else d
             if i == len(dirs)-1:
-                print(prepend+"└── "+(highlight_name(d) if is_module else d))
+                tree_symb = "└── "
                 is_last = True
             else:
-                print(prepend+"├── "+(highlight_name(d) if is_module else d))
+                tree_symb = "├── "
+                is_last = False
+            append = attr('dim')+" (short-id not unique)"+attr('reset') if is_module and not d in self.modules_avail else ""
+            print(prepend+tree_symb+(highlight_name(d) if is_module else d)+append)
             if is_module:
                 if with_event:
                     events = self.getModuleEvents(module_id)
@@ -96,6 +98,7 @@ class miniflask():
         if len(self.modules_loaded) == 0:
             return highlight_loaded_none("No Loaded Modules")
         return highlight_loaded("Loaded Modules:", self.modules_loaded.keys())
+
 
     # =================== #
     # module registration #
