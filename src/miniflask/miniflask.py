@@ -10,7 +10,7 @@ from os import path, listdir
 from colored import fg, bg, attr
 from importlib import import_module
 from copy import copy
-import argparse
+from argparse import ArgumentParser, SUPPRESS as argparse_SUPPRESS
 
 # coloring
 highlight_error = lambda: fg('red')+attr('bold')+"Error:"+attr('reset')+" "
@@ -21,6 +21,7 @@ highlight_loaded_none = lambda x: fg('red')+x+attr('reset')
 highlight_loaded = lambda x, y: attr('underlined')+x+attr('reset')+" "+fg('green')+attr('bold')+", ".join(y)+attr('reset')
 highlight_event = lambda x: fg('light_yellow')+x+attr('reset')
 highlight_blue_line = lambda x: fg('blue')+attr('bold')+x+attr('reset')
+highlight_type = lambda x: fg('cyan')+x+attr('reset')
 
 # ================ #
 # MiniFlask Kernel #
@@ -36,7 +37,7 @@ class miniflask():
         sys.path.insert(0,self.modules_dir)
 
         # arguments from cli-stdin
-        self.settings_parser = argparse.ArgumentParser()
+        self.settings_parser = ArgumentParser(usage=sys.argv[0]+" modulelist [optional arguments]")
 
         # internal
         self.halt_parse = False
@@ -114,6 +115,13 @@ class miniflask():
             raise ValueError(highlight_error()+"Module '%s' not known." % highlight_module(module))
         return self.modules_avail[module]
 
+    # get short id of a moodule
+    def getModuleShortId(self, module):
+        if not module in self.modules_avail:
+            raise ValueError(highlight_error()+"Module '%s' not known." % highlight_module(module))
+        uniqueId = self.modules_avail[module]
+        return uniqueId.split(".")[-1]
+
     # loads module (once)
     def load(self, module, verbose=True):
 
@@ -163,18 +171,24 @@ class miniflask():
     # overwrite state defaults
     def register_defaults(self, defaults):
         prefix = self.module+"."
+        prefix_short = self.getModuleShortId(self.module)+"."
         for key, val in defaults.items():
             varname = prefix+key
+            varname_short = prefix_short+key
             if isinstance(val,bool):
-                self.settings_parser.add_argument('--'+varname, dest=varname, action='store_true')#, help=S("_"+varname,alt=""))
+                self.settings_parser.add_argument('--'+varname, dest=varname, action='store_true', metavar=highlight_type("\tbool"))
                 self.settings_parser.add_argument('--no-'+varname, dest=varname, action='store_false')
-                # self.settings_parser.set_defaults(**{varname:S(varname)})
+                self.settings_parser.add_argument('--'+varname_short, dest=varname, action='store_true', help=argparse_SUPPRESS)
+                self.settings_parser.add_argument('--no-'+varname_short, dest=varname, action='store_false', help=argparse_SUPPRESS)
             elif isinstance(val,int):
-                self.settings_parser.add_argument( "--"+varname, type=int, default=val) #, help=S("_"+varname,alt=""))
+                self.settings_parser.add_argument( "--"+varname, type=int, default=val, metavar=highlight_type("\tint"))
+                self.settings_parser.add_argument( "--"+varname_short, type=int, default=val, help=argparse_SUPPRESS)
             elif isinstance(val,str):
-                self.settings_parser.add_argument( "--"+varname, type=str, default=val) #, help=S("_"+varname,alt=""))
+                self.settings_parser.add_argument( "--"+varname, type=str, default=val, metavar=highlight_type('\tstring'))
+                self.settings_parser.add_argument( "--"+varname_short, type=str, default=val, help=argparse_SUPPRESS)
             elif isinstance(val,float):
-                self.settings_parser.add_argument( "--"+varname, type=float, default=val) #, help=S("_"+varname,alt=""))
+                self.settings_parser.add_argument( "--"+varname, type=float, default=val, metavar=highlight_type('\tstring')) #, help=S("_"+varname,alt=""))
+                self.settings_parser.add_argument( "--"+varname_short, type=float, default=val, help=argparse_SUPPRESS)
         self.state.update(defaults)
 
     # ======= #
@@ -189,7 +203,7 @@ class miniflask():
         if not argv:
             argv = sys.argv#[1:]
 
-        parser = argparse.ArgumentParser()
+        parser = ArgumentParser()
         parser.add_argument('cmds')
         args = parser.parse_args(argv[1:2])
 
