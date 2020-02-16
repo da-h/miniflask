@@ -42,8 +42,9 @@ class miniflask():
         # internal
         self.halt_parse = False
         self.event_objs = {}
-        self.event = event(self, optional=False)
-        self.event_optional = event(self, optional=True)
+        self.event = event(self, optional=False, unique=False)
+        self.event_optional = event(self, optional=True, unique=False)
+        self.event_optional_unique = event(self, optional=True, unique=True)
         self.state = {}
         self.modules_loaded = {}
         self.modules_avail = getModulesAvail(self.modules_dir)
@@ -162,7 +163,7 @@ class miniflask():
             raise ValueError(highlight_error()+"Event '%s' is unique, and thus, cannot be imported twice.\n\t(Imported by %s)" % (highlight_event(name),", ".join(["'"+highlight_module(e)+"'" for e in self.event_objs[name].modules])))
 
         # register event
-        if event in self.event_objs:
+        if name in self.event_objs:
             self.event_objs[name].fn.append(fn)
             self.event_objs[name].modules.append(self)
         else:
@@ -232,6 +233,8 @@ class state_wrapper(dict):
 
     def __getitem__(self, name):
         return self.all[self.module_name+"."+name]
+    def __setitem__(self, name, val):
+        self.all[self.module_name+"."+name] = val
 
     def __getattribute__(self, name):
         return super().__getattribute__(name)
