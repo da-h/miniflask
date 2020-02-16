@@ -242,11 +242,11 @@ class state_wrapper(dict):
 class miniflask_wrapper(miniflask):
     def __init__(self,module_name, mf):
         self.module_name = module_name
-        self.wrapped_class = mf
+        self.wrapped_class = mf.wrapped_class if hasattr(mf, 'wrapped_class') else mf
         self.state = state_wrapper(module_name, mf.state)
 
     def __getattr__(self,attr):
-        orig_attr = self.wrapped_class.__getattribute__(attr)
+        orig_attr = super().__getattribute__('wrapped_class').__getattribute__(attr)
         if callable(orig_attr):
             def hooked(*args, **kwargs):
                 result = orig_attr(*args, **kwargs)
