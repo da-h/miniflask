@@ -11,6 +11,7 @@ from colored import fg, bg, attr
 from importlib import import_module
 from copy import copy
 from argparse import ArgumentParser, SUPPRESS as argparse_SUPPRESS
+from queue import Queue
 
 # coloring
 highlight_error = lambda: fg('red')+attr('bold')+"Error:"+attr('reset')+" "
@@ -38,6 +39,7 @@ class miniflask():
 
         # arguments from cli-stdin
         self.settings_parser = ArgumentParser(usage=sys.argv[0]+" modulelist [optional arguments]")
+        self.settings_parse_later = []
 
         # internal
         self.halt_parse = False
@@ -178,23 +180,28 @@ class miniflask():
         for key, val in defaults.items():
             varname = prefix+key
             varname_short = prefix_short+key
-            if isinstance(val,bool):
-                self.settings_parser.add_argument('--'+varname, dest=varname, action='store_true')
-                self.settings_parser.add_argument('--no-'+varname, dest=varname, action='store_false')
-                self.settings_parser.add_argument('--'+varname_short, dest=varname, action='store_true', help=argparse_SUPPRESS)
-                self.settings_parser.add_argument('--no-'+varname_short, dest=varname, action='store_false', help=argparse_SUPPRESS)
-            elif isinstance(val,int):
-                self.settings_parser.add_argument( "--"+varname, type=int, dest=varname, default=val, metavar=highlight_type("\tint"))
-                self.settings_parser.add_argument( "--"+varname_short, type=int, dest=varname, default=val, help=argparse_SUPPRESS)
-            elif isinstance(val,str):
-                self.settings_parser.add_argument( "--"+varname, type=str, dest=varname, default=val, metavar=highlight_type('\tstring'))
-                self.settings_parser.add_argument( "--"+varname_short, type=str, dest=varname, default=val, help=argparse_SUPPRESS)
-            elif isinstance(val,float):
-                self.settings_parser.add_argument( "--"+varname, type=float, dest=varname, default=val, metavar=highlight_type('\tstring')) #, help=S("_"+varname,alt=""))
-                self.settings_parser.add_argument( "--"+varname_short, type=float, dest=varname, default=val, help=argparse_SUPPRESS)
-            else:
-                raise ValueError("Type '%s' not supported. (Used for setting '%s')" % (type(val),varname))
-        # self.state.update(defaults)
+            self._settings_parser_add(varname, varname_short, val)
+        self.state.all.update({prefix+k:v for k,v in defaults.items()})
+
+    def _settings_parser_add(self, varname, varname_short, val):
+        if isinstance(val,bool):
+            self.settings_parser.add_argument('--'+varname, dest=varname, action='store_true')
+            self.settings_parser.add_argument('--no-'+varname, dest=varname, action='store_false')
+            self.settings_parser.add_argument('--'+varname_short, dest=varname, action='store_true', help=argparse_SUPPRESS)
+            self.settings_parser.add_argument('--no-'+varname_short, dest=varname, action='store_false', help=argparse_SUPPRESS)
+        elif isinstance(val,int):
+            self.settings_parser.add_argument( "--"+varname, type=int, dest=varname, default=val, metavar=highlight_type("\tint"))
+            self.settings_parser.add_argument( "--"+varname_short, type=int, dest=varname, default=val, help=argparse_SUPPRESS)
+        elif isinstance(val,str):
+            self.settings_parser.add_argument( "--"+varname, type=str, dest=varname, default=val, metavar=highlight_type('\tstring'))
+            self.settings_parser.add_argument( "--"+varname_short, type=str, dest=varname, default=val, help=argparse_SUPPRESS)
+        elif isinstance(val,float):
+            self.settings_parser.add_argument( "--"+varname, type=float, dest=varname, default=val, metavar=highlight_type('\tstring')) #, help=S("_"+varname,alt=""))
+            self.settings_parser.add_argument( "--"+varname_short, type=float, dest=varname, default=val, help=argparse_SUPPRESS)
+        elif callable(val):
+            self.settings_parse_later.append((varname,varname_short,val))
+        else:
+            raise ValueError("Type '%s' not supported. (Used for setting '%s')" % (type(val),varname))
 
     # ======= #
     # runtime #
@@ -212,6 +219,7 @@ class miniflask():
         parser.add_argument('cmds')
         args = parser.parse_args(argv[1:2])
 
+        # load modules
         cmds = args.cmds.split(',')
         for cmd in cmds:
             if self.halt_parse:
@@ -222,6 +230,12 @@ class miniflask():
             # except Exception as e:
             #     print(e)
 
+        # parse lambdas
+        for varname, varname_short, fn in self.settings_parse_later:
+            self.state[varname] = fn(self.state,self.event)
+            self._settings_parser_add(varname, varname_short, self.state[varname])
+
+        # parse arguments
         settings_args = self.settings_parser.parse_args(argv[2:])
         for varname, val in vars(settings_args).items():
             self.state[varname] = val
