@@ -184,15 +184,17 @@ class miniflask():
                 self.settings_parser.add_argument('--'+varname_short, dest=varname, action='store_true', help=argparse_SUPPRESS)
                 self.settings_parser.add_argument('--no-'+varname_short, dest=varname, action='store_false', help=argparse_SUPPRESS)
             elif isinstance(val,int):
-                self.settings_parser.add_argument( "--"+varname, type=int, default=val, metavar=highlight_type("\tint"))
-                self.settings_parser.add_argument( "--"+varname_short, type=int, default=val, help=argparse_SUPPRESS)
+                self.settings_parser.add_argument( "--"+varname, type=int, dest=varname, default=val, metavar=highlight_type("\tint"))
+                self.settings_parser.add_argument( "--"+varname_short, type=int, dest=varname, default=val, help=argparse_SUPPRESS)
             elif isinstance(val,str):
-                self.settings_parser.add_argument( "--"+varname, type=str, default=val, metavar=highlight_type('\tstring'))
-                self.settings_parser.add_argument( "--"+varname_short, type=str, default=val, help=argparse_SUPPRESS)
+                self.settings_parser.add_argument( "--"+varname, type=str, dest=varname, default=val, metavar=highlight_type('\tstring'))
+                self.settings_parser.add_argument( "--"+varname_short, type=str, dest=varname, default=val, help=argparse_SUPPRESS)
             elif isinstance(val,float):
-                self.settings_parser.add_argument( "--"+varname, type=float, default=val, metavar=highlight_type('\tstring')) #, help=S("_"+varname,alt=""))
-                self.settings_parser.add_argument( "--"+varname_short, type=float, default=val, help=argparse_SUPPRESS)
-        self.state.update(defaults)
+                self.settings_parser.add_argument( "--"+varname, type=float, dest=varname, default=val, metavar=highlight_type('\tstring')) #, help=S("_"+varname,alt=""))
+                self.settings_parser.add_argument( "--"+varname_short, type=float, dest=varname, default=val, help=argparse_SUPPRESS)
+            else:
+                raise ValueError("Type '%s' not supported. (Used for setting '%s')" % (type(val),varname))
+        # self.state.update(defaults)
 
     # ======= #
     # runtime #
