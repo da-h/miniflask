@@ -11,8 +11,12 @@ def getModulesAvail(modules_dir):
         if ".module" not in filenames:
             continue
         f[module_name_id] = module_name_id
-        if module_name_short in f and module_name_short != module_name_id:
-            del f[module_name_short]
-        else:
-            f[module_name_short] = module_name_id
+
+        # add reference to shortid
+        is_module_with_shortid = not path.exists(path.join(dirpath,".noshortid"))
+        if is_module_with_shortid:
+            if module_name_short in f and module_name_short != module_name_id:
+                del f[module_name_short]
+            else:
+                f[module_name_short] = module_name_id
     return f

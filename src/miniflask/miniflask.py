@@ -79,6 +79,7 @@ class miniflask():
         dirs = [d for d in listdir(dir) if path.isdir(path.join(dir,d)) and not d.startswith("_")]
         for i, d in enumerate(dirs):
             is_module = path.exists(path.join(dir,d,".module"))
+            is_module_without_shortid = path.exists(path.join(dir,d,".noshortid"))
             module_id = id_pre + "." + d if id_pre != "" else d
             if i == len(dirs)-1:
                 tree_symb = "└── "
@@ -86,7 +87,8 @@ class miniflask():
             else:
                 tree_symb = "├── "
                 is_last = False
-            append = attr('dim')+" (short-id not unique)"+attr('reset') if is_module and not d in self.modules_avail else ""
+            append = " "+fg('blue')+"("+module_id+")"+attr('reset') if is_module_without_shortid else ""
+            append += attr('dim')+" (short-id not unique)"+attr('reset') if is_module and not d in self.modules_avail else ""
             print(prepend+tree_symb+(highlight_name(d) if is_module else d)+append)
             if is_module:
                 if with_event:
