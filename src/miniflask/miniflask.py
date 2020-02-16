@@ -177,7 +177,7 @@ class miniflask():
             varname = prefix+key
             varname_short = prefix_short+key
             if isinstance(val,bool):
-                self.settings_parser.add_argument('--'+varname, dest=varname, action='store_true', metavar=highlight_type("\tbool"))
+                self.settings_parser.add_argument('--'+varname, dest=varname, action='store_true')
                 self.settings_parser.add_argument('--no-'+varname, dest=varname, action='store_false')
                 self.settings_parser.add_argument('--'+varname_short, dest=varname, action='store_true', help=argparse_SUPPRESS)
                 self.settings_parser.add_argument('--no-'+varname_short, dest=varname, action='store_false', help=argparse_SUPPRESS)

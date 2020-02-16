@@ -1,6 +1,4 @@
 def dummy_fn(*args,**kwargs):
-    if len(args) == 1 and len(kwargs) == 0:
-        return args[0]
     return []
 
 def dummy_fn_unique(*args,**kwargs):
