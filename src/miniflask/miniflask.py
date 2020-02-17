@@ -92,16 +92,17 @@ class miniflask():
             append = " "+fg('blue')+"("+module_id+")"+attr('reset') if is_module_without_shortid else ""
             append += attr('dim')+" (short-id not unique)"+attr('reset') if is_module and not d in self.modules_avail else ""
             print(prepend+tree_symb+(highlight_name(d) if is_module else d)+append)
+
+            tree_symb_next = "     " if is_last else "│    "
             if is_module:
                 if with_event:
                     events = self.getModuleEvents(module_id)
                     if len(events) > 0:
                         for e in events:
                             unique_flag = "!" if e[1] else ">"
-                            tree_symb = "     " if is_last else "│    "
-                            print(prepend+tree_symb+unique_flag+" "+highlight_event(e[0]))
+                            print(prepend+tree_symb_next+unique_flag+" "+highlight_event(e[0]))
                 continue
-            self.showModules(path.join(dir,d),prepend=prepend+"    " if is_last else "│   ", id_pre=module_id, with_event=with_event)
+            self.showModules(path.join(dir,d),prepend=prepend+tree_symb_next, id_pre=module_id, with_event=with_event)
 
     # pretty print loaded modules
     def __str__(self):
