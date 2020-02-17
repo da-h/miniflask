@@ -174,12 +174,12 @@ class miniflask():
             self.event_objs[name] = event_obj(fn, unique, self)
 
     # overwrite state defaults
-    def register_defaults(self, defaults):
-        prefix = self.module+"."
-        prefix_short = self.getModuleShortId(self.module)+"."
+    def register_defaults(self, defaults, all=False):
+        prefix = "" if all else self.module+"."
+        prefix_short = "" if all else self.getModuleShortId(self.module)+"."
         for key, val in defaults.items():
             varname = prefix+key
-            varname_short = prefix_short+key
+            varname_short = None if all else prefix_short+key
             self._settings_parser_add(varname, varname_short, val)
         self.state.all.update({prefix+k:v for k,v in defaults.items()})
 
@@ -187,17 +187,21 @@ class miniflask():
         if isinstance(val,bool):
             self.settings_parser.add_argument('--'+varname, dest=varname, action='store_true')
             self.settings_parser.add_argument('--no-'+varname, dest=varname, action='store_false')
-            self.settings_parser.add_argument('--'+varname_short, dest=varname, action='store_true', help=argparse_SUPPRESS)
-            self.settings_parser.add_argument('--no-'+varname_short, dest=varname, action='store_false', help=argparse_SUPPRESS)
+            if varname_short:
+                self.settings_parser.add_argument('--'+varname_short, dest=varname, action='store_true', help=argparse_SUPPRESS)
+                self.settings_parser.add_argument('--no-'+varname_short, dest=varname, action='store_false', help=argparse_SUPPRESS)
         elif isinstance(val,int):
             self.settings_parser.add_argument( "--"+varname, type=int, dest=varname, default=val, metavar=highlight_type("\tint"))
-            self.settings_parser.add_argument( "--"+varname_short, type=int, dest=varname, default=val, help=argparse_SUPPRESS)
+            if varname_short:
+                self.settings_parser.add_argument( "--"+varname_short, type=int, dest=varname, default=val, help=argparse_SUPPRESS)
         elif isinstance(val,str):
             self.settings_parser.add_argument( "--"+varname, type=str, dest=varname, default=val, metavar=highlight_type('\tstring'))
-            self.settings_parser.add_argument( "--"+varname_short, type=str, dest=varname, default=val, help=argparse_SUPPRESS)
+            if varname_short:
+                self.settings_parser.add_argument( "--"+varname_short, type=str, dest=varname, default=val, help=argparse_SUPPRESS)
         elif isinstance(val,float):
             self.settings_parser.add_argument( "--"+varname, type=float, dest=varname, default=val, metavar=highlight_type('\tstring')) #, help=S("_"+varname,alt=""))
-            self.settings_parser.add_argument( "--"+varname_short, type=float, dest=varname, default=val, help=argparse_SUPPRESS)
+            if varname_short:
+                self.settings_parser.add_argument( "--"+varname_short, type=float, dest=varname, default=val, help=argparse_SUPPRESS)
         elif callable(val):
             self.settings_parse_later.append((varname,varname_short,val))
         else:
