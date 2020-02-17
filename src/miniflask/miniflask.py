@@ -12,6 +12,7 @@ from importlib import import_module
 from copy import copy
 from argparse import ArgumentParser, SUPPRESS as argparse_SUPPRESS
 from queue import Queue
+import re
 
 # coloring
 highlight_error = lambda: fg('red')+attr('bold')+"Error:"+attr('reset')+" "
@@ -40,6 +41,7 @@ class miniflask():
         # arguments from cli-stdin
         self.settings_parser = ArgumentParser(usage=sys.argv[0]+" modulelist [optional arguments]")
         self.settings_parse_later = []
+        self.default_modules = []
 
         # internal
         self.halt_parse = False
@@ -160,6 +162,10 @@ class miniflask():
         mod.miniflask_obj.module = module
         mod.register(mod.miniflask_obj)
 
+    # register default module that is loaded if none of glob is matched
+    def register_default_module(self, glob, module):
+        self.default_modules.append((glob, module))
+
     # saves function to a given (event-)name
     def register_event(self,name,fn,unique=False):
 
@@ -234,6 +240,13 @@ class miniflask():
             self.load(cmd)
             # except Exception as e:
             #     print(e)
+
+        # ensure default_modules are loaded
+        keys = self.modules_loaded.keys()
+        for glob, module in self.default_modules:
+            found = [x for x in keys if re.search(glob, x)]
+            if len(found) == 0:
+                self.load(module)
 
         # parse lambdas
         for varname, varname_short, fn in self.settings_parse_later:
