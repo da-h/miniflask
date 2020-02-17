@@ -17,7 +17,7 @@ class miniflask_dummy():
 
     def register_event(self,name,fn,unique=False):
         self.event_objs[name] = unique
-    def register_defaults(self,*args):
+    def register_defaults(self,*args, **kwargs):
         pass
 
     # ignore all other function calls

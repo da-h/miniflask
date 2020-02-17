@@ -265,7 +265,7 @@ class miniflask_wrapper(miniflask):
     def __init__(self,module_name, mf):
         self.module_name = module_name
         self.wrapped_class = mf.wrapped_class if hasattr(mf, 'wrapped_class') else mf
-        self.state = state_wrapper(module_name, mf.state)
+        self.state = state_wrapper(module_name, self.wrapped_class.state)
 
     def __getattr__(self,attr):
         orig_attr = super().__getattribute__('wrapped_class').__getattribute__(attr)
