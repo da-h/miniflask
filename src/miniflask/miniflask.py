@@ -195,10 +195,10 @@ class miniflask():
 
     def _settings_parser_add(self, varname, varname_short, val):
         if isinstance(val,bool):
-            self.settings_parser.add_argument('--'+varname, dest=varname, action='store_true')
+            self.settings_parser.add_argument('--'+varname, dest=varname, action='store_true', default=val)
             self.settings_parser.add_argument('--no-'+varname, dest=varname, action='store_false')
             if varname_short:
-                self.settings_parser.add_argument('--'+varname_short, dest=varname, action='store_true', help=argparse_SUPPRESS)
+                self.settings_parser.add_argument('--'+varname_short, dest=varname, action='store_true', help=argparse_SUPPRESS, default=val)
                 self.settings_parser.add_argument('--no-'+varname_short, dest=varname, action='store_false', help=argparse_SUPPRESS)
         elif isinstance(val,int):
             self.settings_parser.add_argument( "--"+varname, type=int, dest=varname, default=val, metavar=highlight_type("\tint"))
