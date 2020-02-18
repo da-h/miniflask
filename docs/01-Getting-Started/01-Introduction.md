@@ -77,7 +77,7 @@ if not mf.halt_parse:
 ```
 
 
-**Useage**:  
+**Usage**:  
 Now, we can use our program in the following ways:
 ```sh
 > python main.py
