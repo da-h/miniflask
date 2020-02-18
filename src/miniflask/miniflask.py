@@ -24,6 +24,8 @@ highlight_loaded = lambda x, y: attr('underlined')+x+attr('reset')+" "+fg('green
 highlight_event = lambda x: fg('light_yellow')+x+attr('reset')
 highlight_blue_line = lambda x: fg('blue')+attr('bold')+x+attr('reset')
 highlight_type = lambda x: fg('cyan')+x+attr('reset')
+highlight_val = lambda x: fg('white')+x+attr('reset')
+highlight_val_overwrite = lambda x: fg('red')+attr('bold')+x+attr('reset')
 
 # ================ #
 # MiniFlask Kernel #
@@ -50,6 +52,7 @@ class miniflask():
         self.event_optional = event(self, optional=True, unique=False)
         self.event_optional_unique = event(self, optional=True, unique=True)
         self.state = {}
+        self.state_default = {}
         self.modules_loaded = {}
         self.modules_avail = getModulesAvail(self.modules_dir)
         self.miniflask_objs = {} # local modified versions of miniflask
@@ -253,6 +256,9 @@ class miniflask():
             self.state[varname] = fn(self.state,self.event)
             self._settings_parser_add(varname, varname_short, self.state[varname])
 
+        # remember default state
+        self.state_default.update(self.state)
+
         # parse arguments
         settings_args = self.settings_parser.parse_args(argv[2:])
         for varname, val in vars(settings_args).items():
@@ -263,8 +269,9 @@ class miniflask():
 
 
 class state_wrapper(dict):
-    def __init__(self, module_name, state):
+    def __init__(self, module_name, state, state_default):
         self.all = state
+        self.default = state_default
         self.module_name = module_name
 
     def __getitem__(self, name):
@@ -279,7 +286,7 @@ class miniflask_wrapper(miniflask):
     def __init__(self,module_name, mf):
         self.module_name = module_name
         self.wrapped_class = mf.wrapped_class if hasattr(mf, 'wrapped_class') else mf
-        self.state = state_wrapper(module_name, self.wrapped_class.state)
+        self.state = state_wrapper(module_name, self.wrapped_class.state, self.wrapped_class.state_default)
 
     def __getattr__(self,attr):
         orig_attr = super().__getattribute__('wrapped_class').__getattribute__(attr)
