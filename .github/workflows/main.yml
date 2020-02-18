@@ -1,0 +1,37 @@
+name: Deploy
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  autotagging:
+    name: Autoadd release Tags
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@master
+    - uses: jaliborc/action-general-autotag@7d2ae9f
+      with:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        source_file: src/miniflask/__init__.py
+        extraction_regex: "^__version__\\s*=\\s*\"(\\d[\\d\\.]+)\""
+        tag_message: "Alpha Release"
+        tag_format: "v{version}"
+  documentation:
+    name: Deploy Documentation
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@master
+    - uses: ./.github/actions/build-documentation
+      env:
+          DOCS_SRC: ./docs
+          DEST: ./out
+    - name: GitHub Pages Deploy
+      uses: JamesIves/github-pages-deploy-action@master
+      env:
+          BUILD_DIR: ./docs
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          BASE_BRANCH: master # The branch the action should deploy from.
+          BRANCH: gh-pages # The branch the action should deploy to.
+          FOLDER: docs # The folder the action should deploy.
