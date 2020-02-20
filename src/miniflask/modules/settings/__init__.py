@@ -19,6 +19,9 @@ def insert_key(S,k,val):
 def listsettings(state, event):
     S = {}
     last_k = []
+    if len(state.all) == 0:
+        print("No Settings available.")
+        return
     maxklen = max(len(k) for k in state.all.keys())
     print("Folder│"+highlight_name("module")+"│"+highlight_module("variable")+(" "*(maxklen-22))+" = "+highlight_val("value"))
     print("—"*(maxklen+8))
