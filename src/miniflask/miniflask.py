@@ -190,7 +190,7 @@ class miniflask():
         for key, val in defaults.items():
             varname = prefix+key
             varname_short = None if all else prefix_short+key
-            self._settings_parser_add(varname, varname_short, val)
+            self.settings_parse_later.append((varname,varname_short,val))
         self.state.all.update({prefix+k:v for k,v in defaults.items()})
 
     def _settings_parser_add(self, varname, varname_short, val):
@@ -212,8 +212,6 @@ class miniflask():
             self.settings_parser.add_argument( "--"+varname, type=float, dest=varname, default=val, metavar=highlight_type('\tstring')) #, help=S("_"+varname,alt=""))
             if varname_short:
                 self.settings_parser.add_argument( "--"+varname_short, type=float, dest=varname, default=val, help=argparse_SUPPRESS)
-        elif callable(val):
-            self.settings_parse_later.append((varname,varname_short,val))
         else:
             raise ValueError("Type '%s' not supported. (Used for setting '%s')" % (type(val),varname))
 
@@ -251,9 +249,17 @@ class miniflask():
             if len(found) == 0:
                 self.load(module)
 
-        # parse lambdas
-        for varname, varname_short, fn in self.settings_parse_later:
-            self.state[varname] = fn(self.state,self.event)
+        # parse lambdas & overwrites
+        short_names = {}
+        for varname, varname_short, val in self.settings_parse_later:
+            if callable(val):
+                self.state[varname] = val(self.state,self.event)
+            else:
+                self.state[varname] = val
+            short_names[varname] = varname_short
+
+        # set argument parser
+        for varname, varname_short in short_names.items():
             self._settings_parser_add(varname, varname_short, self.state[varname])
 
         # remember default state
