@@ -1,5 +1,6 @@
 # package modules
 from .event import event, event_obj
+from .state import state
 from .dummy import miniflask_dummy
 from .util import getModulesAvail
 from .modules import registerPredefined
@@ -278,25 +279,11 @@ class miniflask():
 
 
 
-class state_wrapper(dict):
-    def __init__(self, module_name, state, state_default):
-        self.all = state
-        self.default = state_default
-        self.module_name = module_name
-
-    def __getitem__(self, name):
-        return self.all[self.module_name+"."+name]
-    def __setitem__(self, name, val):
-        self.all[self.module_name+"."+name] = val
-
-    def __getattribute__(self, name):
-        return super().__getattribute__(name)
-
 class miniflask_wrapper(miniflask):
     def __init__(self,module_name, mf):
         self.module_name = module_name
         self.wrapped_class = mf.wrapped_class if hasattr(mf, 'wrapped_class') else mf
-        self.state = state_wrapper(module_name, self.wrapped_class.state, self.wrapped_class.state_default)
+        self.state = state(module_name, self.wrapped_class.state, self.wrapped_class.state_default)
 
     def __getattr__(self,attr):
         orig_attr = super().__getattribute__('wrapped_class').__getattribute__(attr)
