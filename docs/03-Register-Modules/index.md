@@ -1,6 +1,2 @@
-{theme=documentation}
 
-\include{"../include.md"}
-
-
-to be written
+\redirect{"01-Module-Declaration.md"}

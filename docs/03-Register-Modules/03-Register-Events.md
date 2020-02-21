@@ -1,0 +1,88 @@
+{theme=documentation}
+
+\include{"../include.md"}
+
+# Register Events
+Who doesn't love functional interfaces? ;)
+
+### Minimal Example
+**Example File:** `modules/module1/__init__.py`
+```python
+def main(state, event):
+    print("This is the main-event of module1")
+
+def register(mf):
+    mf.register_event('main', main, unique=False)
+```
+
+**Example File:** `modules/module2/__init__.py`
+```python
+def main(state, event):
+    print("This is the main-event of module2")
+
+def notneeded(state, event, someargument):
+    print("Event was called. Argument:" + someargument)
+    return "notneeded() result"
+
+def register(mf):
+    mf.register_event('main', main, unique=False)
+    mf.register_event('notneeded', notneeded, unique=False)
+```
+
+**Example File:** `main.py`
+```python
+import miniflask
+
+# initialize miniflask
+mf = miniflask.init(modules_dir="./modules")
+state, event = mf.state, mf.event
+mf.parse_args()
+mf.event.main()
+```
+
+---
+
+### Register Events
+Every Event-Method gets called with two arguments `state` and `event`, **plus** the arguments that are passed when the event is called.
+
+There are two type of events:
+
+**Unique**:  
+Can be defined by exactly one module.\n Typically unique events are called and are expected to return exactly one result.  
+`mf.register_event('eventname', fn, unique=True)`
+
+**Nonunique**  
+Can be defined by arbitrary many module. The results of all such events of loaded modules are collected and returned in a list.  
+`mf.register_event('eventname', fn, unique=False)`
+
+
+### Call Events
+Events can be called using the `event` object, i.e. in another event or after initialization of miniflask using the global `mf.event` object (see above).
+
+There are two types of calls:
+
+**Mandatory Calls**  
+You expect this event to exist and to be called using a self-specified interface.
+E.g.:
+
+```python
+event.main()
+result = event.notneeded("some argument")
+```
+
+*Note*: This code will raise an Exception, if one of the two events `main` or `notneeded` are not defined (or differ in their interface to the expectation of the call).
+
+**Optional Calls**  
+You want this event to be called if it is defined, but if it isn't you don't mind.
+E.g.:
+
+```python
+event.optional.main()
+result = event.optional.notneeded("some argument")
+result = event.optional_unique.notneeded("some argument")
+```
+\n
+
+# Note {.alert}
+- `event.optional.eventname()` treats the event like a `nonunique` event, thus it returns an list of results.
+- `event.optional_unique.eventname()` treats the event like a `unique` event, thus it returns `None` in the case of no defined event of the name `eventname`.
