@@ -193,25 +193,29 @@ class miniflask():
             self.settings_parse_later.append((varname,varname_short,val))
         self.state.all.update({prefix+k:v for k,v in defaults.items()})
 
-    def _settings_parser_add(self, varname, varname_short, val):
+    def _settings_parser_add(self, varname, varname_short, val, nargs=1, default=None):
+        if default is None:
+            default = val
         if isinstance(val,bool):
-            self.settings_parser.add_argument('--'+varname, dest=varname, action='store_true', default=val)
+            self.settings_parser.add_argument('--'+varname, dest=varname, action='store_true', default=default)
             self.settings_parser.add_argument('--no-'+varname, dest=varname, action='store_false')
             if varname_short:
-                self.settings_parser.add_argument('--'+varname_short, dest=varname, action='store_true', help=argparse_SUPPRESS, default=val)
+                self.settings_parser.add_argument('--'+varname_short, dest=varname, action='store_true', help=argparse_SUPPRESS, default=default)
                 self.settings_parser.add_argument('--no-'+varname_short, dest=varname, action='store_false', help=argparse_SUPPRESS)
         elif isinstance(val,int):
-            self.settings_parser.add_argument( "--"+varname, type=int, dest=varname, default=val, metavar=highlight_type("\tint"))
+            self.settings_parser.add_argument( "--"+varname, type=int, dest=varname, default=default, metavar=highlight_type("\tint"), nargs=nargs)
             if varname_short:
-                self.settings_parser.add_argument( "--"+varname_short, type=int, dest=varname, default=val, help=argparse_SUPPRESS)
+                self.settings_parser.add_argument( "--"+varname_short, type=int, dest=varname, default=default, help=argparse_SUPPRESS, nargs=nargs)
         elif isinstance(val,str):
-            self.settings_parser.add_argument( "--"+varname, type=str, dest=varname, default=val, metavar=highlight_type('\tstring'))
+            self.settings_parser.add_argument( "--"+varname, type=str, dest=varname, default=default, metavar=highlight_type('\tstring'))
             if varname_short:
-                self.settings_parser.add_argument( "--"+varname_short, type=str, dest=varname, default=val, help=argparse_SUPPRESS)
+                self.settings_parser.add_argument( "--"+varname_short, type=str, dest=varname, default=default, help=argparse_SUPPRESS)
         elif isinstance(val,float):
-            self.settings_parser.add_argument( "--"+varname, type=float, dest=varname, default=val, metavar=highlight_type('\tstring')) #, help=S("_"+varname,alt=""))
+            self.settings_parser.add_argument( "--"+varname, type=float, dest=varname, default=default, metavar=highlight_type('\tstring')) #, help=S("_"+varname,alt=""))
             if varname_short:
-                self.settings_parser.add_argument( "--"+varname_short, type=float, dest=varname, default=val, help=argparse_SUPPRESS)
+                self.settings_parser.add_argument( "--"+varname_short, type=float, dest=varname, default=default, help=argparse_SUPPRESS)
+        elif isinstance(val,list):
+            self._settings_parser_add(varname, varname_short, val[0], nargs="+", default=val)
         else:
             raise ValueError("Type '%s' not supported. (Used for setting '%s')" % (type(val),varname))
 
