@@ -1,4 +1,5 @@
 from .miniflask import miniflask
+from .event import outervar
 from .modules import *
 
 # meta

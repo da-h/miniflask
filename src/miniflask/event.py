@@ -1,4 +1,11 @@
 from .dummy import dummy_fn, dummy_fn_unique
+import collections
+import inspect
+
+class outervar():
+    pass
+
+
 
 class event_obj():
     def __init__(self, fn, unique, module):
@@ -15,6 +22,7 @@ class event():
         self._mf = mf
         self.optional_value = optional
         self.unique_value = unique
+        self.locals = {}
 
     def __getattr__(self, name):
         if name == "_mf":
@@ -34,12 +42,34 @@ class event():
                 return dummy_fn_unique
             else:
                 return dummy_fn
+
+
         def fn_wrap(*args,**kwargs):
+            outer_locals = inspect.currentframe().f_back.f_locals
             eobj = self._mf.event_objs[name]
+
             if eobj.unique:
-                return eobj.fn(eobj.modules.state,eobj.modules.event,*args,**kwargs)
+                needed_locals = {}
+                signature = inspect.signature(eobj.fn)
+                needed_locals = {
+                    k: outer_locals[k]
+                    for k, v in signature.parameters.items()
+                    if v.default is not inspect.Parameter.empty and v.default is outervar
+                }
+
+                return eobj.fn(eobj.modules.state,eobj.modules.event,*args,**needed_locals,**kwargs)
             else:
-                return [fn(mf.state,mf.event,*args,**kwargs) for fn, mf in zip(eobj.fn,eobj.modules)]
+                results = []
+                for fn, mf in zip(eobj.fn,eobj.modules):
+                    signature = inspect.signature(fn)
+                    needed_locals = {
+                        k: outer_locals[k]
+                        for k, v in signature.parameters.items()
+                        if v.default is not inspect.Parameter.empty and v.default is outervar
+                    }
+
+                    results.append(fn(mf.state,mf.event,*args,**needed_locals,**kwargs))
+                return results
         return fn_wrap
 
 
