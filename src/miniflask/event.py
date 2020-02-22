@@ -1,6 +1,7 @@
 from .dummy import dummy_fn, dummy_fn_unique
 import collections
 import inspect
+from functools import partial
 
 class outervar():
     pass
@@ -25,51 +26,53 @@ class event():
         self.locals = {}
 
     def __getattr__(self, name):
-        if name == "_mf":
-            return super().__getattribute__(name)
-        elif name == "optional_value":
-            return super().__getattribute__(name)
-        elif name == "unique_value":
-            return super().__getattribute__(name)
-        elif name == "optional":
-            return super().__getattribute__("_mf").event_optional
-        elif name == "optional_unique":
-            return super().__getattribute__("_mf").event_optional_unique
+
         if name not in self._mf.event_objs:
             if not self.optional_value:
                 raise AttributeError("The Event '%s' has not been registered yet." % name)
             if self.unique_value:
-                return dummy_fn_unique
+                fn_wrap = dummy_fn_unique
             else:
-                return dummy_fn
+                fn_wrap = dummy_fn
 
+        else:
 
-        def fn_wrap(*args,**kwargs):
-            outer_locals = inspect.currentframe().f_back.f_locals
             eobj = self._mf.event_objs[name]
 
-            if eobj.unique:
-                needed_locals = {}
-                signature = inspect.signature(eobj.fn)
-                needed_locals = {
-                    k: outer_locals[k]
-                    for k, v in signature.parameters.items()
+            # fn_wrap_scope creates a function wrap of fn that passes also state and event of eobj
+            # additionally, if outervar is defined as a default, it queries that from the last outer scope
+            def fn_wrap_scope(fn, state, event, needed_locals=[]):
+
+                # get kwargs of fn wit outervar as default
+                signature = inspect.signature(fn)
+                needed_locals = [
+                    k for k, v in signature.parameters.items()
                     if v.default is not inspect.Parameter.empty and v.default is outervar
-                }
+                ]
 
-                return eobj.fn(eobj.modules.state,eobj.modules.event,*args,**needed_locals,**kwargs)
+                # if no outervar found, just pass state and event
+                if len(needed_locals) > 0:
+                    def fn_wrap(*args, **kwargs):
+                        outer_locals = {}
+                        all_outer_locals = inspect.currentframe().f_back.f_locals
+                        outer_locals = {k: all_outer_locals[k] for k in needed_locals}
+                        return fn(state,event,*args,**outer_locals,**kwargs)
+                else:
+                    def fn_wrap(*args, **kwargs):
+                        return fn(state,event,*args,**kwargs)
+                return fn_wrap
+
+            if eobj.unique:
+                fn_wrap = fn_wrap_scope(eobj.fn, eobj.modules.state, eobj.modules.event)
             else:
-                results = []
-                for fn, mf in zip(eobj.fn,eobj.modules):
-                    signature = inspect.signature(fn)
-                    needed_locals = {
-                        k: outer_locals[k]
-                        for k, v in signature.parameters.items()
-                        if v.default is not inspect.Parameter.empty and v.default is outervar
-                    }
+                def multiple_fn_wrap_scope(fns, modules=eobj.modules):
+                    fns = [fn_wrap_scope(fn, state=module.state, event=module.event) for fn, module in zip(fns,modules)]
+                    def fn_wrap(*args,**kwargs):
+                        return [fn(*args, **kwargs) for fn in fns]
+                    return fn_wrap
+                fn_wrap = multiple_fn_wrap_scope(eobj.fn)
 
-                    results.append(fn(mf.state,mf.event,*args,**needed_locals,**kwargs))
-                return results
+        setattr(self,name, fn_wrap)
         return fn_wrap
 
 
