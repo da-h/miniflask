@@ -56,6 +56,35 @@ Can be defined by arbitrary many module. The results of all such events of loade
 `mf.register_event('eventname', fn, unique=False)`
 
 
+### Outervar
+In some scenarios it may be useful to define a module to depend completely on another module.
+In this case we can inherit the scope of some variables from the callee, by setting their default to `miniflask.event.outervar`.
+
+**Example File:** `modules/module2/__init__.py`
+```python
+from miniflask.event import outervar
+
+def main(state, event, varA=outervar):
+    print("This variable is queried from the callee scope:", varA)
+
+def register(mf):
+    mf.register_event('main', main, unique=False)
+```
+
+**Example File:** `main.py`
+```python
+import miniflask
+
+# initialize miniflask
+mf = miniflask.init(modules_dir="./modules")
+state, event = mf.state, mf.event
+mf.parse_args()
+varA=42
+mf.event.main()
+```
+
+
+
 ### Call Events
 Events can be called using the `event` object, i.e. in another event or after initialization of miniflask using the global `mf.event` object (see above).
 
