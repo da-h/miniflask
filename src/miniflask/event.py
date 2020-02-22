@@ -41,7 +41,7 @@ class event():
 
             # fn_wrap_scope creates a function wrap of fn that passes also state and event of eobj
             # additionally, if outervar is defined as a default, it queries that from the last outer scope
-            def fn_wrap_scope(fn, state, event, needed_locals=[]):
+            def fn_wrap_scope(fn, state, event, needed_locals=[], miniflask_args=[]):
 
                 # get kwargs of fn wit outervar as default
                 signature = inspect.signature(fn)
@@ -49,6 +49,17 @@ class event():
                     k for k, v in signature.parameters.items()
                     if v.default is not inspect.Parameter.empty and v.default is outervar
                 ]
+                arg_names = [k for k, v in signature.parameters.items()]
+
+                # get index of "state" / "event"
+                if arg_names[0] == "state":
+                    miniflask_args.append(state)
+                    if arg_names[1] == "event":
+                        miniflask_args.append(event)
+                elif arg_names[0] == "event":
+                    miniflask_args.append(event)
+                    if arg_names[1] == "state":
+                        miniflask_args.append(state)
 
                 # if no outervar found, just pass state and event
                 if len(needed_locals) > 0:
@@ -56,10 +67,12 @@ class event():
                         outer_locals = {}
                         all_outer_locals = inspect.currentframe().f_back.f_locals
                         outer_locals = {k: all_outer_locals[k] for k in needed_locals}
-                        return fn(state,event,*args,**outer_locals,**kwargs)
-                else:
+                        return fn(*miniflask_args,*args,**outer_locals,**kwargs)
+                if len(miniflask_args) > 0:
                     def fn_wrap(*args, **kwargs):
-                        return fn(state,event,*args,**kwargs)
+                        return fn(*miniflask_args,*args,**kwargs)
+                else:
+                    return fn
                 return fn_wrap
 
             if eobj.unique:

@@ -7,13 +7,8 @@ import miniflask
 mf = miniflask.init(
     modules_dir="./modules",
 )
-mf.load("moduleunique")
-
-class event():
-
-    @classmethod
-    def func(cls, x):
-        return x
+event = mf.event
+mf.load("modulenomfargs")
 
 a = 0
 for i in range(10000000):

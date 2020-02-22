@@ -43,7 +43,7 @@ mf.event.main()
 ---
 
 ### Register Events
-Every Event-Method gets called with two arguments `state` and `event`, **plus** the arguments that are passed when the event is called.
+Every Event-Method can be called with two arguments `state` and `event` (**only as first two arguments**), **plus** the arguments that are passed when the event is called.
 
 There are two type of events:
 
@@ -115,3 +115,8 @@ result = event.optional_unique.notneeded("some argument")
 # Note {.alert}
 - `event.optional.eventname()` treats the event like a `nonunique` event, thus it returns an list of results.
 - `event.optional_unique.eventname()` treats the event like a `unique` event, thus it returns `None` in the case of no defined event of the name `eventname`.
+# .{.end}
+
+
+### Performance Note
+Leaving the `event` and `state` argument out from an event function definition removes an extra function wrapper around every function. Thus, without them the time consumption should not differ at all from a normal function call.
