@@ -14,9 +14,10 @@ jobs:
     - uses: jaliborc/action-general-autotag@7d2ae9f
       with:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        source_file: src/miniflask/__init__.py
-        extraction_regex: "^__version__\\s*=\\s*\"(\\d[\\d\\.]+)\""
-        tag_message: "Alpha Release"
+        source_file: "src/miniflask/__init__.py"
+        # extraction_regex: "^__version__\\s*=\\s*\"(\\d[\\d\\.]+)\""
+        extraction_regex: "__version__\\s*=\\s*\"(\\d[\\d\\.]+)\""
+        tag_message: "Release"
         tag_format: "v{version}"
   documentation:
     name: Deploy Documentation
