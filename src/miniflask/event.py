@@ -41,7 +41,7 @@ class event():
 
             # fn_wrap_scope creates a function wrap of fn that passes also state and event of eobj
             # additionally, if outervar is defined as a default, it queries that from the last outer scope
-            def fn_wrap_scope(fn, state, event, needed_locals=[], miniflask_args=[]):
+            def fn_wrap_scope(fn, state, event, module, needed_locals=[], miniflask_args=[]):
 
                 # get kwargs of fn wit outervar as default
                 signature = inspect.signature(fn)
@@ -67,21 +67,30 @@ class event():
                         outer_locals = {}
                         all_outer_locals = inspect.currentframe().f_back.f_locals
                         outer_locals = {k: all_outer_locals[k] for k in needed_locals}
-                        return fn(*miniflask_args,*args,**outer_locals,**kwargs)
+                        try:
+                            return fn(*miniflask_args,*args,**outer_locals,**kwargs)
+                        except Exception as e:
+                            raise Exception(str(e)+"\n\tOccured in function: '%s' in module '%s'" % (fn.__name__, module.module))#,modules[i].module))
                 if len(miniflask_args) > 0:
                     def fn_wrap(*args, **kwargs):
-                        return fn(*miniflask_args,*args,**kwargs)
+                        try:
+                            return fn(*miniflask_args,*args,**kwargs)
+                        except Exception as e:
+                            raise Exception(str(e)+"\n\tOccured in function: '%s' in module '%s'" % (fn.__name__, module.module))#,modules[i].module))
                 else:
                     return fn
                 return fn_wrap
 
             if eobj.unique:
-                fn_wrap = fn_wrap_scope(eobj.fn, eobj.modules.state, eobj.modules.event)
+                fn_wrap = fn_wrap_scope(eobj.fn, eobj.modules.state, eobj.modules.event, eobj.modules)
             else:
-                def multiple_fn_wrap_scope(fns, modules=eobj.modules):
-                    fns = [fn_wrap_scope(fn, state=module.state, event=module.event) for fn, module in zip(fns,modules)]
+                def multiple_fn_wrap_scope(orig_fns, modules=eobj.modules):
+                    fns = [fn_wrap_scope(fn, state=module.state, event=module.event, module=module) for fn, module in zip(orig_fns,modules)]
                     def fn_wrap(*args,**kwargs):
-                        return [fn(*args, **kwargs) for fn in fns]
+                        results = []
+                        for i,fn in enumerate(fns):
+                            results.append(fn(*args, **kwargs))
+                        return results
                     return fn_wrap
                 fn_wrap = multiple_fn_wrap_scope(eobj.fn)
 
