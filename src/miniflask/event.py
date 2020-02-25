@@ -41,7 +41,11 @@ class event():
 
             # fn_wrap_scope creates a function wrap of fn that passes also state and event of eobj
             # additionally, if outervar is defined as a default, it queries that from the last outer scope
-            def fn_wrap_scope(fn, state, event, module, needed_locals=[], miniflask_args=[]):
+            def fn_wrap_scope(fn, state, event, module, needed_locals=None, miniflask_args=None):
+                if needed_locals is None:
+                    needed_locals = []
+                if miniflask_args is None:
+                    miniflask_args = []
 
                 # get kwargs of fn wit outervar as default
                 signature = inspect.signature(fn)
@@ -52,14 +56,15 @@ class event():
                 arg_names = [k for k, v in signature.parameters.items()]
 
                 # get index of "state" / "event"
-                if arg_names[0] == "state":
-                    miniflask_args.append(state)
-                    if arg_names[1] == "event":
-                        miniflask_args.append(event)
-                elif arg_names[0] == "event":
-                    miniflask_args.append(event)
-                    if arg_names[1] == "state":
+                if len(arg_names) > 0:
+                    if arg_names[0] == "state":
                         miniflask_args.append(state)
+                        if len(arg_names) > 1 and arg_names[1] == "event":
+                            miniflask_args.append(event)
+                    elif arg_names[0] == "event":
+                        miniflask_args.append(event)
+                        if len(arg_names) > 1 and arg_names[1] == "state":
+                            miniflask_args.append(state)
 
                 # if no outervar found, just pass state and event
                 if len(needed_locals) > 0:
@@ -67,16 +72,10 @@ class event():
                         outer_locals = {}
                         all_outer_locals = inspect.currentframe().f_back.f_locals
                         outer_locals = {k: all_outer_locals[k] for k in needed_locals}
-                        try:
-                            return fn(*miniflask_args,*args,**outer_locals,**kwargs)
-                        except Exception as e:
-                            raise Exception(str(e)+"\n\tOccured in function: '%s' in module '%s'" % (fn.__name__, module.module))#,modules[i].module))
-                if len(miniflask_args) > 0:
+                        return fn(*miniflask_args,*args,**outer_locals,**kwargs)
+                elif len(miniflask_args) > 0:
                     def fn_wrap(*args, **kwargs):
-                        try:
-                            return fn(*miniflask_args,*args,**kwargs)
-                        except Exception as e:
-                            raise Exception(str(e)+"\n\tOccured in function: '%s' in module '%s'" % (fn.__name__, module.module))#,modules[i].module))
+                        return fn(*miniflask_args,*args,**kwargs)
                 else:
                     return fn
                 return fn_wrap

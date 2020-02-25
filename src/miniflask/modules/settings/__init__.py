@@ -31,10 +31,13 @@ def listsettings(state, event):
         overwritten = v != state.default[k]
         k = k.split(".")
         insert_key(S,k,v)
-        k_hidden = [" "*len(ki) if ki==ki2 else ki for ki,ki2 in zip_longest(k,last_k) if ki is not None]
-        last_k = k
-        k_hidden[-2] = highlight_name(k_hidden[-2])
-        k_hidden[-1] = highlight_module(k_hidden[-1])
+        if len(k) > 1:
+            k_hidden = [" "*len(ki) if ki==ki2 else ki for ki,ki2 in zip_longest(k,last_k) if ki is not None]
+            last_k = k
+            k_hidden[-2] = highlight_name(k_hidden[-2])
+            k_hidden[-1] = highlight_module(k_hidden[-1])
+        else:
+            k_hidden = k
 
         append = "" if not overwritten else " -> "+highlight_val_overwrite(str(v))
         print("│".join(k_hidden)+(" "*(maxklen-klen))+" = "+highlight_val(str(state.default[korig]))+append)
