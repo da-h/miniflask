@@ -196,7 +196,7 @@ class miniflask():
             self.settings_parse_later.append((varname,varname_short,val))
         self.state.all.update({prefix+k:v for k,v in defaults.items()})
 
-    def _settings_parser_add(self, varname, varname_short, val, nargs=1, default=None):
+    def _settings_parser_add(self, varname, varname_short, val, nargs=None, default=None):
         if default is None:
             default = val
         if isinstance(val,bool):
