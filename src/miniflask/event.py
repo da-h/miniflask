@@ -6,8 +6,6 @@ from functools import partial
 class outervar():
     pass
 
-
-
 class event_obj():
     def __init__(self, fn, unique, module):
         self.unique = unique
@@ -41,7 +39,7 @@ class event():
 
             # fn_wrap_scope creates a function wrap of fn that passes also state and event of eobj
             # additionally, if outervar is defined as a default, it queries that from the last outer scope
-            def fn_wrap_scope(fn, state, event, module, needed_locals=None, miniflask_args=None):
+            def fn_wrap_scope(fn, state, event, module, needed_locals=None, miniflask_args=None, skip_twice=False):
                 if needed_locals is None:
                     needed_locals = []
                 if miniflask_args is None:
@@ -70,7 +68,10 @@ class event():
                 if len(needed_locals) > 0:
                     def fn_wrap(*args, **kwargs):
                         outer_locals = {}
-                        all_outer_locals = inspect.currentframe().f_back.f_locals
+                        if skip_twice:
+                            all_outer_locals = inspect.currentframe().f_back.f_back.f_locals
+                        else:
+                            all_outer_locals = inspect.currentframe().f_back.f_locals
                         outer_locals = {k: all_outer_locals[k] for k in needed_locals}
                         return fn(*miniflask_args,*args,**outer_locals,**kwargs)
                 elif len(miniflask_args) > 0:
@@ -84,7 +85,7 @@ class event():
                 fn_wrap = fn_wrap_scope(eobj.fn, eobj.modules.state, eobj.modules.event, eobj.modules)
             else:
                 def multiple_fn_wrap_scope(orig_fns, modules=eobj.modules):
-                    fns = [fn_wrap_scope(fn, state=module.state, event=module.event, module=module) for fn, module in zip(orig_fns,modules)]
+                    fns = [fn_wrap_scope(fn, state=module.state, event=module.event, module=module, skip_twice=True) for fn, module in zip(orig_fns,modules)]
                     def fn_wrap(*args,**kwargs):
                         results = []
                         for i,fn in enumerate(fns):

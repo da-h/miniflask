@@ -1,4 +1,4 @@
-from miniflask.event import outervar
+from miniflask import outervar
 
 def main(state, event, varA=outervar):
     print("outervar:",varA)
