@@ -188,12 +188,24 @@ class miniflask():
 
     # overwrite state defaults
     def register_defaults(self, defaults, all=False):
-        prefix = "" if all else self.module+"."
-        prefix_short = "" if all else self.getModuleShortId(self.module)+"."
-        for key, val in defaults.items():
-            varname = prefix+key
-            varname_short = None if all else prefix_short+key
-            self.settings_parse_later.append((varname,varname_short,val))
+        if not all:
+            # prefix is exactly the module
+            prefix = "" if all else self.module+"."
+            prefix_short = "" if all else self.getModuleShortId(self.module)+"."
+            for key, val in defaults.items():
+                varname = prefix+key
+                varname_short = None if all else prefix_short+key
+                self.settings_parse_later.append((varname,varname_short,val))
+        else:
+            # prefix has to be infered from key
+            prefix = ""
+            for key, val in defaults.items():
+                varname = key
+                key_split =  key.split(".")
+                varname_short = ".".join(key_split[-2:]) if len(key_split) > 1 else None
+                if varname_short == varname:
+                    varname_short = None
+                self.settings_parse_later.append((varname,varname_short,val))
         self.state.all.update({prefix+k:v for k,v in defaults.items()})
 
     def _settings_parser_add(self, varname, varname_short, val, nargs=None, default=None):
