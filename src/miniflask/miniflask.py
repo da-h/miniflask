@@ -3,7 +3,11 @@ from .event import event, event_obj
 from .state import state
 from .dummy import miniflask_dummy
 from .util import getModulesAvail
+from .util import highlight_error, highlight_name, highlight_module, highlight_loading, highlight_loaded_none, highlight_loaded, highlight_event, highlight_blue_line, highlight_type, highlight_val, highlight_val_overwrite
+
+
 from .modules import registerPredefined
+from .modules.settings import listsettings
 
 # global modules
 import sys
@@ -14,19 +18,6 @@ from copy import copy
 from argparse import ArgumentParser, SUPPRESS as argparse_SUPPRESS
 from queue import Queue
 import re
-
-# coloring
-highlight_error = lambda: fg('red')+attr('bold')+"Error:"+attr('reset')+" "
-highlight_name = lambda x: fg('blue')+attr('bold')+x+attr('reset')
-highlight_module = lambda x: fg('green')+attr('bold')+x+attr('reset')
-highlight_loading = lambda x: "Load Module ... "+highlight_module(x)
-highlight_loaded_none = lambda x: fg('red')+x+attr('reset')
-highlight_loaded = lambda x, y: attr('underlined')+x+attr('reset')+" "+fg('green')+attr('bold')+", ".join(y)+attr('reset')
-highlight_event = lambda x: fg('light_yellow')+x+attr('reset')
-highlight_blue_line = lambda x: fg('blue')+attr('bold')+x+attr('reset')
-highlight_type = lambda x: fg('cyan')+x+attr('reset')
-highlight_val = lambda x: fg('white')+x+attr('reset')
-highlight_val_overwrite = lambda x: fg('red')+attr('bold')+x+attr('reset')
 
 # ================ #
 # MiniFlask Kernel #
@@ -280,6 +271,9 @@ class miniflask():
         # set argument parser
         for varname, varname_short in short_names.items():
             self._settings_parser_add(varname, varname_short, self.state[varname])
+
+        # add help message
+        self.settings_parser.print_help = lambda: (print("usage: modulelist [optional arguments]"),print(),print("optional arguments (and their defaults):"),listsettings(state("",self.state,self.state_default),self.event))
 
         # remember default state
         self.state_default.update(self.state)

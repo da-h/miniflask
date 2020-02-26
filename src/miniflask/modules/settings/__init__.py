@@ -1,5 +1,4 @@
 import sys
-from colored import attr, fg
 from itertools import zip_longest
 from miniflask.miniflask import highlight_module, highlight_val, highlight_name, highlight_val_overwrite
 
