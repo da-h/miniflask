@@ -37,6 +37,7 @@ def listsettings(state, event):
             k_hidden[-1] = highlight_module(k_hidden[-1])
         else:
             k_hidden = k
+            k_hidden[-1] = highlight_module(k_hidden[-1])
 
         append = "" if not overwritten else " -> "+highlight_val_overwrite(str(v))
         print("│".join(k_hidden)+(" "*(maxklen-klen))+" = "+highlight_val(str(state.default[korig]))+append)
