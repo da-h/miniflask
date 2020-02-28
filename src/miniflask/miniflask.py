@@ -34,7 +34,7 @@ class miniflask():
 
         # arguments from cli-stdin
         self.settings_parser = ArgumentParser(usage=sys.argv[0]+" modulelist [optional arguments]")
-        self.settings_parse_later = []
+        self.settings_parse_later = {}
         self.default_modules = []
 
         # internal
@@ -125,38 +125,48 @@ class miniflask():
         if not module in self.modules_avail:
             raise ValueError(highlight_error()+"Module '%s' not known." % highlight_module(module))
         uniqueId = self.modules_avail[module]
-        return uniqueId.split(".")[-1]
+        shortid = uniqueId.split(".")[-1]
+        return shortid if shortid in self.modules_avail and self.modules_avail[shortid] == module else None
+
+    # maps 'folder.subfolder.module.list.of.vars' to 'folder.subfoldder.module'
+    def _getModuleIdFromVarId(self, varid_list, scope=None):
+        if scope is not None and scope in self.modules_avail:
+            return scope
+        for i in range(len(varid_list)-1,0,-1):
+            test_id = ".".join(varid_list[:i])
+            if test_id in self.modules_avail:
+                return test_id
+        return None
 
     # loads module (once)
-    def load(self, module, verbose=True):
+    def load(self, module_name, verbose=True):
 
         # load list of modules
-        if isinstance(module,list):
-            for m in module:
+        if isinstance(module_name,list):
+            for m in module_name:
                 self.load(m)
             return
 
         # get id
-        module = self.getModuleId(module)
+        module_name = self.getModuleId(module_name)
 
-        # check if module exists or is already loaded
-        if not module in self.modules_avail:
-            raise ValueError(highlight_error()+"Module '%s' not known." % module)
-        if module in self.modules_loaded:
+        # check if module_name exists or is already loaded
+        if not module_name in self.modules_avail:
+            raise ValueError(highlight_error()+"module_name '%s' not known." % module_name)
+        if module_name in self.modules_loaded:
             return
 
         # load module
-        print(highlight_loading(self.modules_avail[module]))
-        mod = import_module(self.modules_avail[module])
+        print(highlight_loading(self.modules_avail[module_name]))
+        mod = import_module(self.modules_avail[module_name])
         if not hasattr(mod,"register"):
-            raise ValueError(highlight_error()+"Module '%s' does not register itself." % module)
+            raise ValueError(highlight_error()+"Module '%s' does not register itself." % module_name)
 
         # remember loaded modules
-        self.modules_loaded[self.modules_avail[module]] = mod
+        self.modules_loaded[self.modules_avail[module_name]] = mod
 
         # register events
-        mod.miniflask_obj = miniflask_wrapper(module, self)
-        mod.miniflask_obj.module = module
+        mod.miniflask_obj = miniflask_wrapper(module_name, self)
         mod.register(mod.miniflask_obj)
 
     # register default module that is loaded if none of glob is matched
@@ -178,26 +188,43 @@ class miniflask():
             self.event_objs[name] = event_obj(fn, unique, self)
 
     # overwrite state defaults
-    def register_defaults(self, defaults, all=False):
-        if not all:
-            # prefix is exactly the module
-            prefix = "" if all else self.module+"."
-            prefix_short = "" if all else self.getModuleShortId(self.module)+"."
-            for key, val in defaults.items():
-                varname = prefix+key
-                varname_short = None if all else prefix_short+key
-                self.settings_parse_later.append((varname,varname_short,val))
-        else:
-            # prefix has to be infered from key
-            prefix = ""
-            for key, val in defaults.items():
-                varname = key
-                key_split =  key.split(".")
-                varname_short = ".".join(key_split[-2:]) if len(key_split) > 1 else None
-                if varname_short == varname:
-                    varname_short = None
-                self.settings_parse_later.append((varname,varname_short,val))
-        self.state.all.update({prefix+k:v for k,v in defaults.items()})
+    # Note: the problem lies in the fact that the true id of a variable is defined as scope.key,
+    #       however scope can be empty if key is meant as a reference in the global scope=="".
+    #       Otherwise, this function would be a lot simpler.
+    def register_defaults(self, defaults, scope="", overwrite=False, cliargs=True):
+        if scope is None:
+            scope = ""
+
+        for key, val in defaults.items():
+
+            # unique & full varname is fully defined using scope
+            varname = scope+"."+key if len(scope) > 0 else key
+            key_split = varname.split(".")
+
+            # short name is only given iff corresponding module has a unique short id
+            varname_short = None
+            module_id = self._getModuleIdFromVarId(key_split,scope=scope)
+            if module_id is not None and module_id in self.modules_avail:
+
+                # retrieve real local key name
+                key = varname[len(module_id)+1:]
+                module_short_id = self.getModuleShortId(module_id)
+                if module_short_id is not None:
+                    varname_short = module_short_id+"."+key
+
+            # ignore if short varname is varname
+            if varname_short == varname:
+                varname_short = None
+
+            # add to global state
+            if overwrite and varname not in self.state.all:
+                raise ValueError("Variable '%s' is not registered yet, however it seems like you wold like to overwrite it." % varname)
+
+            # pre-initialize variable for possible lambda expressions in second pass
+            self.state.all[varname] = val
+
+            # actual initialization is done when all modules has been parsed
+            self.settings_parse_later[varname] = (varname_short,val,cliargs)
 
     def _settings_parser_add(self, varname, varname_short, val, nargs=None, default=None):
         if default is None:
@@ -260,17 +287,15 @@ class miniflask():
                 self.load(module)
 
         # parse lambdas & overwrites
-        short_names = {}
-        for varname, varname_short, val in self.settings_parse_later:
+        for varname, (varname_short, val, cliargs) in self.settings_parse_later.items():
             if callable(val):
                 self.state[varname] = val(self.state,self.event)
             else:
                 self.state[varname] = val
-            short_names[varname] = varname_short
 
-        # set argument parser
-        for varname, varname_short in short_names.items():
-            self._settings_parser_add(varname, varname_short, self.state[varname])
+            # add to argument parser
+            if cliargs:
+                self._settings_parser_add(varname, varname_short, self.state[varname])
 
         # add help message
         self.settings_parser.print_help = lambda: (print("usage: modulelist [optional arguments]"),print(),print("optional arguments (and their defaults):"),listsettings(state("",self.state,self.state_default),self.event))
@@ -288,10 +313,14 @@ class miniflask():
 
 
 class miniflask_wrapper(miniflask):
-    def __init__(self,module_name, mf):
+    def __init__(self, module_name, mf):
         self.module_name = module_name
         self.wrapped_class = mf.wrapped_class if hasattr(mf, 'wrapped_class') else mf
         self.state = state(module_name, self.wrapped_class.state, self.wrapped_class.state_default)
+
+    def set_scope(self,new_module_name):
+        self.module_name = new_module_name
+        self.state.module_name = new_module_name
 
     def __getattr__(self,attr):
         orig_attr = super().__getattribute__('wrapped_class').__getattribute__(attr)
@@ -305,3 +334,24 @@ class miniflask_wrapper(miniflask):
             return hooked
         else:
             return orig_attr
+
+    # overwrite state defaults
+    def register_defaults(self, defaults, scope=None, **kwargs):
+        # default behaviour is to use current module-name
+        if scope is None:
+            scope = self.module_name
+        super().register_defaults(defaults, scope=scope, **kwargs)
+
+    # helper variables are not added to argument parser
+    def register_helpers(self, defaults, **kwargs):
+        self.register_defaults(defaults, cliargs=False, **kwargs)
+
+    # does not add scope of module
+    def register_globals(self, defaults, **kwargs):
+        self.register_defaults(defaults, scope="", **kwargs)
+
+    # overwrites previously registered variables
+    def overwrite_defaults(self, defaults, scope="", **kwargs):
+        self.register_defaults(defaults, scope=scope, overwrite=True, **kwargs)
+
+
