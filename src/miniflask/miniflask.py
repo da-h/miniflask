@@ -191,7 +191,7 @@ class miniflask():
     # Note: the problem lies in the fact that the true id of a variable is defined as scope.key,
     #       however scope can be empty if key is meant as a reference in the global scope=="".
     #       Otherwise, this function would be a lot simpler.
-    def register_defaults(self, defaults, scope="", overwrite=False, cliargs=True):
+    def register_defaults(self, defaults, scope="", overwrite=False, cliargs=True, parsefn=True):
         if scope is None:
             scope = ""
 
@@ -224,7 +224,7 @@ class miniflask():
             self.state.all[varname] = val
 
             # actual initialization is done when all modules has been parsed
-            self.settings_parse_later[varname] = (varname_short,val,cliargs)
+            self.settings_parse_later[varname] = (varname_short, val, cliargs, parsefn)
 
     def _settings_parser_add(self, varname, varname_short, val, nargs=None, default=None):
         if default is None:
@@ -287,8 +287,8 @@ class miniflask():
                 self.load(module)
 
         # parse lambdas & overwrites
-        for varname, (varname_short, val, cliargs) in self.settings_parse_later.items():
-            if callable(val):
+        for varname, (varname_short, val, cliargs, parsefn) in self.settings_parse_later.items():
+            if callable(val) and parsefn:
                 self.state[varname] = val(self.state,self.event)
             else:
                 self.state[varname] = val
