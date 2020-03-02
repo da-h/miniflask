@@ -289,19 +289,21 @@ class miniflask():
         # parse lambdas & overwrites
         for varname, (varname_short, val, cliargs, parsefn) in self.settings_parse_later.items():
             if callable(val) and parsefn:
-                self.state[varname] = val(self.state,self.event)
+                the_val = val(self.state,self.event)
             else:
-                self.state[varname] = val
+                the_val = val
+            self.state[varname] = the_val
 
-            # add to argument parser
             if cliargs:
+
+                # add to argument parser
                 self._settings_parser_add(varname, varname_short, self.state[varname])
+
+                # remember default state
+                self.state_default[varname] = the_val
 
         # add help message
         self.settings_parser.print_help = lambda: (print("usage: modulelist [optional arguments]"),print(),print("optional arguments (and their defaults):"),listsettings(state("",self.state,self.state_default),self.event))
-
-        # remember default state
-        self.state_default.update(self.state)
 
         # parse arguments
         settings_args = self.settings_parser.parse_args(argv[2:])

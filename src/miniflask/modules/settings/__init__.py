@@ -25,6 +25,11 @@ def listsettings(state, event):
     print("Folder│"+highlight_name("module")+"│"+highlight_module("variable")+(" "*(maxklen-22))+" = "+highlight_val("value"))
     print("—"*(maxklen+8))
     for k, v in state.all.items():
+
+        # ignore state variables that are not registered for argument parsing
+        if k not in state.default:
+            continue
+
         klen = len(k)
         korig = k
         overwritten = v != state.default[k]
