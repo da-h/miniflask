@@ -11,6 +11,8 @@ def insert_key(S,k,val):
 
     # insert keys recursively
     if len(k) > 1:
+        if isinstance(S[k[0]],dict):
+            S[k[0]] = {'_': S[k[0]]}
         insert_key(S[k[0]], k[1:], val)
     else:
         S[k[0]] = val
