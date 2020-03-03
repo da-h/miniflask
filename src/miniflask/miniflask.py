@@ -160,7 +160,8 @@ class miniflask():
             return
 
         # load module
-        print(highlight_loading(self.modules_avail[module_name]))
+        prepend = self._loadprepend if hasattr(self,'_loadprepend') else ""
+        print(prepend+highlight_loading(self.modules_avail[module_name]))
         mod = import_module(self.modules_avail[module_name])
         if not hasattr(mod,"register"):
             raise ValueError(highlight_error()+"Module '%s' does not register itself." % module_name)
@@ -170,6 +171,7 @@ class miniflask():
 
         # register events
         mod.miniflask_obj = miniflask_wrapper(module_name, self)
+        mod.miniflask_obj._loadprepend = prepend + "  ├── "
         mod.register(mod.miniflask_obj)
 
     # register default module that is loaded if none of glob is matched
