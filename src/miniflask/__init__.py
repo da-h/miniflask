@@ -3,7 +3,7 @@ from .event import outervar
 from .modules import *
 
 # meta
-__version__ = "1.4"
+__version__ = "1.4.1"
 
 def init(**kwargs):
     return miniflask(**kwargs)
