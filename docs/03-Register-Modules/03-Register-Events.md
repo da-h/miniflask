@@ -59,6 +59,7 @@ Can be defined by arbitrary many module. The results of all such events of loade
 ### Outervar
 In some scenarios it may be useful to define a module to depend completely on another module.
 In this case we can inherit the scope of some variables from the callee, by setting their default to `miniflask.event.outervar`.
+**Note:** This is miniflasks version of friend-classes known from OOP, as such it should also be used with caution and only for strong dependencies between modules that also are too loose for a well-defined interfaces.
 
 **Example File:** `modules/module2/__init__.py`
 ```python
