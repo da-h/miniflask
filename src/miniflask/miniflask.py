@@ -306,7 +306,7 @@ class miniflask():
                 self.state_default[varname] = the_val
 
         # add help message
-        self.settings_parser.print_help = lambda: (print("usage: modulelist [optional arguments]"),print(),print("optional arguments (and their defaults):"),listsettings(state("",self.state,self.state_default),self.event))
+        self.settings_parser.print_help = lambda: (print("usage: modulelist [optional arguments]"),print(),print("optional arguments (and their defaults):"),print(listsettings(state("",self.state,self.state_default),self.event)))
 
         # parse arguments
         settings_args = self.settings_parser.parse_args(argv[2:])
