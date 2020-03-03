@@ -20,7 +20,7 @@ from queue import Queue
 import re
 
 def print_info(*args,color=fg('green'),msg="INFO"):
-    print(color+attr('boldd')+msg+attr('reset')+color+": "+attr('reset'),*args,attr('reset'))
+    print(color+attr('bold')+msg+attr('reset')+color+": "+attr('reset'),*args,attr('reset'))
 
 # ================ #
 # MiniFlask Kernel #
