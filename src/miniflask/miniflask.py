@@ -269,6 +269,8 @@ class miniflask():
 
         if not argv:
             argv = sys.argv#[1:]
+        else:
+            argv = [None]+argv
 
         parser = ArgumentParser()
         parser.add_argument('cmds')
