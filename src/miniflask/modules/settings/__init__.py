@@ -1,7 +1,7 @@
 import sys
 import os
 from itertools import zip_longest
-from miniflask.miniflask import highlight_module, highlight_val, highlight_name, highlight_val_overwrite
+from miniflask.miniflask import highlight_module, highlight_val, highlight_name, highlight_val_overwrite, like
 
 html_module = lambda x: x
 html_name= lambda x: x
@@ -32,7 +32,7 @@ def listsettings(state, asciicodes=True):
 
         klen = len(k)
         korig = k
-        overwritten = v != state.default[k]
+        overwritten = v != (state.default[k].default if isinstance(state.default[k],like) else state.default[k])
         k = k.split(".")
         if len(k) > 1:
             k_hidden = [" "*len(ki) if ki==ki2 and asciicodes else ki for ki,ki2 in zip_longest(k,last_k) if ki is not None]

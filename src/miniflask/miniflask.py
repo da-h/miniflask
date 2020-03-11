@@ -1,6 +1,6 @@
 # package modules
 from .event import event, event_obj
-from .state import state
+from .state import state, like
 from .dummy import miniflask_dummy
 from .util import getModulesAvail
 from .util import highlight_error, highlight_name, highlight_module, highlight_loading, highlight_loaded_none, highlight_loaded, highlight_event, highlight_blue_line, highlight_type, highlight_val, highlight_val_overwrite
@@ -307,7 +307,11 @@ class miniflask():
                 self._settings_parser_add(varname, varname_short, the_val)
 
                 # remember default state
-                self.state_default[varname] = the_val
+                if isinstance(val,like):
+                    val.default = the_val
+                    self.state_default[varname] = val 
+                else:
+                    self.state_default[varname] = the_val 
 
         # add help message
         self.settings_parser.print_help = lambda: (print("usage: modulelist [optional arguments]"),print(),print("optional arguments (and their defaults):"),print(listsettings(state("",self.state,self.state_default),self.event)))
