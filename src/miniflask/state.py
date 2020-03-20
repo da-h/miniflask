@@ -10,7 +10,7 @@ class state(dict):
         return state(self.module_name+"."+module_name if local else module_name, self.state, self.state_default)
 
     def __contains__(self, name):
-        return self.module_name+"."+name if len(self.module_name) > 0 else name in self.all
+        return self.module_name+"."+name in self.all if len(self.module_name) > 0 else name in self.all
     def __getitem__(self, name):
         return self.all[self.module_name+"."+name if len(self.module_name) > 0 else name]
     def __setitem__(self, name, val):
