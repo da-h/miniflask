@@ -4,7 +4,7 @@ sys.path.insert(0, os.path.join("..","..","src"))
 
 import miniflask
 mf = miniflask.init(
-    modules_dir="./modules",
+    module_dirs="./modules",
 )
 mf.parse_args()
 if not mf.halt_parse:

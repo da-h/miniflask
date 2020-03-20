@@ -6,7 +6,7 @@
 Telling MiniFlask what exists.
 
 ### Initialize Miniflask
-We initialize MiniFlask using the argument `modules_dir`. This tells MiniFlask where all modules are defined. Besides that, the module directory can be organized as you wish.
+We initialize MiniFlask using the argument `module_dirs`. This tells MiniFlask where all modules are defined. Besides that, the module directory can be organized as you wish.
 
 
 **Example** `main.py`
@@ -14,7 +14,7 @@ We initialize MiniFlask using the argument `modules_dir`. This tells MiniFlask w
 import miniflask
 
 # initialize miniflask
-mf = miniflask.init(modules_dir="./modules")
+mf = miniflask.init(module_dirs="./modules")
 mf.parse_args()
 ```
 

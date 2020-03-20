@@ -27,13 +27,17 @@ def print_info(*args,color=fg('green'),msg="INFO"):
 # ================ #
 
 class miniflask():
-    def __init__(self, modules_dir):
-        if modules_dir == False:
+    def __init__(self, module_dirs):
+        if not module_dirs:
             return
 
         # module dir to be read from
-        self.modules_dir = modules_dir
-        sys.path.insert(0,self.modules_dir)
+        if not isinstance(module_dirs,list):
+            self.module_dirs = [module_dirs]
+        else:
+            self.module_dirs = module_dirs
+        for dir in self.module_dirs:
+            sys.path.insert(0,dir)
 
         # arguments from cli-stdin
         self.settings_parser = ArgumentParser(usage=sys.argv[0]+" modulelist [optional arguments]")
@@ -51,7 +55,7 @@ class miniflask():
         self.state = {}
         self.state_default = {}
         self.modules_loaded = {}
-        self.modules_avail = getModulesAvail(self.modules_dir)
+        self.modules_avail = getModulesAvail(self.module_dirs)
         self.miniflask_objs = {} # local modified versions of miniflask
         registerPredefined(self.modules_avail)
 
@@ -77,13 +81,26 @@ class miniflask():
     # pretty print of all available modules
     def showModules(self, dir=None, prepend="", id_pre="", with_event=True):
         if not dir:
-            dir = self.modules_dir
+            if len(self.module_dirs) == 1:
+                dir = self.module_dirs[0]
+            else:
+                for dir in self.module_dirs:
+                    print(attr("bold")+"Module Directory: %s" % dir)
+                    print(len("Module Directory: %s" % dir)*"-"+attr("reset"))
+                    self.showModules(dir)
+                    print()
+                return
+
         if len(prepend) == 0:
             print(highlight_name("."))
         dirs = [d for d in listdir(dir) if path.isdir(path.join(dir,d)) and not d.startswith("_")]
         for i, d in enumerate(dirs):
+            if path.exists(path.join(dir,d,".ignoredir")):
+                continue
+
             is_module = path.exists(path.join(dir,d,".module"))
             is_module_without_shortid = path.exists(path.join(dir,d,".noshortid"))
+
             module_id = id_pre + "." + d if id_pre != "" else d
             if i == len(dirs)-1:
                 tree_symb = "└── "

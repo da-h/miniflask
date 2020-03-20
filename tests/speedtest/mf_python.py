@@ -5,7 +5,7 @@ sys.path.insert(0, os.path.join("..","..","src"))
 
 import miniflask
 mf = miniflask.init(
-    modules_dir="./modules",
+    module_dirs="./modules",
 )
 mf.load("module1")
 from modules.module1 import func as func2

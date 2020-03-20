@@ -34,7 +34,7 @@ def register(mf):
 import miniflask
 
 # initialize miniflask
-mf = miniflask.init(modules_dir="./modules")
+mf = miniflask.init(module_dirs="./modules")
 state, event = mf.state, mf.event
 mf.parse_args()
 mf.event.main()
@@ -77,7 +77,7 @@ def register(mf):
 import miniflask
 
 # initialize miniflask
-mf = miniflask.init(modules_dir="./modules")
+mf = miniflask.init(module_dirs="./modules")
 state, event = mf.state, mf.event
 mf.parse_args()
 varA=42
