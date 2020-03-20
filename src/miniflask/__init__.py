@@ -4,7 +4,7 @@ from .modules import *
 from .state import like
 
 # meta
-__version__ = "1.7"
+__version__ = "1.7.1"
 
 def init(**kwargs):
     return miniflask(**kwargs)

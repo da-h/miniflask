@@ -240,7 +240,10 @@ class miniflask():
                 varname_short = None
 
             # pre-initialize variable for possible lambda expressions in second pass
-            self.state.all[varname] = val
+            if hasattr(self.state,"all"):
+                self.state.all[varname] = val
+            else:
+                self.state[varname] = val
 
             # actual initialization is done when all modules has been parsed
             self.settings_parse_later[varname] = (varname_short, val, cliargs, parsefn, overwrite)
