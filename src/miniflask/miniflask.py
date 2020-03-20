@@ -277,7 +277,7 @@ class miniflask():
     def stop_parse(self):
         self.halt_parse = True
 
-    def parse_args(self, argv=None):
+    def parse_args(self, argv=None, optional=False):
         self.halt_parse = False
 
         if not argv:
@@ -286,19 +286,20 @@ class miniflask():
             argv = [None]+argv
 
         parser = ArgumentParser()
-        parser.add_argument('cmds')
+        parser.add_argument('cmds', nargs="+" if not optional else "?")
         args = parser.parse_args(argv[1:2])
 
         # load modules
-        cmds = args.cmds.split(',')
-        for cmd in cmds:
-            if self.halt_parse:
-                break
+        if args.cmds:
+            cmds = args.cmds.split(',')
+            for cmd in cmds:
+                if self.halt_parse:
+                    break
 
-            # try:
-            self.load(cmd)
-            # except Exception as e:
-            #     print(e)
+                # try:
+                self.load(cmd)
+                # except Exception as e:
+                #     print(e)
 
         # ensure default_modules are loaded
         keys = self.modules_loaded.keys()

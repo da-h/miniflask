@@ -18,6 +18,8 @@ mf = miniflask.init(module_dirs="./modules")
 mf.parse_args()
 ```
 
+**Note**: `parse_args` requires some modules to be loaded from cli. However, using `optional=True` miniflask does not require the user to load any modules anymore. (This makes sense, if your script that loads miniflask itself loads some modules per defaulft.)
+
 **Example**  
 For instance, we could organize the folder `./modules` like this:
 ```shell
