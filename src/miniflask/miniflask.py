@@ -298,7 +298,10 @@ class miniflask():
 
         # load modules
         if args.cmds:
-            cmds = args.cmds[0].split(',')
+            if optional:
+                cmds = args.cmds.split(',')
+            else:
+                cmds = args.cmds[0].split(',')
             for cmd in cmds:
                 if self.halt_parse:
                     break
