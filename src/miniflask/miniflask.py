@@ -42,6 +42,7 @@ class miniflask():
         # arguments from cli-stdin
         self.settings_parser = ArgumentParser(usage=sys.argv[0]+" modulelist [optional arguments]")
         self.settings_parse_later = {}
+        self.settings_parse_later_overwrites = {}
         self.default_modules = []
 
         # internal
@@ -246,7 +247,10 @@ class miniflask():
                 self.state[varname] = val
 
             # actual initialization is done when all modules has been parsed
-            self.settings_parse_later[varname] = (varname_short, val, cliargs, parsefn, overwrite)
+            if overwrite:
+                self.settings_parse_later_overwrites[varname] = (varname_short, val, cliargs, parsefn)
+            else:
+                self.settings_parse_later[varname] = (varname_short, val, cliargs, parsefn)
 
     def _settings_parser_add(self, varname, varname_short, val, nargs=None, default=None):
         if default is None:
@@ -312,28 +316,32 @@ class miniflask():
                 self.load(module)
 
         # add variables to argparse and remember defaults
-        for varname, (varname_short, val, cliargs, parsefn, overwrite) in self.settings_parse_later.items():
+        for settings in [self.settings_parse_later,self.settings_parse_later_overwrites]:
+            overwrite = settings == self.settings_parse_later_overwrites 
+            for varname, (varname_short, val, cliargs, parsefn) in settings.items():
 
-            # check if exists
-            if overwrite and varname not in self.state:
-                raise ValueError("Variable '%s' is not registered yet, however it seems like you wold like to overwrite it." % varname)
+                # check if exists
+                if overwrite and varname not in self.settings_parse_later:
+                    raise ValueError("Variable '%s' is not registered yet, however it seems like you wold like to overwrite it." % varname)
 
-            if callable(val) and parsefn:
-                the_val = val(self.state,self.event)
-            else:
-                the_val = val
-
-            if cliargs:
-
-                # add to argument parser
-                self._settings_parser_add(varname, varname_short, the_val)
-
-                # remember default state
-                if isinstance(val,like):
-                    val.default = the_val
-                    self.state_default[varname] = val
+                if callable(val) and parsefn:
+                    the_val = val(self.state,self.event)
                 else:
-                    self.state_default[varname] = the_val
+                    the_val = val
+
+                if cliargs:
+
+                    # add to argument parser
+                    # Note: the the last value (an overwrite-variable) should be the one that generates the argparser)
+                    if overwrite or varname not in self.settings_parse_later_overwrites:
+                        self._settings_parser_add(varname, varname_short, the_val)
+
+                    # remember default state
+                    if isinstance(val,like):
+                        val.default = the_val
+                        self.state_default[varname] = val
+                    else:
+                        self.state_default[varname] = the_val
 
         # add help message
         self.settings_parser.print_help = lambda: (print("usage: modulelist [optional arguments]"),print(),print("optional arguments (and their defaults):"),print(listsettings(state("",self.state,self.state_default),self.event)))
@@ -344,7 +352,7 @@ class miniflask():
             self.state[varname] = val
 
         # finally parse lambda-dependencies
-        for varname, (varname_short, val, cliargs, parsefn, _) in self.settings_parse_later.items():
+        for varname, (varname_short, val, cliargs, parsefn) in self.settings_parse_later.items():
             while callable(val) and parsefn:
                 val = val(self.state,self.event)
                 self.state[varname] = val
