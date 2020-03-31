@@ -54,6 +54,16 @@ Overwriting the variable allows for shared or global settings.
 **Example File:** `modules/module2/__init__.py`
 ```python
 def register(mf):
+    mf.set_sccope("common")
+    mf.register_defaults({
+        "varA": 42,
+    })
+```
+This variable is identified in the global scope by `common.varA` instead of `module2.varA`.
+**Note**: `mf.set_scope()` sets the scope globally (also in the event states).
+
+**Alternative**:
+```python
     mf.register_defaults({
         "varA": 42,
     }, scope="common")
@@ -76,7 +86,6 @@ def register(mf):
 ```
 
 **Note**: `mf.register_globals(...)` is equivalent to a call of `mf.register_defaults(...,scope="")`.  
-**Note**: `mf.set_scope()` sets the global globally (also in the event states).  
 \n
 
 

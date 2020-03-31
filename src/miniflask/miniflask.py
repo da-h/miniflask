@@ -403,7 +403,10 @@ class miniflask_wrapper(miniflask):
         self.register_defaults(defaults, scope="", **kwargs)
 
     # overwrites previously registered variables
-    def overwrite_defaults(self, defaults, scope="", **kwargs):
+    def overwrite_globals(self, defaults, scope="", **kwargs):
         self.register_defaults(defaults, scope=scope, overwrite=True, **kwargs)
 
+    # overwrites previously registered variables
+    def overwrite_defaults(self, defaults, scope=None, **kwargs):
+        self.register_defaults(defaults, scope=scope, overwrite=True, **kwargs)
 
