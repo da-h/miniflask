@@ -370,6 +370,12 @@ class miniflask_wrapper(miniflask):
         self.wrapped_class = mf.wrapped_class if hasattr(mf, 'wrapped_class') else mf
         self.state = state(module_name, self.wrapped_class.state, self.wrapped_class.state_default)
 
+    def redefine_scope(self,new_module_name):
+        self.modules_avail[self.getModuleShortId(self.module_name)] = new_module_name
+        del self.modules_avail[self.module_name]
+        self.modules_avail[new_module_name] = new_module_name
+        self.set_scope(new_module_name)
+
     def set_scope(self,new_module_name):
         self.module_name = new_module_name
         self.state.module_name = new_module_name
