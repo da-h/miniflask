@@ -102,3 +102,7 @@ main event called by module2
 it uses a variable var: 9001
 main event called by module1
 ```
+
+License
+-------
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)](https://opensource.org/licenses/MIT) - See [LICENSE](LICENSE) for details.  
