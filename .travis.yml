@@ -3,6 +3,7 @@
 #    - master
 
 os: linux
+dist: xenial
 language: python
 jobs:
   include:
