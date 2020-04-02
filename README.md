@@ -1,5 +1,8 @@
 MiniFlask
 =========
+[![python-3 badge](https://img.shields.io/pypi/v/miniflask?style=flat-square)](https://pypi.org/project/miniflask/)
+[![python-3 badge](https://img.shields.io/pypi/pyversions/miniflask?style=flat-square)](https://pypi.org/project/miniflask/)
+[![CI build status](https://img.shields.io/travis/da-h/miniflask.svg?style=flat-square&branch=master)](https://travis-ci.org/da-h/miniflask)
 
 Miniflask is a **small** research-oriented **plugin**-engine for **python**.
 > A long time ago in a galaxy full of plugin-engines ...
