@@ -107,7 +107,7 @@ main event called by module1
 ## Contributing
 ---------------
 
-1. Fork it (<https://github.com/da-h/miniflask/fork>)
+1. [Fork it!](https://github.com/da-h/miniflask/fork)
 2. Create your feature branch (`git checkout -b feature/fooBar`)
 3. Commit your changes (`git commit -am 'Add some fooBar'`)
 4. Push to the branch (`git push origin feature/fooBar`)
