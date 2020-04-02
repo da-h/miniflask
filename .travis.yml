@@ -1,0 +1,35 @@
+branches:
+  only:
+    - master
+
+os: linux
+language: python
+jobs:
+  include:
+    - name: "Python 3.8 on Linux (sdist)"
+      os: linux
+      python: 3.8
+      cache: pip
+      env: PY=python
+      script:
+        - $PY setup.py sdist
+
+
+install:
+  - $PY --version
+  - $PY -m pip install --upgrade pip wheel setuptools
+  - $PY -m pip install -r requirements.txt
+
+before_script:
+  - echo "TODO: set up credentials"
+  # - openssl aes-256-cbc -K $encrypted_0b4beaaf3949_key -iv $encrypted_0b4beaaf3949_iv -in .travis/secret-files.tar.enc -out secret-files.tar -d
+  # - tar xvf secret-files.tar
+
+after_success:
+  - ls dist/*
+  - ls -la
+  - $PY --version
+  - $PY -m pip install --upgrade twine
+  - sudo chown -R $(whoami):$(whoami) dist;
+  - echo "twine upload"
+  # - twine upload --config-file .pypirc-bot dist/*.tar.gz;
