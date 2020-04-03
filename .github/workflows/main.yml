@@ -6,33 +6,54 @@ on:
       - master
 
 jobs:
-  autotagging:
-    name: Autoadd release Tags
+  deploy:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@master
-    - uses: jaliborc/action-general-autotag@7d2ae9f
-      with:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        source_file: "src/miniflask/__init__.py"
-        # extraction_regex: "^__version__\\s*=\\s*\"(\\d[\\d\\.]+)\""
-        extraction_regex: "__version__\\s*=\\s*\"(\\d[\\d\\.]+)\""
-        tag_message: "Release"
-        tag_format: "v{version}"
-  documentation:
-    name: Deploy Documentation
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@master
-    - uses: ./.github/actions/build-documentation
-      env:
-          DOCS_SRC: ./docs
-          DEST: ./out
-    - name: GitHub Pages Deploy
-      uses: JamesIves/github-pages-deploy-action@master
-      env:
-          BUILD_DIR: ./docs
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Autoadd release Tags
+        uses: jaliborc/action-general-autotag@7d2ae9f
+        id:   autotag
+        with:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          BASE_BRANCH: master # The branch the action should deploy from.
-          BRANCH: gh-pages # The branch the action should deploy to.
-          FOLDER: docs # The folder the action should deploy.
+          source_file: "src/miniflask/__init__.py"
+          # extraction_regex: "^__version__\\s*=\\s*\"(\\d[\\d\\.]+)\""
+          extraction_regex: "__version__\\s*=\\s*\"(\\d[\\d\\.]+)\""
+          tag_message: "Release"
+          tag_format: "v{version}"
+      - name: show output
+        run: echo ${{ steps.autotag.tagname }}
+      - name: Deploy Documentation
+        if: steps.autotag.tagname != ''
+        uses: ./.github/actions/build-documentation
+        env:
+            DOCS_SRC: ./docs
+            DEST: ./out
+      - name: GitHub Pages Deploy
+        if: steps.autotag.tagname != ''
+        uses: JamesIves/github-pages-deploy-action@master
+        env:
+            BUILD_DIR: ./docs
+            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+            BASE_BRANCH: master # The branch the action should deploy from.
+            BRANCH: gh-pages # The branch the action should deploy to.
+            FOLDER: docs # The folder the action should deploy.
+      - name: Checkout
+        if: steps.autotag.tagname != ''
+        uses: actions/checkout@v2
+      - name: Set up Python
+        if: steps.autotag.tagname != ''
+        uses: actions/setup-python@v1
+        with:
+            python-version: '3.x'
+      - name: Install dependencies
+        if: steps.autotag.tagname != ''
+        run: python setup.py sdist
+      - name: Publish a Python distribution to PyPI
+        if: steps.autotag.tagname != ''
+        uses: pypa/gh-action-pypi-publish@master
+        with:
+            user: __token__
+            password: ${{ secrets.pypi_password }}
+
+# Guide: https://help.github.com/en/actions/language-and-framework-guides/using-python-with-github-actions
