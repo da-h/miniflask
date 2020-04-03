@@ -10,10 +10,16 @@ PACKAGES = setuptools.find_packages(where="src")
 META_PATH = os.path.join("src", NAME, "__init__.py")
 KEYWORDS = [NAME, "plugin-engine", "plugin-system"]
 CLASSIFIERS = [
-    "Development Status :: 3 - Alpha",
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "Topic :: Scientific/Engineering",
+    "Topic :: Software Development :: Libraries :: Application Frameworks",
+    "Environment :: Console",
     "Operating System :: MacOS",
     "Operating System :: Microsoft :: Windows",
     "Operating System :: POSIX :: Linux",
+    "Operating System :: Unix",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.6",
     "Programming Language :: Python :: 3.7",
@@ -63,7 +69,8 @@ if __name__ == "__main__":
         maintainer=find_meta("author"),
         long_description=read("README.md"),
         long_description_content_type="text/markdown",
-        packages=setuptools.find_packages(),
+        packages=PACKAGES,
+        package_dir={"": "src"},
         classifiers=CLASSIFIERS,
         keywords=KEYWORDS,
         install_requires=INSTALL_REQUIRES,
