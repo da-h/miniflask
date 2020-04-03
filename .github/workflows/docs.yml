@@ -1,0 +1,29 @@
+name: Update Documentation
+
+on:
+  push:
+    branches:
+      - master
+    paths:
+        - 'docs/**'
+
+jobs:
+  updatedocumentation:
+    runs-on: ubuntu-latest
+    name: "Update Documentation"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Deploy Documentation
+        uses: ./.github/actions/build-documentation
+        env:
+            DOCS_SRC: ./docs
+            DEST: ./out
+      - name: GitHub Pages Deploy
+        uses: JamesIves/github-pages-deploy-action@master
+        env:
+            BUILD_DIR: ./docs
+            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+            BASE_BRANCH: master # The branch the action should deploy from.
+            BRANCH: gh-pages # The branch the action should deploy to.
+            FOLDER: docs # The folder the action should deploy.

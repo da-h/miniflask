@@ -1,4 +1,4 @@
-name: Deploy
+name: Deploy to PyPI
 
 on:
   push:
@@ -6,25 +6,6 @@ on:
       - master
 
 jobs:
-  updatedocumentation:
-    runs-on: ubuntu-latest
-    name: "Update Documentation"
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v2
-      - name: Deploy Documentation
-        uses: ./.github/actions/build-documentation
-        env:
-            DOCS_SRC: ./docs
-            DEST: ./out
-      - name: GitHub Pages Deploy
-        uses: JamesIves/github-pages-deploy-action@master
-        env:
-            BUILD_DIR: ./docs
-            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-            BASE_BRANCH: master # The branch the action should deploy from.
-            BRANCH: gh-pages # The branch the action should deploy to.
-            FOLDER: docs # The folder the action should deploy.
   deploy:
     runs-on: ubuntu-latest
     name: "Deploy to PyPI"
@@ -41,6 +22,9 @@ jobs:
           extraction_regex: "__version__\\s*=\\s*\"(\\d[\\d\\.]+)\""
           tag_message: "Release"
           tag_format: "v{version}"
+      - name: Show version
+        if: steps.autotag.outputs.tagname
+        run: echo ${{ steps.autotg.outputs.tagname }}
       - name: Set up Python
         if: steps.autotag.outputs.tagname
         uses: actions/setup-python@v1
