@@ -23,18 +23,18 @@ jobs:
           tag_message: "Release"
           tag_format: "v{version}"
       - name: Show version
-        if: steps.autotag.outputs.tagname
+        if: steps.autotag.outputs.tagname != ''
         run: echo ${{ steps.autotg.outputs.tagname }}
       - name: Set up Python
-        if: steps.autotag.outputs.tagname
+        if: steps.autotag.outputs.tagname != ''
         uses: actions/setup-python@v1
         with:
             python-version: '3.x'
       - name: Install dependencies
-        if: steps.autotag.outputs.tagname
+        if: steps.autotag.outputs.tagname != ''
         run: python setup.py sdist
       - name: Publish a Python distribution to PyPI
-        if: steps.autotag.outputs.tagname
+        if: steps.autotag.outputs.tagname != ''
         uses: pypa/gh-action-pypi-publish@master
         with:
             user: __token__
