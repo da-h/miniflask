@@ -110,7 +110,7 @@ main event called by module1
 ```
 
 
-## Contributing
+Contributing
 ---------------
 
 1. [Fork it!](https://github.com/da-h/miniflask/fork)
