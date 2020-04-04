@@ -2,7 +2,7 @@ MiniFlask
 =========
 [![python-3 badge](https://img.shields.io/pypi/v/miniflask?style=flat-square)](https://pypi.org/project/miniflask/)
 [![python-3 badge](https://img.shields.io/pypi/pyversions/miniflask?style=flat-square)](https://pypi.org/project/miniflask/)
-[![CI build status](https://github.com/da-h/miniflask/workflows/Deploy/badge.svg)](https://github.com/da-h/miniflask/actions?query=workflow%3ADeploy)
+[![CI build status](https://github.com/da-h/miniflask/workflows/Deploy%20to%20PyPI/badge.svg)](https://github.com/da-h/miniflask/actions?query=workflow%3A%22Deploy+to+PyPI%22)
 
 Miniflask is a **small** research-oriented **plugin**-engine for **python**.
 > A long time ago in a galaxy full of plugin-engines ...
