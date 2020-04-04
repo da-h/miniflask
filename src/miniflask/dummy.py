@@ -2,9 +2,9 @@ def dummy_fn(*args,**kwargs):
     return []
 
 def dummy_fn_unique(*args,**kwargs):
-    if len(args) == 1 and len(kwargs) == 0:
+    if len(args) == 1:
         return args[0]
-    return *args,kwargs
+    return args
 
 class miniflask_dummy():
     def __init__(self, *args, **kwargs):
