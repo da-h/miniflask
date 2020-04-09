@@ -369,7 +369,7 @@ class miniflask():
             if hasattr(self.event, call):
                 getattr(self.event, call)()
             else:
-                print("No event '{0}' registered."
+                print("No event '{0}' registered. "
                       "Please make sure to register the event '{0}', "
                       "or provide a suitable event to call.".format(call))
 
