@@ -13,12 +13,6 @@ Quick Start
 
 For a quick look into miniflask, just install it using
 ```bash
-# until we deploy to pip:
-cd [your project dir]
-git clone https://github.com/da-h/miniflask miniflask_git
-ln -s miniflask_git/src/miniflask .
-
-# in a future release of course:
 pip install miniflask
 ```
 
