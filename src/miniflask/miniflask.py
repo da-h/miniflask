@@ -365,6 +365,10 @@ class miniflask():
     def run(self, call="main"):
         # check if all requested modules are loaded
         if not self.halt_parse:
+
+            # optional init event
+            self.event.optional.init()
+
             # call event if exists
             if hasattr(self.event, call):
                 getattr(self.event, call)()
