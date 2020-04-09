@@ -276,7 +276,12 @@ class miniflask():
         elif isinstance(val,list):
             self._settings_parser_add(varname, varname_short, val[0], nargs="+", default=val)
         else:
-            raise ValueError("Type '%s' not supported. (Used for setting '%s')" % (type(val),varname))
+            try:
+                self.settings_parser.add_argument("--"+varname, type=val, dest=varname, metavar=highlight_type("\t{}".format(val)))
+                if varname_short:
+                    self.settings_parser.add_argument("--"+varname_short, type=val, dest=varname, help=argparse_SUPPRESS)
+            except:
+                raise ValueError("Type '%s' not supported. (Used for setting '%s')" % (type(val), varname))
 
     # ======= #
     # runtime #
