@@ -71,15 +71,7 @@ import miniflask
 # initialize miniflask
 mf = miniflask.init(module_dirs="./modules")
 mf.parse_args()
-
-# check if all requested modules are loaded
-if not mf.halt_parse:
-
-    # call event "main" if exists
-    if hasattr(mf.event, 'main'):
-        mf.event.main()
-    else:
-        print("There is nothing to do.")
+mf.run()
 ```
 
 
