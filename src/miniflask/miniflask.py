@@ -362,6 +362,16 @@ class miniflask():
 
         print(highlight_blue_line("-"*50))
 
+    def run(self, call="main"):
+        # check if all requested modules are loaded
+        if not self.halt_parse:
+            # call event if exists
+            if hasattr(self.event, call):
+                getattr(self.event, call)()
+            else:
+                print("No event '{0}' registered."
+                      "Please make sure to register the event '{0}', "
+                      "or provide a suitable event to call.".format(call))
 
 
 class miniflask_wrapper(miniflask):
