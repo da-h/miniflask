@@ -89,7 +89,7 @@ class miniflask():
                 for dir in self.module_dirs:
                     print(attr("bold")+"Module Directory: %s" % dir)
                     print(len("Module Directory: %s" % dir)*"-"+attr("reset"))
-                    self.showModules(dir)
+                    self.showModules(dir, prepend=prepend, id_pre=id_pre, with_event=with_event)
                     print()
                 return
 

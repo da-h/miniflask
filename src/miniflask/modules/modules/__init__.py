@@ -1,5 +1,8 @@
+def showModules(state, event):
+    event._mf.showModules(with_event=state.all["events"])
 
 def register(mf):
-    mf.showModules(with_event=False)
-    # mf.register_defaults({"show_events":False})
-    # mf.stop_parse()
+    mf.register_globals({
+        "events": True
+    })
+    mf.register_event('init', showModules)

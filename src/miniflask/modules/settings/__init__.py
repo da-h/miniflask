@@ -19,8 +19,7 @@ def listsettings(state, asciicodes=True):
 
     last_k = []
     if len(state.all) == 0:
-        print("No Settings available.")
-        return
+        return "No Settings available."
     maxklen = max(len(k) for k in state.all.keys())
     text = "Folder│"+color_name("module")+"│"+color_module("variable")+(" "*(maxklen-22))+" = "+color_val("value")+linesep
     text += "—"*(maxklen+8)+linesep
