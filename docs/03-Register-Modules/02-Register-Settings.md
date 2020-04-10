@@ -11,7 +11,7 @@ def register(mf):
     mf.register_defaults({
         "variableA": 42,
         "variableB": "Hello",
-        "variableC": True
+        "variableC": True,
         "variableD": [1,2,3,5,8,13] # only lists of same type are supported
     })
 ```
@@ -19,6 +19,19 @@ def register(mf):
 **Note:** Multiple calls to `register_defaults` are allowed.
 
 ---
+
+## Required Arguments
+Set any base type (`str`, `bool`, `int`, `float`) or list of any base type as default to register an argument that has to be specified by the user.
+```python
+def register(mf):
+    mf.register_defaults({
+        "variableA": int,
+        "variableB": str,
+        "variableC": bool,
+        "variableD": [float] # only lists of same type are supported
+    })
+```
+
 
 ## Argument Parser
 Whenever we load `module1`, e.g. by using 
@@ -41,6 +54,38 @@ optional arguments:
 ```
 
 Thus, to turn `variableC` off, we can just add `--no-module1.variableC` to the above command.
+
+### Argument Types
+For a boolean typed variable, the following arguments are possible:
+
+| **Set to True**  | **Set to False** |
+| ---------------- | ---------------- |
+| \block[
+```
+--module.var
+--module.var true
+--module.var TrUe (well, boolean values are case insensitive)
+--module.var yes
+--module.var y
+--module.var t
+--module.var 1
+```
+] | \block[
+```
+--no-module.var
+--module.var false
+--module.var FalSE (well, boolean values are case-insensitive)
+--module.var no
+--module.var n
+--module.var f
+--module.var 0
+```
+] |
+
+List arguments are just as easy as
+```
+--module.var 1 2 3 4 5
+```
 
 ## Dependencies
 In some cases global dependencies are needed.  
