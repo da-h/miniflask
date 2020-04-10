@@ -1,4 +1,4 @@
-from os import walk, path
+from os import walk, path, linesep
 from colored import attr, fg
 
 # get modules in a directory
@@ -40,6 +40,7 @@ highlight_error = lambda: fg('red')+attr('bold')+"Error:"+attr('reset')+" "
 highlight_name = lambda x: fg('blue')+attr('bold')+x+attr('reset')
 highlight_module = lambda x: fg('green')+attr('bold')+x+attr('reset')
 highlight_loading = lambda x: "Load Module ... "+highlight_module(x)
+highlight_loading_default = lambda y,x: "Load Default Module ... "+highlight_module(x)+" (for regex "+attr('dim')+y+attr('reset')+")"
 highlight_loaded_none = lambda x: fg('red')+x+attr('reset')
 highlight_loaded = lambda x, y: attr('underlined')+x+attr('reset')+" "+fg('green')+attr('bold')+", ".join(y)+attr('reset')
 highlight_event = lambda x: fg('light_yellow')+x+attr('reset')

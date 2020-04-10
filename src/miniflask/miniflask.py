@@ -3,7 +3,7 @@ from .event import event, event_obj
 from .state import state, like
 from .dummy import miniflask_dummy
 from .util import getModulesAvail
-from .util import highlight_error, highlight_name, highlight_module, highlight_loading, highlight_loaded_none, highlight_loaded, highlight_event, highlight_blue_line, highlight_type, highlight_val, highlight_val_overwrite, str2bool
+from .util import highlight_error, highlight_name, highlight_module, highlight_loading, highlight_loading_default, highlight_loaded_none, highlight_loaded, highlight_event, highlight_blue_line, highlight_type, highlight_val, highlight_val_overwrite, str2bool
 
 
 from .modules import registerPredefined
@@ -161,7 +161,7 @@ class miniflask():
         return None
 
     # loads module (once)
-    def load(self, module_name, verbose=True):
+    def load(self, module_name, verbose=True, loading_text=highlight_loading):
 
         # load list of modules
         if isinstance(module_name,list):
@@ -180,7 +180,7 @@ class miniflask():
 
         # load module
         prepend = self._loadprepend if hasattr(self,'_loadprepend') else ""
-        print(prepend+highlight_loading(self.modules_avail[module_name]))
+        print(prepend+loading_text(self.modules_avail[module_name]))
         mod = import_module(self.modules_avail[module_name])
         if not hasattr(mod,"register"):
             raise ValueError(highlight_error()+"Module '%s' does not register itself." % module_name)
@@ -332,7 +332,7 @@ class miniflask():
         for glob, module in self.default_modules:
             found = [x for x in keys if re.search(glob, x)]
             if len(found) == 0:
-                self.load(module)
+                self.load(module, loading_text=lambda x: highlight_loading_default(glob,x))
 
         # add variables to argparse and remember defaults
         for settings in [self.settings_parse_later,self.settings_parse_later_overwrites]:
