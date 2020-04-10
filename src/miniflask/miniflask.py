@@ -254,32 +254,45 @@ class miniflask():
                 self.settings_parse_later[varname] = (varname_short, val, cliargs, parsefn)
 
     def _settings_parser_add(self, varname, varname_short, val, nargs=None, default=None):
-        if default is None:
-            default = val
-        if isinstance(val,bool) and nargs != '+':
-            self.settings_parser.add_argument('--'+varname, dest=varname, action='store_true', default=default)
+
+        # lists are just multiple arguments
+        if isinstance(val,list):
+            self._settings_parser_add(varname, varname_short, val[0], nargs="+", default=val)
+            return
+
+        # get argument type from value (this an be int, but also 42 for instance)
+        if type(val) == type:
+            argtype = val if val != bool else str2bool
+        else:
+            argtype = type(val) if type(val) != bool else str2bool
+        kwarg_long  = {'dest': varname, 'type': argtype, 'nargs': nargs}
+        kwarg_short = {'dest': varname, 'type': argtype, 'nargs': nargs, 'help': argparse_SUPPRESS}
+
+        # we know the default argument, if the value is given
+        # otherwise the value is a required argument (to be tested later)
+        if type(val) != type:
+            kwarg_long["default"] = kwarg_short["default"] = default if default is not None else val
+        else:
+            if varname_short:
+                self.settings_parser_required_arguments.append([varname,varname_short])
+            else:
+                self.settings_parser_required_arguments.append([varname])
+
+        # for bool: enable --no-varname as alternative for --varname false
+        if argtype == str2bool and nargs != '+':
+            kwarg_long["nargs"] = kwarg_short["nargs"] = '?'
+            kwarg_long["const"] = kwarg_short["const"] = True
             self.settings_parser.add_argument('--no-'+varname, dest=varname, action='store_false')
             if varname_short:
-                self.settings_parser.add_argument('--'+varname_short, dest=varname, action='store_true', help=argparse_SUPPRESS, default=default)
                 self.settings_parser.add_argument('--no-'+varname_short, dest=varname, action='store_false', help=argparse_SUPPRESS)
-        elif type(val) in [int,str,float,bool]:
-            argtype = type(val) if type(val) != bool else str2bool
-            self.settings_parser.add_argument( "--"+varname, type=argtype, dest=varname, default=default, metavar=highlight_type("\t"+str(type(val))), nargs=nargs)
+
+        # define the actual arguments
+        if argtype in [int,str,float,str2bool]:
+            self.settings_parser.add_argument( "--"+varname, **kwarg_long)
             if varname_short:
-                self.settings_parser.add_argument( "--"+varname_short, type=argtype, dest=varname, default=default, help=argparse_SUPPRESS, nargs=nargs)
-        elif isinstance(val,list):
-            self._settings_parser_add(varname, varname_short, val[0], nargs="+", default=val)
+                self.settings_parser.add_argument( "--"+varname_short, **kwarg_short)
         else:
-            try:
-                argtype = val if val != bool else str2bool
-                self.settings_parser.add_argument("--"+varname, type=argtype, dest=varname, metavar=highlight_type("\t{}".format(val)), nargs=nargs)
-                if varname_short:
-                    self.settings_parser.add_argument("--"+varname_short, type=argtype, dest=varname, help=argparse_SUPPRESS, nargs=nargs)
-                    self.settings_parser_required_arguments.append([varname,varname_short])
-                else:
-                    self.settings_parser_required_arguments.append([varname])
-            except:
-                raise ValueError("Type '%s' not supported. (Used for setting '%s')" % (type(val), varname))
+            raise ValueError("Type '%s' not supported. (Used for setting '%s')" % (type(val), varname))
 
     # ======= #
     # runtime #
