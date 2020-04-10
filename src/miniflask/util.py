@@ -15,7 +15,7 @@ def getModulesAvail(module_dirs, f={}):
                 continue
 
             # ignore sub directories
-            if path.exists(path.join(dirpath,".ignoredir")):
+            if path.exists(path.join(dirpath,".ignoredir")) or path.basename(dirpath).startswith("."):
                 dirnames[:] = []
                 continue
 

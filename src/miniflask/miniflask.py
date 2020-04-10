@@ -97,6 +97,8 @@ class miniflask():
             print(highlight_name("."))
         dirs = [d for d in listdir(dir) if path.isdir(path.join(dir,d)) and not d.startswith("_")]
         for i, d in enumerate(dirs):
+            if d.startswith("."):
+                continue
             if path.exists(path.join(dir,d,".ignoredir")):
                 continue
 
