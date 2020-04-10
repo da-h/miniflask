@@ -369,7 +369,7 @@ class miniflask():
         # add help message
         self.settings_parser.print_help = lambda: (print("usage: modulelist [optional arguments]"),print(),print("optional arguments (and their defaults):"),print(listsettings(state("",self.state,self.state_default),self.event)))
 
-        # parse user overwrites
+        # parse user overwrites (first time, s.t. lambdas change adaptively)
         settings_args = self.settings_parser.parse_args(argv[2:])
         for varname, val in vars(settings_args).items():
             self.state[varname] = val
@@ -384,7 +384,9 @@ class miniflask():
 
         # finally parse lambda-dependencies
         for varname, (varname_short, val, cliargs, parsefn) in self.settings_parse_later.items():
-            while callable(val) and type(val) != type and parsefn:
+
+            # Note: if current state equals state_default it has not been overwritten by user, thus lambda can be evaluated again
+            while callable(val) and type(val) != type and parsefn and self.state[varname] == self.state_default[varname]:
                 val = val(self.state,self.event)
                 self.state[varname] = val
 
