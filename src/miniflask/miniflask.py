@@ -3,7 +3,7 @@ from .event import event, event_obj
 from .state import state, like
 from .dummy import miniflask_dummy
 from .util import getModulesAvail
-from .util import highlight_error, highlight_name, highlight_module, highlight_loading, highlight_loaded_none, highlight_loaded, highlight_event, highlight_blue_line, highlight_type, highlight_val, highlight_val_overwrite
+from .util import highlight_error, highlight_name, highlight_module, highlight_loading, highlight_loaded_none, highlight_loaded, highlight_event, highlight_blue_line, highlight_type, highlight_val, highlight_val_overwrite, str2bool
 
 
 from .modules import registerPredefined
@@ -256,31 +256,25 @@ class miniflask():
     def _settings_parser_add(self, varname, varname_short, val, nargs=None, default=None):
         if default is None:
             default = val
-        if isinstance(val,bool):
+        if isinstance(val,bool) and nargs != '+':
             self.settings_parser.add_argument('--'+varname, dest=varname, action='store_true', default=default)
             self.settings_parser.add_argument('--no-'+varname, dest=varname, action='store_false')
             if varname_short:
                 self.settings_parser.add_argument('--'+varname_short, dest=varname, action='store_true', help=argparse_SUPPRESS, default=default)
                 self.settings_parser.add_argument('--no-'+varname_short, dest=varname, action='store_false', help=argparse_SUPPRESS)
-        elif isinstance(val,int):
-            self.settings_parser.add_argument( "--"+varname, type=int, dest=varname, default=default, metavar=highlight_type("\tint"), nargs=nargs)
+        elif type(val) in [int,str,float,bool]:
+            argtype = type(val) if type(val) != bool else str2bool
+            self.settings_parser.add_argument( "--"+varname, type=argtype, dest=varname, default=default, metavar=highlight_type("\t"+str(type(val))), nargs=nargs)
             if varname_short:
-                self.settings_parser.add_argument( "--"+varname_short, type=int, dest=varname, default=default, help=argparse_SUPPRESS, nargs=nargs)
-        elif isinstance(val,str):
-            self.settings_parser.add_argument( "--"+varname, type=str, dest=varname, default=default, metavar=highlight_type('\tstring'), nargs=nargs)
-            if varname_short:
-                self.settings_parser.add_argument( "--"+varname_short, type=str, dest=varname, default=default, help=argparse_SUPPRESS, nargs=nargs)
-        elif isinstance(val,float):
-            self.settings_parser.add_argument( "--"+varname, type=float, dest=varname, default=default, metavar=highlight_type('\float'), nargs=nargs) #, help=S("_"+varname,alt=""))
-            if varname_short:
-                self.settings_parser.add_argument( "--"+varname_short, type=float, dest=varname, default=default, help=argparse_SUPPRESS, nargs=nargs)
+                self.settings_parser.add_argument( "--"+varname_short, type=argtype, dest=varname, default=default, help=argparse_SUPPRESS, nargs=nargs)
         elif isinstance(val,list):
             self._settings_parser_add(varname, varname_short, val[0], nargs="+", default=val)
         else:
             try:
-                self.settings_parser.add_argument("--"+varname, type=val, dest=varname, metavar=highlight_type("\t{}".format(val)), nargs=nargs)
+                argtype = val if val != bool else str2bool
+                self.settings_parser.add_argument("--"+varname, type=argtype, dest=varname, metavar=highlight_type("\t{}".format(val)), nargs=nargs)
                 if varname_short:
-                    self.settings_parser.add_argument("--"+varname_short, type=val, dest=varname, help=argparse_SUPPRESS, nargs=nargs)
+                    self.settings_parser.add_argument("--"+varname_short, type=argtype, dest=varname, help=argparse_SUPPRESS, nargs=nargs)
                     self.settings_parser_required_arguments.append([varname,varname_short])
                 else:
                     self.settings_parser_required_arguments.append([varname])
