@@ -278,13 +278,10 @@ class miniflask():
             else:
                 self.settings_parser_required_arguments.append([varname])
 
-        # for bool: enable --no-varname as alternative for --varname false
+        # for bool: enable --varname as alternative for --varname true
         if argtype == str2bool and nargs != '+':
-            kwarg_long["nargs"] = kwarg_short["nargs"] = '?'
-            kwarg_long["const"] = kwarg_short["const"] = True
-            self.settings_parser.add_argument('--no-'+varname, dest=varname, action='store_false')
-            if varname_short:
-                self.settings_parser.add_argument('--no-'+varname_short, dest=varname, action='store_false', help=argparse_SUPPRESS)
+            kwarg_long["nargs"]  = kwarg_short["nargs"] = '?'
+            kwarg_long["const"]  = kwarg_short["const"] = True
 
         # define the actual arguments
         if argtype in [int,str,float,str2bool]:
@@ -293,6 +290,13 @@ class miniflask():
                 self.settings_parser.add_argument( "--"+varname_short, **kwarg_short)
         else:
             raise ValueError("Type '%s' not supported. (Used for setting '%s')" % (type(val), varname))
+
+        # for bool: enable --no-varname as alternative for --varname false
+        # Note: this has to be defined AFTER --varname
+        if argtype == str2bool and nargs != '+':
+            self.settings_parser.add_argument('--no-'+varname, dest=varname, action='store_false')
+            if varname_short:
+                self.settings_parser.add_argument('--no-'+varname_short, dest=varname, action='store_false', help=argparse_SUPPRESS)
 
     # ======= #
     # runtime #
