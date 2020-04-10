@@ -87,14 +87,12 @@ class miniflask():
                 dir = self.module_dirs[0]
             else:
                 for dir in self.module_dirs:
-                    print(attr("bold")+"Module Directory: %s" % dir)
-                    print(len("Module Directory: %s" % dir)*"-"+attr("reset"))
                     self.showModules(dir, prepend=prepend, id_pre=id_pre, with_event=with_event)
-                    print()
                 return
 
         if len(prepend) == 0:
-            print(highlight_name("."))
+            print()
+            print(highlight_name(path.basename(dir)))
         dirs = [d for d in listdir(dir) if path.isdir(path.join(dir,d)) and not d.startswith("_")]
         for i, d in enumerate(dirs):
             if d.startswith("."):
