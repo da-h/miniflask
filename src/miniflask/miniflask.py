@@ -11,7 +11,7 @@ from .modules.settings import listsettings
 
 # global modules
 import sys
-from os import path, listdir
+from os import path, listdir, linesep
 from colored import fg, bg, attr
 from importlib import import_module
 from copy import copy
@@ -43,6 +43,7 @@ class miniflask():
         self.settings_parser = ArgumentParser(usage=sys.argv[0]+" modulelist [optional arguments]")
         self.settings_parse_later = {}
         self.settings_parse_later_overwrites = {}
+        self.settings_parser_required_arguments = []
         self.default_modules = []
 
         # internal
@@ -277,9 +278,12 @@ class miniflask():
             self._settings_parser_add(varname, varname_short, val[0], nargs="+", default=val)
         else:
             try:
-                self.settings_parser.add_argument("--"+varname, type=val, dest=varname, required=True, metavar=highlight_type("\t{}".format(val)))
+                self.settings_parser.add_argument("--"+varname, type=val, dest=varname, metavar=highlight_type("\t{}".format(val)))
                 if varname_short:
-                    self.settings_parser.add_argument("--"+varname_short, type=val, dest=varname, required=True, help=argparse_SUPPRESS)
+                    self.settings_parser.add_argument("--"+varname_short, type=val, dest=varname, help=argparse_SUPPRESS)
+                    self.settings_parser_required_arguments.append([varname,varname_short])
+                else:
+                    self.settings_parser_required_arguments.append([varname])
             except:
                 raise ValueError("Type '%s' not supported. (Used for setting '%s')" % (type(val), varname))
 
@@ -358,6 +362,14 @@ class miniflask():
         settings_args = self.settings_parser.parse_args(argv[2:])
         for varname, val in vars(settings_args).items():
             self.state[varname] = val
+
+        # check if required arguments are given by now
+        missing_arguments = []
+        for variables  in self.settings_parser_required_arguments:
+            if self.state[variables[0]] is None:
+                missing_arguments.append(variables)
+        if len(missing_arguments) > 0:
+            self.settings_parser.error(linesep+linesep.join(["The following argument is required: "+" or ".join(["--"+arg for arg in reversed(args)]) for args in missing_arguments]))
 
         # finally parse lambda-dependencies
         for varname, (varname_short, val, cliargs, parsefn) in self.settings_parse_later.items():
