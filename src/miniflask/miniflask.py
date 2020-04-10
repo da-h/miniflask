@@ -267,20 +267,20 @@ class miniflask():
             if varname_short:
                 self.settings_parser.add_argument( "--"+varname_short, type=int, dest=varname, default=default, help=argparse_SUPPRESS, nargs=nargs)
         elif isinstance(val,str):
-            self.settings_parser.add_argument( "--"+varname, type=str, dest=varname, default=default, metavar=highlight_type('\tstring'))
+            self.settings_parser.add_argument( "--"+varname, type=str, dest=varname, default=default, metavar=highlight_type('\tstring'), nargs=nargs)
             if varname_short:
-                self.settings_parser.add_argument( "--"+varname_short, type=str, dest=varname, default=default, help=argparse_SUPPRESS)
+                self.settings_parser.add_argument( "--"+varname_short, type=str, dest=varname, default=default, help=argparse_SUPPRESS, nargs=nargs)
         elif isinstance(val,float):
-            self.settings_parser.add_argument( "--"+varname, type=float, dest=varname, default=default, metavar=highlight_type('\tstring')) #, help=S("_"+varname,alt=""))
+            self.settings_parser.add_argument( "--"+varname, type=float, dest=varname, default=default, metavar=highlight_type('\float'), nargs=nargs) #, help=S("_"+varname,alt=""))
             if varname_short:
-                self.settings_parser.add_argument( "--"+varname_short, type=float, dest=varname, default=default, help=argparse_SUPPRESS)
+                self.settings_parser.add_argument( "--"+varname_short, type=float, dest=varname, default=default, help=argparse_SUPPRESS, nargs=nargs)
         elif isinstance(val,list):
             self._settings_parser_add(varname, varname_short, val[0], nargs="+", default=val)
         else:
             try:
-                self.settings_parser.add_argument("--"+varname, type=val, dest=varname, metavar=highlight_type("\t{}".format(val)))
+                self.settings_parser.add_argument("--"+varname, type=val, dest=varname, metavar=highlight_type("\t{}".format(val)), nargs=nargs)
                 if varname_short:
-                    self.settings_parser.add_argument("--"+varname_short, type=val, dest=varname, help=argparse_SUPPRESS)
+                    self.settings_parser.add_argument("--"+varname_short, type=val, dest=varname, help=argparse_SUPPRESS, nargs=nargs)
                     self.settings_parser_required_arguments.append([varname,varname_short])
                 else:
                     self.settings_parser_required_arguments.append([varname])
