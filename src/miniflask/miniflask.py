@@ -332,7 +332,7 @@ class miniflask():
                 if overwrite and varname not in self.settings_parse_later:
                     raise ValueError("Variable '%s' is not registered yet, however it seems like you wold like to overwrite it." % varname)
 
-                if callable(val) and parsefn:
+                if callable(val) and type(val) != type and parsefn:
                     the_val = val(self.state,self.event)
                 else:
                     the_val = val
@@ -361,7 +361,7 @@ class miniflask():
 
         # finally parse lambda-dependencies
         for varname, (varname_short, val, cliargs, parsefn) in self.settings_parse_later.items():
-            while callable(val) and parsefn:
+            while callable(val) and type(val) != type and parsefn:
                 val = val(self.state,self.event)
                 self.state[varname] = val
 
