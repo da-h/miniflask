@@ -3,6 +3,6 @@ def showModules(state, event):
 
 def register(mf):
     mf.register_globals({
-        "events": True
+        "events": False
     })
     mf.register_event('init', showModules)
