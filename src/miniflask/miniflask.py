@@ -359,12 +359,12 @@ class miniflask():
                     if overwrite or varname not in self.settings_parse_later_overwrites:
                         self._settings_parser_add(varname, varname_short, the_val)
 
-                # remember default state
-                if isinstance(val,like):
-                    val.default = the_val
-                    self.state_default[varname] = val
-                else:
-                    self.state_default[varname] = the_val
+                    # remember default state
+                    if isinstance(val,like):
+                        val.default = the_val
+                        self.state_default[varname] = val
+                    else:
+                        self.state_default[varname] = the_val
 
         # add help message
         self.settings_parser.print_help = lambda: (print("usage: modulelist [optional arguments]"),print(),print("optional arguments (and their defaults):"),print(listsettings(state("",self.state,self.state_default),self.event)))
@@ -386,7 +386,7 @@ class miniflask():
         for varname, (varname_short, val, cliargs, parsefn) in self.settings_parse_later.items():
 
             # Note: if current state equals state_default it has not been overwritten by user, thus lambda can be evaluated again
-            while callable(val) and type(val) != type and parsefn and self.state[varname] == self.state_default[varname]:
+            while callable(val) and type(val) != type and parsefn and (not cliargs or self.state[varname] == self.state_default[varname]):
                 val = val(self.state,self.event)
                 self.state[varname] = val
 
