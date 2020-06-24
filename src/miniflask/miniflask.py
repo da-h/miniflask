@@ -32,11 +32,15 @@ class miniflask():
             return
 
         # module dir to be read from
-        if not isinstance(module_dirs,list):
-            self.module_dirs = [module_dirs]
-        else:
+        if isinstance(module_dirs,list):
+            self.module_dirs = {path.basename(m):m for m in module_dirs}
+        elif isinstance(module_dirs,str):
+            self.module_dirs = {path.basename(module_dirs):module_dirs}
+        elif isinstance(module_dirs,dict):
             self.module_dirs = module_dirs
-        for dir in self.module_dirs:
+        else:
+            raise ValueError("Only dict or list allowed for `module_dirs'. Found type '%s'." % type(module_dirs))
+        for dir in self.module_dirs.values():
             sys.path.insert(0,dir+path.sep+path.pardir)
 
         # arguments from cli-stdin
@@ -83,18 +87,15 @@ class miniflask():
     # pretty print of all available modules
     def showModules(self, dir=None, prepend="", id_pre=None, with_event=True):
         if not dir:
-            if len(self.module_dirs) == 1:
-                dir = self.module_dirs[0]
-            else:
-                for dir in self.module_dirs:
-                    self.showModules(dir, prepend=prepend, id_pre=id_pre, with_event=with_event)
-                return
+            for basename, dir in self.module_dirs.items():
+                self.showModules(dir, prepend=prepend, id_pre=basename if id_pre is None else id_pre+"."+basename, with_event=with_event)
+            return
 
         if id_pre is None:
             id_pre = path.basename(dir)
         if len(prepend) == 0:
             print()
-            print(highlight_name(path.basename(dir)))
+            print(highlight_name(path.basename(id_pre)))
         dirs = [d for d in listdir(dir) if path.isdir(path.join(dir,d)) and not d.startswith("_")]
         for i, d in enumerate(dirs):
             if d.startswith("."):
