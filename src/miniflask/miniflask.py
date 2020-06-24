@@ -452,8 +452,10 @@ class miniflask_wrapper(miniflask):
         self.state = state(module_name, self.wrapped_class.state, self.wrapped_class.state_default)
 
     def redefine_scope(self,new_module_name):
+        m = self.modules_avail[self.module_name]
         del self.modules_avail[self.module_name]
-        self.modules_avail[new_module_name]["id"] = new_module_name
+        m["id"] = new_module_name
+        self.modules_avail[new_module_name] = m
         self.set_scope(new_module_name)
 
     def set_scope(self,new_module_name):
