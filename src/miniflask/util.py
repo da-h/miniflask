@@ -6,9 +6,9 @@ def getModulesAvail(module_dirs, f={}):
     if not isinstance(module_dirs,list):
         module_dirs = [module_dirs]
     for dir in module_dirs:
+        base_module_name = path.basename(dir)
         for (dirpath, dirnames, filenames) in walk(dir):
-            module_name_id = dirpath[len(dir)+1:].replace(path.sep,".")
-            module_name_short = module_name_id.split(".")[-1]
+            module_name_id = base_module_name+"."+dirpath[len(dir)+1:].replace(path.sep,".")
 
             # empty module id is not allowed
             if len(module_name_id) == 0:
@@ -19,20 +19,16 @@ def getModulesAvail(module_dirs, f={}):
                 dirnames[:] = []
                 continue
 
-            # no real moule
+            # ignore no real moules
             if ".module" not in filenames:
                 continue
 
             # module found
-            f[module_name_id] = module_name_id
-
-            # add reference to shortid
-            is_module_with_shortid = not path.exists(path.join(dirpath,".noshortid"))
-            if is_module_with_shortid:
-                if module_name_short in f and module_name_short != module_name_id:
-                    del f[module_name_short]
-                else:
-                    f[module_name_short] = module_name_id
+            f[module_name_id] = {
+                'id': module_name_id,
+                'lowpriority': path.exists(path.join(dirpath,".lowpriority")),
+                'importpath': module_name_id
+            }
     return f
 
 # coloring

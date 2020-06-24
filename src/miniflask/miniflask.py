@@ -37,7 +37,7 @@ class miniflask():
         else:
             self.module_dirs = module_dirs
         for dir in self.module_dirs:
-            sys.path.insert(0,dir)
+            sys.path.insert(0,dir+path.sep+path.pardir)
 
         # arguments from cli-stdin
         self.settings_parser = ArgumentParser(usage=sys.argv[0]+" modulelist [optional arguments]")
@@ -73,7 +73,7 @@ class miniflask():
             dummy = miniflask_dummy()
 
         # load module
-        mod = import_module(self.modules_avail[module])
+        mod = import_module(self.modules_avail[module]["id"])
         if not hasattr(mod,"register"):
             return []
 
@@ -81,7 +81,7 @@ class miniflask():
         return dummy.getEvents()
 
     # pretty print of all available modules
-    def showModules(self, dir=None, prepend="", id_pre="", with_event=True):
+    def showModules(self, dir=None, prepend="", id_pre=None, with_event=True):
         if not dir:
             if len(self.module_dirs) == 1:
                 dir = self.module_dirs[0]
@@ -90,6 +90,8 @@ class miniflask():
                     self.showModules(dir, prepend=prepend, id_pre=id_pre, with_event=with_event)
                 return
 
+        if id_pre is None:
+            id_pre = path.basename(dir)
         if len(prepend) == 0:
             print()
             print(highlight_name(path.basename(dir)))
@@ -99,19 +101,22 @@ class miniflask():
                 continue
             if path.exists(path.join(dir,d,".ignoredir")):
                 continue
+            module_id = id_pre + "." + d if id_pre != "" else d
 
             is_module = path.exists(path.join(dir,d,".module"))
-            is_module_without_shortid = path.exists(path.join(dir,d,".noshortid"))
+            is_lowpriority_module = path.exists(path.join(dir,d,".lowpriority"))
+            if is_module:
+                shortestid = self.getModuleShortId(module_id)
+            has_shortid = is_module and shortestid == d
 
-            module_id = id_pre + "." + d if id_pre != "" else d
             if i == len(dirs)-1:
                 tree_symb = "└── "
                 is_last = True
             else:
                 tree_symb = "├── "
                 is_last = False
-            append = " "+fg('blue')+"("+module_id+")"+attr('reset') if is_module_without_shortid else ""
-            append += attr('dim')+" (short-id not unique)"+attr('reset') if is_module and not d in self.modules_avail else ""
+            append = " "+fg('blue')+"("+shortestid+")"+attr('reset') if is_module and not has_shortid else ""
+            append += attr('dim')+" (low-priority module)"+attr('reset') if is_lowpriority_module else ""
             print(prepend+tree_symb+(highlight_name(d) if is_module else d)+append)
 
             tree_symb_next = "     " if is_last else "│    "
@@ -137,18 +142,50 @@ class miniflask():
     # =================== #
 
     # get unique id of a moodule
-    def getModuleId(self, module):
-        if not module in self.modules_avail:
-            raise ValueError(highlight_error()+"Module '%s' not known." % highlight_module(module))
-        return self.modules_avail[module]
+    def getModuleId(self, module_id):
+        module_ids = self.modules_avail.keys()
+        module = module_id.replace(".","\.(.*\.)*")
+
+        # first search for a default module
+        r = re.compile("^(.*\.)?%s(\..*)?\.(default|%s)$" % (module, module_id.split(".")[-1]))
+        found_modules = list(filter(r.match, module_ids))
+
+        # if no default module found, check for direct identifier
+        if len(found_modules) == 0:
+            r = re.compile("^(.*\.)?%s(\..*)?$" % module)
+            found_modules = list(filter(r.match, module_ids))
+
+        # if more than one module found, exclude all low-priority modules
+        if len(found_modules) > 1:
+            found_modules = list(filter(lambda mid: not self.modules_avail[mid]["lowpriority"], found_modules))
+
+        # if more than one module found let the user know
+        if len(found_modules) > 1:
+            raise ValueError(highlight_error()+"Module-Identifier '%s' is not unique. Found %i modules:\n\t%s" % (highlight_module(module_id), len(found_modules), "\n\t".join(found_modules)))
+
+        # no module found with both variants
+        elif len(found_modules) == 0:
+            raise ValueError(highlight_error()+"Module '%s' not known." % highlight_module(module_id))
+
+        # module_id is a unique identifier
+        module = found_modules[0]
+        return self.modules_avail[module]["id"]
 
     # get short id of a moodule
     def getModuleShortId(self, module):
         if not module in self.modules_avail:
             raise ValueError(highlight_error()+"Module '%s' not known." % highlight_module(module))
-        uniqueId = self.modules_avail[module]
-        shortid = uniqueId.split(".")[-1]
-        return shortid if shortid in self.modules_avail and self.modules_avail[shortid] == module else None
+        uniqueId = self.modules_avail[module]["id"].split(".")
+        for i in range(len(uniqueId)-1,0,-1):
+            shortid = ".".join(uniqueId[i:])
+            try:
+                if module == self.getModuleId(shortid):
+                    return shortid
+                else:
+                    pass
+            except ValueError as e:
+                pass
+        return None
 
     # maps 'folder.subfolder.module.list.of.vars' to 'folder.subfoldder.module'
     def _getModuleIdFromVarId(self, varid_list, scope=None):
@@ -172,21 +209,21 @@ class miniflask():
         # get id
         module_name = self.getModuleId(module_name)
 
-        # check if module_name exists or is already loaded
-        if not module_name in self.modules_avail:
-            raise ValueError(highlight_error()+"module_name '%s' not known." % module_name)
+        # check if already loaded
         if module_name in self.modules_loaded:
             return
 
-        # load module
+        # loading message
         prepend = self._loadprepend if hasattr(self,'_loadprepend') else ""
-        print(prepend+loading_text(self.modules_avail[module_name]))
-        mod = import_module(self.modules_avail[module_name])
+        print(prepend+loading_text(module_name))
+
+        # load module
+        mod = import_module(self.modules_avail[module_name]["importpath"])
         if not hasattr(mod,"register"):
             raise ValueError(highlight_error()+"Module '%s' does not register itself." % module_name)
 
         # remember loaded modules
-        self.modules_loaded[self.modules_avail[module_name]] = mod
+        self.modules_loaded[module_name] = mod
 
         # register events
         mod.miniflask_obj = miniflask_wrapper(module_name, self)
@@ -415,9 +452,8 @@ class miniflask_wrapper(miniflask):
         self.state = state(module_name, self.wrapped_class.state, self.wrapped_class.state_default)
 
     def redefine_scope(self,new_module_name):
-        self.modules_avail[self.getModuleShortId(self.module_name)] = new_module_name
         del self.modules_avail[self.module_name]
-        self.modules_avail[new_module_name] = new_module_name
+        self.modules_avail[new_module_name]["id"] = new_module_name
         self.set_scope(new_module_name)
 
     def set_scope(self,new_module_name):
