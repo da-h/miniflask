@@ -481,12 +481,22 @@ class miniflask_wrapper(miniflask):
 
     # enables relative imports
     def load(self, module_name, auto_query=True, **kwargs):
+
+        # if list given, iterate over list
+        if isinstance(module_name, list):
+            for mname in module_name:
+                self.load(mname, auto_query=auto_query, **kwargs)
+            return
+
+        # parse relative imports first
         m = relative_import_re.match(module_name)
         if m is not None:
             upmodule = len(m[1])
             relative_module = m[2]
             module_name = ".".join(self.module_name.split(".")[:-upmodule]) + "." + relative_module
             auto_query = False
+
+        # call load (but ensure no querying is made if relative imports were given)
         super().load(module_name, auto_query=auto_query, **kwargs)
 
     # overwrite state defaults
