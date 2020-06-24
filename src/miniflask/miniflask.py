@@ -198,7 +198,7 @@ class miniflask():
         return None
 
     # loads module (once)
-    def load(self, module_name, verbose=True, loading_text=highlight_loading):
+    def load(self, module_name, verbose=True, auto_query=True, loading_text=highlight_loading):
 
         # load list of modules
         if isinstance(module_name,list):
@@ -207,7 +207,10 @@ class miniflask():
             return
 
         # get id
-        module_name = self.getModuleId(module_name)
+        if auto_query:
+            module_name = self.getModuleId(module_name)
+        elif not module_name in self.modules_avail:
+            raise ValueError(highlight_error()+"Module '%s' not known." % highlight_module(module_name))
 
         # check if already loaded
         if module_name in self.modules_loaded:
@@ -445,6 +448,7 @@ class miniflask():
                       "or provide a suitable event to call.".format(call))
 
 
+relative_import_re = re.compile("(\.+)(.*)")
 class miniflask_wrapper(miniflask):
     def __init__(self, module_name, mf):
         self.module_name = module_name
@@ -474,6 +478,16 @@ class miniflask_wrapper(miniflask):
             return hooked
         else:
             return orig_attr
+
+    # enables relative imports
+    def load(self, module_name, auto_query=True, **kwargs):
+        m = relative_import_re.match(module_name)
+        if m is not None:
+            upmodule = len(m[1])
+            relative_module = m[2]
+            module_name = ".".join(self.module_name.split(".")[:-upmodule]) + "." + relative_module
+            auto_query = False
+        super().load(module_name, auto_query=auto_query, **kwargs)
 
     # overwrite state defaults
     def register_defaults(self, defaults, scope=None, **kwargs):
