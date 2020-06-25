@@ -473,16 +473,15 @@ class miniflask_wrapper(miniflask):
         self.wrapped_class = mf.wrapped_class if hasattr(mf, 'wrapped_class') else mf
         self.state = state(module_name, self.wrapped_class.state, self.wrapped_class.state_default)
 
-    def redefine_scope(self,new_module_name):
-        m = self.modules_avail[self.module_name]
-        del self.modules_avail[self.module_name]
-        m["id"] = new_module_name
-        self.modules_avail[new_module_name] = m
-        self.set_scope(new_module_name)
-
-    def set_scope(self,new_module_name):
-        self.module_name = new_module_name
-        self.state.module_name = new_module_name
+    def _get_relative_module_id(self, module_name):
+        was_relative = False
+        m = relative_import_re.match(module_name)
+        if m is not None:
+            upmodule = len(m[1])
+            relative_module = m[2]
+            module_name = ".".join(self.module_name.split(".")[:-upmodule]) + "." + relative_module
+            was_relative = True
+        return module_name, was_relative
 
     def __getattr__(self,attr):
         orig_attr = super().__getattribute__('wrapped_class').__getattribute__(attr)
@@ -496,6 +495,19 @@ class miniflask_wrapper(miniflask):
             return hooked
         else:
             return orig_attr
+
+    def redefine_scope(self,new_module_name, append_default=True):
+        if append_default:
+            new_module_name += ".default"
+        m = self.modules_avail[self.module_name]
+        del self.modules_avail[self.module_name]
+        m["id"] = new_module_name
+        self.modules_avail[new_module_name] = m
+        self.set_scope(new_module_name)
+
+    def set_scope(self,new_module_name):
+        self.module_name = new_module_name
+        self.state.module_name = new_module_name
 
     # like with relative imports
     def like(self, varname, alt, scope="."):
@@ -514,12 +526,8 @@ class miniflask_wrapper(miniflask):
             return
 
         # parse relative imports first
-        m = relative_import_re.match(module_name)
-        if m is not None:
-            upmodule = len(m[1])
-            relative_module = m[2]
-            module_name = ".".join(self.module_name.split(".")[:-upmodule]) + "." + relative_module
-            auto_query = False
+        module_name, was_relative = self._get_relative_module_id(module_name)
+        auto_query = not was_relative
 
         # call load (but ensure no querying is made if relative imports were given)
         super().load(module_name, auto_query=auto_query, **kwargs)
