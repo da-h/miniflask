@@ -177,6 +177,12 @@ class miniflask():
         if not module in self.modules_avail:
             raise ValueError(highlight_error()+"Module '%s' not known." % highlight_module(module))
         uniqueId = self.modules_avail[module]["id"].split(".")
+
+        # modA.default -> modA
+        if uniqueId[-1] == "default":
+            uniqueId = uniqueId[:-1]
+
+        # find the shortest substring to match a module uniquely
         for i in range(len(uniqueId)-1,0,-1):
             shortid = ".".join(uniqueId[i:])
             try:
