@@ -497,6 +497,13 @@ class miniflask_wrapper(miniflask):
         else:
             return orig_attr
 
+    # like with relative imports
+    def like(self, varname, alt, scope="."):
+        scope_name = scope
+        if scope is not None:
+            scope, was_relative = self._get_relative_module_id(scope)
+        return like(varname, alt, scope=scope, scope_name=scope_name)
+
     # enables relative imports
     def load(self, module_name, auto_query=True, **kwargs):
 

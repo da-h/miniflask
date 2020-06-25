@@ -20,10 +20,13 @@ class state(dict):
         return super().__getattribute__(name)
 
 class like:
-    def __init__(self, varname, alt):
-        self.varname = varname
+    def __init__(self, varname, alt, scope=None, scope_name=None):
+        if scope_name is None:
+            scope_name = scope
+        global_varname = varname if scope is None else scope + "." + varname
+        self.varname = scope_name+"."+varname if scope_name is not None else varname
         self.alt = alt
-        self.fn = lambda state,event: state[varname] if varname in state else alt
+        self.fn = lambda state,event: state[global_varname] if global_varname in state else alt
 
     def __call__(self, state, event):
         return self.fn(state,event)
