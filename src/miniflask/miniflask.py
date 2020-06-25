@@ -189,14 +189,26 @@ class miniflask():
         return None
 
     # maps 'folder.subfolder.module.list.of.vars' to 'folder.subfoldder.module'
-    def _getModuleIdFromVarId(self, varid_list, scope=None):
-        if scope is not None and scope in self.modules_avail:
-            return scope
+    def _getModuleIdFromVarId(self, varid, varid_list, scope=None):
+
+        # try to use scope as module id
+        try:
+            if varid.startswith(scope):
+                varid = varid[len(scope)+1:]
+            return self.getModuleId(scope), varid
+        except ValueError as e:
+            pass
+
+        # no we have to work out which module may be meant
         for i in range(len(varid_list)-1,0,-1):
             test_id = ".".join(varid_list[:i])
-            if test_id in self.modules_avail:
-                return test_id
-        return None
+            try:
+                return self.getModuleId(test_id), ".".join(varid_list[i:])
+            except ValueError as e:
+                pass
+
+        # no id could be derived
+        return None, ".".join(varid_list)
 
     # loads module (once)
     def load(self, module_name, verbose=True, auto_query=True, loading_text=highlight_loading):
@@ -269,14 +281,19 @@ class miniflask():
 
             # short name is only given iff corresponding module has a unique short id
             varname_short = None
-            module_id = self._getModuleIdFromVarId(key_split,scope=scope)
-            if module_id is not None and module_id in self.modules_avail:
+
+            # get module id from global varname identifier
+            module_id, key = self._getModuleIdFromVarId(varname,key_split,scope=scope)
+            if module_id is not None:
 
                 # retrieve real local key name
-                key = varname[len(module_id)+1:]
                 module_short_id = self.getModuleShortId(module_id)
                 if module_short_id is not None:
                     varname_short = module_short_id+"."+key
+
+                # recreate actual key
+                module_id = self.getModuleId(module_id)
+                varname = module_id + "." + key
 
             # ignore if short varname is varname
             if varname_short == varname:
