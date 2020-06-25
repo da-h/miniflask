@@ -202,11 +202,21 @@ class miniflask():
     # maps 'folder.subfolder.module.list.of.vars' to 'folder.subfoldder.module'
     def _getModuleIdFromVarId(self, varid, varid_list, scope=None):
 
-        # try to use scope as module id
+        # try to use scope.default as module id
         try:
+            module_id = self.getModuleId(scope+".default")
             if varid.startswith(scope):
                 varid = varid[len(scope)+1:]
-            return self.getModuleId(scope), varid
+            return module_id, varid
+        except ValueError as e:
+            pass
+
+        # try to use scope as module id
+        try:
+            module_id = self.getModuleId(scope)
+            if varid.startswith(scope):
+                varid = varid[len(scope)+1:]
+            return module_id, varid
         except ValueError as e:
             pass
 
@@ -490,17 +500,22 @@ class miniflask():
 relative_import_re = re.compile("(\.+)(.*)")
 class miniflask_wrapper(miniflask):
     def __init__(self, module_name, mf):
-        self.module_name = module_name
+        self.module_id = module_name
+        self.module_name = module_name.split(".")[-1]
+        self.module_base = module_name.split(".")[0]
         self.wrapped_class = mf.wrapped_class if hasattr(mf, 'wrapped_class') else mf
         self.state = state(module_name, self.wrapped_class.state, self.wrapped_class.state_default)
 
-    def _get_relative_module_id(self, module_name):
+    def _get_relative_module_id(self, module_name, offset=0):
         was_relative = False
         m = relative_import_re.match(module_name)
         if m is not None:
             upmodule = len(m[1])
             relative_module = m[2]
-            module_name = ".".join(self.module_name.split(".")[:-upmodule]) + "." + relative_module
+            if upmodule == offset:
+                module_name = self.module_id + ("." + relative_module if relative_module else "")
+            else:
+                module_name = ".".join(self.module_id.split(".")[:-upmodule+offset]) + ("." + relative_module if relative_module else "")
             was_relative = True
         return module_name, was_relative
 
@@ -517,22 +532,22 @@ class miniflask_wrapper(miniflask):
         else:
             return orig_attr
 
-    def redefine_scope(self,new_module_name, append_default=True):
-        old_module_name = self.module_name
-        new_module_name = self.set_scope(new_module_name, append_default=append_default)
+    def redefine_scope(self,new_module_name):
+        old_module_name = self.module_id
+        new_module_name = self.set_scope(new_module_name)
+        if new_module_name in self.modules_avail:
+            raise ValueError("Scope `%s` already used. Cannot define multiple modules using `redefine_scope`. Did you maybe mean to use `set_scope`?" % new_module_name)
         m = self.modules_avail[old_module_name]
         del self.modules_avail[old_module_name]
         m["id"] = new_module_name
         self.modules_avail[new_module_name] = m
 
-    def set_scope(self,new_module_name, append_default=True):
-        if append_default:
-            if not new_module_name.endswith("."):
-                new_module_name += "."
-            new_module_name += "default"
+    def set_scope(self,new_module_name):
         new_module_name, was_relative = self._get_relative_module_id(new_module_name)
-        self.module_name = new_module_name
-        self.state.module_name = new_module_name
+        if not was_relative:
+            new_module_name = self.module_base + "." + new_module_name
+        self.module_id = new_module_name
+        self.state.module_id = new_module_name
         return new_module_name
 
     # like with relative imports
@@ -562,7 +577,8 @@ class miniflask_wrapper(miniflask):
     def register_defaults(self, defaults, scope=None, **kwargs):
         # default behaviour is to use current module-name
         if scope is None:
-            scope = self.module_name
+            scope = self.module_id
+        scope, was_relative = self._get_relative_module_id(scope, offset=1)
         super().register_defaults(defaults, scope=scope, **kwargs)
 
     # helper variables are not added to argument parser
