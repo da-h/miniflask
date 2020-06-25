@@ -405,8 +405,14 @@ class miniflask():
                 if overwrite and varname not in self.settings_parse_later:
                     raise ValueError("Variable '%s' is not registered yet, however it seems like you wold like to overwrite it." % varname)
 
+                # eval dependencies/like expressions
                 if callable(val) and type(val) != type and parsefn:
-                    the_val = val(self.state,self.event)
+                    try:
+                        the_val = val
+                        while callable(the_val) and type(the_val) != type:
+                            the_val = the_val(self.state,self.event)
+                    except RecursionError as e:
+                        raise RecursionError("In parsing of value '%s'." % varname)
                 else:
                     the_val = val
 
@@ -442,9 +448,13 @@ class miniflask():
 
         # finally parse lambda-dependencies
         for varname, (varname_short, val, cliargs, parsefn) in self.settings_parse_later.items():
-
             # Note: if current state equals state_default it has not been overwritten by user, thus lambda can be evaluated again
-            while callable(val) and type(val) != type and parsefn and (not cliargs or self.state[varname] == self.state_default[varname]):
+            # Three cases exist in wich lambda expression shall be recalculated:
+            # The value is a function AND one of
+            # 1. was helper variable, thus no cli-argument can overwrite it anyway
+            # 2. the value has not been overwritten by user and the value is a normal lambda/function
+            # 3. the value has not been overwritten by user and the value is a like expression
+            while callable(val) and type(val) != type and parsefn and (not cliargs or self.state[varname] == self.state_default[varname] or (isinstance(self.state_default[varname], like) and self.state[varname] == self.state_default[varname].default)):
                 val = val(self.state,self.event)
                 self.state[varname] = val
 
