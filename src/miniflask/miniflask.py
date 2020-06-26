@@ -77,7 +77,7 @@ class miniflask():
             dummy = miniflask_dummy()
 
         # load module
-        mod = import_module(self.modules_avail[module]["id"])
+        mod = import_module(self.modules_avail[module]["importpath"])
         if not hasattr(mod,"register"):
             return []
 

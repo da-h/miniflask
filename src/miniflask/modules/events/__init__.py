@@ -10,23 +10,20 @@ def color_module(moduleid):
 
 def register(mf):
     events = {}
-    for module in mf.modules_avail.keys():
+    for module_id in mf.modules_avail.keys():
+        module_path = mf.modules_avail[module_id]["importpath"]
 
         # ignore self
-        if __name__ == mf.getModuleId(module):
-            continue
-
-        # ignore short ids
-        if module != mf.getModuleId(module):
+        if __name__ == mf.getModuleId(module_id):
             continue
 
         # note all events
-        module_events = mf.getModuleEvents(module)
+        module_events = mf.getModuleEvents(module_id)
         for e in module_events:
             if e in events:
-                events[e].append(module)
+                events[e].append(module_id)
             else:
-                events[e] = [module]
+                events[e] = [module_id]
 
     # print it
     print()
