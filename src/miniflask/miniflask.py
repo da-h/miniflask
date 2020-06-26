@@ -29,7 +29,8 @@ def print_info(*args,color=fg('green'),msg="INFO"):
 # ================ #
 
 class miniflask():
-    def __init__(self, module_dirs):
+    def __init__(self, module_dirs, debug=False):
+        self.debug = debug
         if not module_dirs:
             return
 
@@ -521,7 +522,7 @@ class miniflask():
             tb = traceback.extract_tb(e.__traceback__)
             print()
             print(fg("red")+"Uncatched Exception occured. Traceback:"+attr("reset"))
-            print(format_traceback_list(tb, exc=e))
+            print(format_traceback_list(tb, exc=e, ignore_miniflask=not self.debug))
 
 relative_import_re = re.compile("(\.+)(.*)")
 class miniflask_wrapper(miniflask):
