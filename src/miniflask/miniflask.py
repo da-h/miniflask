@@ -483,6 +483,9 @@ class miniflask():
         # load required modules
         self.load(modules)
 
+        # parse command line arguments & overwrite default parameters
+        self.parse_args()
+
         # check if all requested modules are loaded
         if not self.halt_parse:
 
