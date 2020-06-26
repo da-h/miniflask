@@ -1,5 +1,5 @@
 # package modules
-from .exceptions import save_traceback, RegisteringException
+from .exceptions import save_traceback, format_traceback_list, RegisteringException
 from .event import event, event_obj
 from .state import state, like
 from .dummy import miniflask_dummy
@@ -11,6 +11,7 @@ from .modules import registerPredefined
 from .modules.settings import listsettings
 
 # global modules
+import traceback
 import sys
 from os import path, listdir, linesep
 from colored import fg, bg, attr
@@ -484,27 +485,43 @@ class miniflask():
         print(highlight_blue_line("-"*50))
 
     def run(self, modules=["info"], call="main"):
+        try:
 
-        # load required modules
-        self.load(modules)
+            # load required modules
+            self.load(modules)
 
-        # parse command line arguments & overwrite default parameters
-        self.parse_args()
+            # parse command line arguments & overwrite default parameters
+            self.parse_args()
 
-        # check if all requested modules are loaded
-        if not self.halt_parse:
+            # check if all requested modules are loaded
+            if not self.halt_parse:
 
-            # optional init event
-            self.event.optional.init()
+                # optional init event
+                self.event.optional.init()
 
-            # call event if exists
-            if hasattr(self.event, call):
-                getattr(self.event, call)()
-            else:
-                print("No event '{0}' registered. "
-                      "Please make sure to register the event '{0}', "
-                      "or provide a suitable event to call with mf.run(call=\"myevent\").".format(call))
+                # call event if exists
+                if hasattr(self.event, call):
 
+                    # call the event
+                    # (this is only for nicer exception output)
+                    if call == "main":
+                        self.event.main()
+                    else:
+                        getattr(self.event, call)()
+                else:
+                    print("No event '{0}' registered. "
+                          "Please make sure to register the event '{0}', "
+                          "or provide a suitable event to call with mf.run(call=\"myevent\").".format(call))
+        except RegisteringException as e:
+            tb = traceback.extract_tb(e.__traceback__)
+            print()
+            print(fg("red")+"Uncatched Exception occured. Traceback:"+attr("reset"))
+            print(format_traceback_list(tb, exc=e, ignore_miniflask=False))
+        except Exception as e:
+            tb = traceback.extract_tb(e.__traceback__)
+            print()
+            print(fg("red")+"Uncatched Exception occured. Traceback:"+attr("reset"))
+            print(format_traceback_list(tb, exc=e))
 
 relative_import_re = re.compile("(\.+)(.*)")
 class miniflask_wrapper(miniflask):
