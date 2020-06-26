@@ -109,13 +109,13 @@ E.g.:
 ```python
 event.optional.main()
 result = event.optional.notneeded("some argument")
-result = event.optional_unique.notneeded("some argument")
+result = event.optional.notneeded("some argument", altfn=lambda s: s+" (no optional event used)")
 ```
 \n
 
 # Note {.alert}
 - `event.optional.eventname()` treats the event like a `nonunique` event, thus it returns an list of results.
-- `event.optional_unique.eventname()` treats the event like a `unique` event, thus it returns `None` in the case of no defined event of the name `eventname`.
+- `event.optional.eventname(..., altfn=...)` treats the event like a `unique` event, but in case no event was defined, it uses altfn to parse the arguments.
 # .{.end}
 
 

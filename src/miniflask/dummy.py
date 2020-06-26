@@ -1,10 +1,7 @@
-def dummy_fn(*args,**kwargs):
+def dummy_fn(*args, altfn=None, **kwargs):
+    if callable(altfn):
+        return altfn(*args, **kwargs)
     return []
-
-def dummy_fn_unique(*args,**kwargs):
-    if len(args) == 1:
-        return args[0]
-    return args
 
 class miniflask_dummy():
     def __init__(self, *args, **kwargs):
@@ -17,6 +14,7 @@ class miniflask_dummy():
 
     def register_event(self,name,fn,unique=False):
         self.event_objs[name] = unique
+
     def register_defaults(self,*args, **kwargs):
         pass
 

@@ -53,11 +53,8 @@ class miniflask():
         # internal
         self.halt_parse = False
         self.event_objs = {}
-        self.event_optional = event(self, optional=True, unique=False)
-        self.event_optional_unique = event(self, optional=True, unique=True)
-        self.event = event(self, optional=False, unique=False)
-        self.event.optional = self.event_optional
-        self.event.optional_unique = self.event_optional_unique
+        self.event = event(self, optional=False)
+        self.event.optional = event(self, optional=True)
         self.state = {}
         self.state_default = {}
         self.modules_loaded = {}
