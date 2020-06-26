@@ -1,4 +1,4 @@
-from .miniflask import miniflask, print_info
+from .miniflask import miniflask as init, print_info
 from .event import outervar
 from .modules import *
 from .state import like
@@ -17,6 +17,3 @@ __author__        = "David Hartmann"
 __license__       = "MIT License"
 __copyright__     = "Copyright (c) 2020 " + __author__
 
-
-def init(**kwargs):
-    return miniflask(**kwargs)
