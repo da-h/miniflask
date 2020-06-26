@@ -478,7 +478,11 @@ class miniflask():
 
         print(highlight_blue_line("-"*50))
 
-    def run(self, call="main"):
+    def run(self, modules=["info"], call="main"):
+
+        # load required modules
+        self.load(modules)
+
         # check if all requested modules are loaded
         if not self.halt_parse:
 
@@ -491,7 +495,7 @@ class miniflask():
             else:
                 print("No event '{0}' registered. "
                       "Please make sure to register the event '{0}', "
-                      "or provide a suitable event to call.".format(call))
+                      "or provide a suitable event to call with mf.run(call=\"myevent\").".format(call))
 
 
 relative_import_re = re.compile("(\.+)(.*)")
@@ -556,6 +560,10 @@ class miniflask_wrapper(miniflask):
 
     # enables relative imports
     def load(self, module_name, auto_query=True, **kwargs):
+
+        # if nothing given, ignore
+        if module_name is None:
+            return
 
         # if list given, iterate over list
         if isinstance(module_name, list):
