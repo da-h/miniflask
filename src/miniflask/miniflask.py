@@ -485,7 +485,7 @@ class miniflask():
 
         print(highlight_blue_line("-"*50))
 
-    def run(self, modules=["info"], call="main"):
+    def run(self, modules=["settings"], call="main"):
         try:
 
             # load required modules
