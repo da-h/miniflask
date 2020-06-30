@@ -1,4 +1,4 @@
-def func(x):
+def func(x, **kwargs):
     return x
 
 def register(mf):

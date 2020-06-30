@@ -48,6 +48,7 @@ class event():
                     if v.default is not inspect.Parameter.empty and v.default is outervar
                 ]
                 arg_names = [k for k, v in signature.parameters.items()]
+                has_altfn = "altfn" in arg_names
 
                 # get index of "state" / "event"
                 if len(arg_names) > 0:
@@ -62,16 +63,20 @@ class event():
 
                 # if no outervar found, just pass state and event
                 if len(needed_locals) > 0:
-                    def fn_wrap(*args, **kwargs):
+                    def fn_wrap(*args, altfn=None, **kwargs):
                         outer_locals = {}
                         if skip_twice:
                             all_outer_locals = inspect.currentframe().f_back.f_back.f_locals
                         else:
                             all_outer_locals = inspect.currentframe().f_back.f_locals
                         outer_locals = {k: all_outer_locals[k] for k in needed_locals}
+                        if has_altfn:
+                            kwargs["altfn"] = altfn
                         return fn(*miniflask_args,*args,**outer_locals,**kwargs)
                 elif len(miniflask_args) > 0:
-                    def fn_wrap(*args, **kwargs):
+                    def fn_wrap(*args, altfn=None, **kwargs):
+                        if has_altfn:
+                            kwargs["altfn"] = altfn
                         return fn(*miniflask_args,*args,**kwargs)
                 else:
                     return fn
@@ -82,7 +87,7 @@ class event():
             else:
                 def multiple_fn_wrap_scope(orig_fns, modules=eobj.modules):
                     fns = [fn_wrap_scope(fn, state=module.state, event=module.event, module=module, skip_twice=True) for fn, module in zip(orig_fns,modules)]
-                    def fn_wrap(*args,**kwargs):
+                    def fn_wrap(*args, altfn=None, **kwargs):
                         results = []
                         for i,fn in enumerate(fns):
                             results.append(fn(*args, **kwargs))
