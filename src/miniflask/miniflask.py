@@ -514,15 +514,27 @@ class miniflask():
                           "Please make sure to register the event '{0}', "
                           "or provide a suitable event to call with mf.run(call=\"myevent\").".format(call))
         except RegisteringException as e:
-            tb = traceback.extract_tb(e.__traceback__)
-            print()
-            print(fg("red")+"Uncatched Exception occured. Traceback:"+attr("reset"))
-            print(format_traceback_list(tb, exc=e, ignore_miniflask=False))
+            gettrace = getattr(sys, 'gettrace', None)
+
+            # check if debugger will catch this
+            if not gettrace or not gettrace():
+                tb = traceback.extract_tb(e.__traceback__)
+                print()
+                print(fg("red")+"Uncatched Exception occured. Traceback:"+attr("reset"))
+                print(format_traceback_list(tb, exc=e, ignore_miniflask=False))
+            else:
+                raise
         except Exception as e:
-            tb = traceback.extract_tb(e.__traceback__)
-            print()
-            print(fg("red")+"Uncatched Exception occured. Traceback:"+attr("reset"))
-            print(format_traceback_list(tb, exc=e, ignore_miniflask=not self.debug))
+            gettrace = getattr(sys, 'gettrace', None)
+
+            # check if debugger will catch this
+            if not gettrace or not gettrace():
+                tb = traceback.extract_tb(e.__traceback__)
+                print()
+                print(fg("red")+"Uncatched Exception occured. Traceback:"+attr("reset"))
+                print(format_traceback_list(tb, exc=e, ignore_miniflask=not self.debug))
+            else:
+                raise
 
 relative_import_re = re.compile("(\.+)(.*)")
 class miniflask_wrapper(miniflask):
