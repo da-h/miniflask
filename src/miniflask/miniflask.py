@@ -342,7 +342,7 @@ class miniflask():
         if isinstance(val,list):
             if len(val) == 0:
                 raise RegisteringException("Variable '%s' is registered as list (see exception below), however it is required to define the type of the list arguments for it to become accessible from cli.\n\nYour options are:\n\t- define a default list, e.g. [\"a\", \"b\", \"c\"]\n\t- define the list type, e.g. [str]\n\t- define the variable as a helper using register_helpers(...)" % varname, traceback=callee_traceback)
-            self._settings_parser_add(varname, varname_short, val[0], nargs="+", default=val)
+            self._settings_parser_add(varname, varname_short, val[0], callee_traceback, nargs="+", default=val)
             return
 
         # get argument type from value (this an be int, but also 42 for instance)
