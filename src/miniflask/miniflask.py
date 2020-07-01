@@ -418,10 +418,17 @@ class miniflask():
 
         # ensure default_modules are loaded
         keys = self.modules_loaded.keys()
+        if len(self.default_modules) > 1:
+            print("Checking Automatic Request of Default Modules")
+            self._loadprepend = (self._loadprepend if hasattr(self,'_loadprepend') else "") + "\t"
         for glob, module in self.default_modules:
-            found = [x for x in keys if re.search(glob, x)]
+            found = [highlight_module(x) for x in keys if re.search(glob, x)]
             if len(found) == 0:
                 self.load(module, loading_text=lambda x: highlight_loading_default(glob,x))
+            elif len(found) > 1:
+                print(self._loadprepend+"Modules %s apply for Glob %s." % (",".join(found), attr('dim')+glob+attr('reset')))
+            else:
+                print(self._loadprepend+"Module %s applies for Glob %s." % (",".join(found), attr('dim')+glob+attr('reset')))
 
         # add variables to argparse and remember defaults
         for settings in [self.settings_parse_later,self.settings_parse_later_overwrites]:
