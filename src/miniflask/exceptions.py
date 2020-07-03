@@ -30,7 +30,9 @@ class TracebackException(Exception):
 def format_traceback_list(traceback_list, ignore_miniflask=True, exc=None):
     if ignore_miniflask:
         traceback_list = [t for t in traceback_list if not t.filename.endswith("src/miniflask/event.py") and (not t.filename.endswith("src/miniflask/miniflask.py") or t.name in ["load","run"])]
-    if exc is not None:
+
+    # ignore "raise" lines
+    if exc is not None and "raise" in traceback_list[-1].line:
         t = traceback_list[-1]
         t.filename = fg('green')+t.filename+attr('reset')
         t.lineno = fg('yellow')+str(t.lineno)+attr('reset')
