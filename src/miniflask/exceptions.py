@@ -40,6 +40,9 @@ def format_traceback_list(traceback_list, ignore_miniflask=True, exc=None):
         exception_type = fg('red')+attr('bold')+type(exc).__name__+attr('reset')
         last_msg = "  File %s, line %s, in %s\n    %s: %s" % (t.filename, t.lineno, t.name, exception_type, str(exc))
         traceback_list = traceback_list[:-1]
+    if exc is not None and not "raise" in traceback_list[-1].line:
+        exception_type = fg('red')+attr('bold')+type(exc).__name__+attr('reset')
+        last_msg = "    %s: %s" % (exception_type, str(exc))
     else:
         last_msg = ""
     for t in traceback_list:
