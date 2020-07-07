@@ -1,14 +1,19 @@
 from miniflask.dummy import miniflask_dummy
 from colored import fg, bg, attr
 from miniflask.miniflask import highlight_module
+import re
 
-def color_module(moduleid):
+def color_module(moduleid, short=False):
     moduleid = moduleid.split(".")
     moduleid[0] = attr('dim')+moduleid[0]
     moduleid[-1] = attr('reset')+highlight_module(moduleid[-1])
+    if short:
+        return moduleid[-1]
     return ".".join(moduleid)
 
 def register(mf):
+
+    # precompute events
     events = {}
     for module_id in mf.modules_avail.keys():
         module_path = mf.modules_avail[module_id]["importpath"]
@@ -24,11 +29,28 @@ def register(mf):
                 events[e].append(module_id)
             else:
                 events[e] = [module_id]
+                
+    # register actual module
+    mf.register_defaults({
+        "event": "",
+        "long": False,
+    })
+    mf.register_helpers({
+        "events": events
+    })
+    mf.register_event('init', init)
+
+
+def init(state):
 
     # print it
     print()
     print(fg('yellow')+attr('underlined')+"Available events"+attr('reset'))
-    for e in sorted(events.keys()):
+    event_list = state["events"].keys()
+    if state["event"]:
+        r = re.compile(state["event"])
+        event_list = list(filter(lambda e: r.match(e[0]),event_list))
+    for e in sorted(event_list):
         unique_flag = "!" if e[1] else ">"
-        print(fg('yellow')+unique_flag+' '+e[0]+attr('reset')+" used in "+", ".join([color_module(ev) for ev in events[e]])+attr('reset'))
+        print(fg('yellow')+unique_flag+' '+e[0]+attr('reset')+" used in "+", ".join([color_module(ev, short=not state["long"]) for ev in state["events"][e]])+attr('reset'))
     print()
