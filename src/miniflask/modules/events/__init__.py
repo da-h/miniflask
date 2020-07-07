@@ -33,6 +33,7 @@ def register(mf):
     # register actual module
     mf.register_defaults({
         "event": "",
+        "module": "",
         "long": False,
     })
     mf.register_helpers({
@@ -50,6 +51,14 @@ def init(state):
     if state["event"]:
         r = re.compile(state["event"])
         event_list = list(filter(lambda e: r.match(e[0]),event_list))
+    if state["module"]:
+        new_events = {}
+        for e in state["events"].keys():
+            modules = list(filter(lambda m: state["module"] in m, state["events"][e]))
+            if len(modules) > 0:
+                new_events[e] = modules
+        state["events"] = new_events
+        event_list = list(filter(lambda e: e in state["events"],event_list))
     for e in sorted(event_list):
         unique_flag = "!" if e[1] else ">"
         print(fg('yellow')+unique_flag+' '+e[0]+attr('reset')+" used in "+", ".join([color_module(ev, short=not state["long"]) for ev in state["events"][e]])+attr('reset'))
