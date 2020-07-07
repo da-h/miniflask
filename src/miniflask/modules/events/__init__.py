@@ -49,12 +49,13 @@ def init(state):
     print(fg('yellow')+attr('underlined')+"Available events"+attr('reset'))
     event_list = state["events"].keys()
     if state["event"]:
-        r = re.compile(state["event"])
+        r = re.compile(".*"+state["event"]+".*")
         event_list = list(filter(lambda e: r.match(e[0]),event_list))
     if state["module"]:
         new_events = {}
+        r = re.compile(".*"+state["module"]+".*")
         for e in state["events"].keys():
-            modules = list(filter(lambda m: state["module"] in m, state["events"][e]))
+            modules = list(filter(r.match, state["events"][e]))
             if len(modules) > 0:
                 new_events[e] = modules
         state["events"] = new_events
