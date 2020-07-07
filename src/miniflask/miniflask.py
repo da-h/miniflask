@@ -64,6 +64,7 @@ class miniflask():
         self.modules_avail = getModulesAvail(self.module_dirs)
         self.miniflask_objs = {} # local modified versions of miniflask
         registerPredefined(self.modules_avail)
+        self._varid_list = []
 
 
 
@@ -383,13 +384,16 @@ class miniflask():
             if varname_short:
                 self.settings_parser.add_argument('--no-'+varname_short, dest=varname, action='store_false', help=argparse_SUPPRESS)
 
+        # remember the varname also for fuzzy searching
+        self._varid_list.append(varname)
+
     # ======= #
     # runtime #
     # ======= #
     def stop_parse(self):
         self.halt_parse = True
 
-    def parse_args(self, argv=None, optional=True):
+    def parse_args(self, argv=None, optional=True, fuzzy_args=True):
         self.halt_parse = False
 
         if not argv:
@@ -397,6 +401,7 @@ class miniflask():
         else:
             argv = [None]+argv
 
+        # actually parse the input
         parser = ArgumentParser()
         parser.add_argument('cmds', default='info', nargs=1 if not optional else "?")
         args = parser.parse_args(argv[1:2])
@@ -466,6 +471,50 @@ class miniflask():
 
         # add help message
         self.settings_parser.print_help = lambda: (print("usage: modulelist [optional arguments]"),print(),print("optional arguments (and their defaults):"),print(listsettings(state("",self.state,self.state_default),self.event)))
+
+        # fuzzy matching the settings
+        if fuzzy_args:
+            for i in range(len(argv)):
+                varid = argv[i]
+                if not varid.startswith("--"):
+                    continue
+
+                # extract varid from argument
+                varid = varid[2:]
+                was_false_bool = False
+                if varid.startswith("no-"):
+                    varid = varid[3:]
+                    was_false_bool = True
+
+                # check for global direct match first
+                if varid in self._varid_list:
+                    continue
+
+                # check for direct match first
+                r = re.compile("^(.*\.)?%s$" % varid)
+                found_varids = list(filter(r.match, self._varid_list))
+
+                # if no matching varid found, check for fuzzy identifier
+                if len(found_varids) == 0:
+                    r = re.compile("^(.*\.)?%s$" % varid.replace(".","\.(.*\.)*"))
+                    found_varids = list(filter(r.match, self._varid_list))
+
+                # if more than one module found, use default module-variables
+                if len(found_varids) > 1:
+                    found_varids = list(filter(lambda x: "default." in x, found_varids))
+
+                # if no matching varid found, check for fuzzy identifier
+                if len(found_varids) > 1:
+                    argv[i] = highlight_module(argv[i])
+                    raise ValueError(highlight_error()+"Variable-Identifier '--%s' is not unique. Found %i variables:\n\t%s\n\n    Call:\n        %s" % (highlight_module(varid), len(found_varids), "\n\t".join(found_varids), " ".join(argv)))
+
+                # no module found with both variants
+                elif len(found_varids) == 0:
+                    argv[i] = highlight_module(argv[i])
+                    raise ValueError(highlight_error()+"Variable '--%s' not known.\n\n    Call:\n       %s" % (highlight_module(varid)," ".join(argv)))
+
+                # replace with fuzzy-found varid
+                argv[i] = ("--no-" if was_false_bool else "--")+found_varids[0]
 
         # parse user overwrites (first time, s.t. lambdas change adaptively)
         settings_args = self.settings_parser.parse_args(argv[2:])
