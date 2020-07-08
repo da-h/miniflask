@@ -65,6 +65,7 @@ class miniflask():
         self.miniflask_objs = {} # local modified versions of miniflask
         registerPredefined(self.modules_avail)
         self._varid_list = []
+        self._recently_loaded = []
         self._consolecolumns, self._consolerows = get_terminal_size(0)
 
 
@@ -78,6 +79,27 @@ class miniflask():
             line = line[:margin] + " " + s + " " + line[margin+len(s)+2:]
         print()
         print(fg('blue')+attr('bold')+line+attr('reset'))
+
+    def print_recently_loaded(self, prepend="", loading_text=highlight_loading):
+        for i, mod in enumerate(self._recently_loaded):
+            module_id = mod.miniflask_obj.module_id_initial
+            is_last = i == len(self._recently_loaded) - 1
+            has_children = len(mod.miniflask_obj._recently_loaded) > 0
+            if is_last:
+                tree_symb         = "    " #"└── "
+                tree_symb_current = "╰── "
+            elif has_children:
+                tree_symb         = "│   "
+                tree_symb_current = "│   "
+            else:
+                tree_symb         = "│   " #"├── "
+                tree_symb_current = "├── "
+            if prepend == "":
+                print(loading_text(module_id))
+            else:
+                print(prepend+tree_symb_current+loading_text(module_id))
+            if len(mod.miniflask_obj._recently_loaded) > 0:
+                mod.miniflask_obj.print_recently_loaded(prepend+tree_symb, loading_text)
 
 
     # ==================== #
@@ -263,23 +285,26 @@ class miniflask():
         if module_name in self.modules_loaded:
             return
 
-        # loading message
-        if verbose:
-            prepend = self._loadprepend if hasattr(self,'_loadprepend') else ""
-            print(prepend+loading_text(module_name))
-
         # load module
         mod = import_module(self.modules_avail[module_name]["importpath"])
         if not hasattr(mod,"register"):
             raise ValueError(highlight_error()+"Module '%s' does not register itself." % module_name)
+        mod.miniflask_obj = miniflask_wrapper(module_name, self)
 
         # remember loaded modules
         self.modules_loaded[module_name] = mod
+        self._recently_loaded.append(mod)
 
         # register events
-        mod.miniflask_obj = miniflask_wrapper(module_name, self)
-        mod.miniflask_obj._loadprepend = prepend + attr('dim')+"  ├── "+attr('reset')
         mod.register(mod.miniflask_obj)
+
+        # loading message
+        if verbose:
+            self.print_recently_loaded(prepend="", loading_text=loading_text)
+            self._recently_loaded = []
+
+
+
 
     # register default module that is loaded if none of glob is matched
     def register_default_module(self, glob, module):
@@ -438,7 +463,6 @@ class miniflask():
         keys = self.modules_loaded.keys()
         if len(self.default_modules) > 1:
             self.print_heading("Loading Automatically Requested Default Modules")
-            self._loadprepend = self._loadprepend if hasattr(self,'_loadprepend') else ""
         for glob, module in self.default_modules:
             found = [highlight_loading_module(x) for x in keys if re.search(glob, x)]
             if len(found) == 0:
@@ -614,10 +638,12 @@ relative_import_re = re.compile("(\.+)(.*)")
 class miniflask_wrapper(miniflask):
     def __init__(self, module_name, mf):
         self.module_id = module_name
+        self.module_id_initial = module_name
         self.module_name = module_name.split(".")[-1]
         self.module_base = module_name.split(".")[0]
         self.wrapped_class = mf.wrapped_class if hasattr(mf, 'wrapped_class') else mf
         self.state = state(module_name, self.wrapped_class.state, self.wrapped_class.state_default)
+        self._recently_loaded = []
 
     def _get_relative_module_id(self, module_name, offset=0):
         was_relative = False
@@ -688,7 +714,7 @@ class miniflask_wrapper(miniflask):
         auto_query = not was_relative
 
         # call load (but ensure no querying is made if relative imports were given)
-        super().load(module_name, auto_query=auto_query, **kwargs)
+        super().load(module_name, auto_query=auto_query, verbose=False, **kwargs)
 
     # overwrite state defaults
     def register_defaults(self, defaults, scope=None, **kwargs):
