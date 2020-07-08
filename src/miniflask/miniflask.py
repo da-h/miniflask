@@ -4,7 +4,7 @@ from .event import event, event_obj
 from .state import state, like
 from .dummy import miniflask_dummy
 from .util import getModulesAvail
-from .util import highlight_error, highlight_name, highlight_module, highlight_loading, highlight_loading_default, highlight_loaded_none, highlight_loaded, highlight_event, highlight_blue_line, highlight_type, highlight_val, highlight_val_overwrite, str2bool
+from .util import highlight_error, highlight_name, highlight_module, highlight_loading, highlight_loading_default, highlight_loaded_default, highlight_loading_module, highlight_loaded_none, highlight_loaded, highlight_event, highlight_type, highlight_val, highlight_val_overwrite, str2bool
 
 
 from .modules import registerPredefined
@@ -13,7 +13,7 @@ from .modules.settings import listsettings
 # global modules
 import traceback
 import sys
-from os import path, listdir, linesep
+from os import path, listdir, linesep, get_terminal_size
 from colored import fg, bg, attr
 from importlib import import_module
 from copy import copy
@@ -65,7 +65,19 @@ class miniflask():
         self.miniflask_objs = {} # local modified versions of miniflask
         registerPredefined(self.modules_avail)
         self._varid_list = []
+        self._consolecolumns, self._consolerows = get_terminal_size(0)
 
+
+    # ------- #
+    # helpers #
+    # ------- #
+    def print_heading(self,*args,color=fg('green'),margin=8):
+        line = "—"*self._consolecolumns
+        if len(args) > 0:
+            s = " ".join(args)
+            line = line[:margin] + " " + s + " " + line[margin+len(s)+2:]
+        print()
+        print(fg('blue')+attr('bold')+line+attr('reset'))
 
 
     # ==================== #
@@ -252,8 +264,9 @@ class miniflask():
             return
 
         # loading message
-        prepend = self._loadprepend if hasattr(self,'_loadprepend') else ""
-        print(prepend+loading_text(module_name))
+        if verbose:
+            prepend = self._loadprepend if hasattr(self,'_loadprepend') else ""
+            print(prepend+loading_text(module_name))
 
         # load module
         mod = import_module(self.modules_avail[module_name]["importpath"])
@@ -265,7 +278,7 @@ class miniflask():
 
         # register events
         mod.miniflask_obj = miniflask_wrapper(module_name, self)
-        mod.miniflask_obj._loadprepend = prepend + "  ├── "
+        mod.miniflask_obj._loadprepend = prepend + attr('dim')+"  ├── "+attr('reset')
         mod.register(mod.miniflask_obj)
 
     # register default module that is loaded if none of glob is matched
@@ -424,16 +437,16 @@ class miniflask():
         # ensure default_modules are loaded
         keys = self.modules_loaded.keys()
         if len(self.default_modules) > 1:
-            print("Checking Automatic Request of Default Modules")
-            self._loadprepend = (self._loadprepend if hasattr(self,'_loadprepend') else "") + "\t"
+            self.print_heading("Loading Automatically Requested Default Modules")
+            self._loadprepend = self._loadprepend if hasattr(self,'_loadprepend') else ""
         for glob, module in self.default_modules:
-            found = [highlight_module(x) for x in keys if re.search(glob, x)]
+            found = [highlight_loading_module(x) for x in keys if re.search(glob, x)]
             if len(found) == 0:
                 self.load(module, loading_text=lambda x: highlight_loading_default(glob,x))
             elif len(found) > 1:
-                print(self._loadprepend+"Modules %s apply for Glob %s." % (",".join(found), attr('dim')+glob+attr('reset')))
+                print(highlight_loaded_default(found,glob))
             else:
-                print(self._loadprepend+"Module %s applies for Glob %s." % (",".join(found), attr('dim')+glob+attr('reset')))
+                print(highlight_loaded_default(found,glob))
 
         # add variables to argparse and remember defaults
         for settings in [self.settings_parse_later,self.settings_parse_later_overwrites]:
@@ -541,10 +554,10 @@ class miniflask():
                 val = val(self.state,self.event)
                 self.state[varname] = val
 
-        print(highlight_blue_line("-"*50))
-
     def run(self, modules=["settings"], call="main"):
         try:
+
+            self.print_heading("Loading Modules:")
 
             # load required modules
             self.load(modules)
@@ -556,13 +569,16 @@ class miniflask():
             if not self.halt_parse:
 
                 # optional init event
-                self.event.optional.init()
+                if hasattr(self.event,'init'):
+                    self.print_heading("Init Event")
+                    self.event.optional.init()
 
                 # call event if exists
                 if hasattr(self.event, call):
 
                     # call the event
                     # (this is only for nicer exception output)
+                    self.print_heading("%s Event" % call)
                     if call == "main":
                         self.event.main()
                     else:

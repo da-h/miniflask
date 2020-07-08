@@ -31,15 +31,20 @@ def getModulesAvail(module_dirs, f={}):
     return f
 
 # coloring
+def highlight_loading_module(x):
+    l = len(x)
+    x = x.split(".")
+    return fg('light_gray')+".".join(x[:-1])+("" if len(x) == 1 else ".")+attr('reset')+fg('green')+attr('bold')+x[-1]+attr('reset')
+
 highlight_error = lambda: fg('red')+attr('bold')+"Error:"+attr('reset')+" "
 highlight_name = lambda x: fg('blue')+attr('bold')+x+attr('reset')
 highlight_module = lambda x: fg('green')+attr('bold')+x+attr('reset')
-highlight_loading = lambda x: "Load Module ... "+highlight_module(x)
-highlight_loading_default = lambda y,x: "Load Default Module ... "+highlight_module(x)+" (for regex "+attr('dim')+y+attr('reset')+")"
+highlight_loading = lambda x: highlight_loading_module(x)
+highlight_loading_default = lambda y,x: attr('dim')+y+attr('reset')+" ⟶  "+highlight_loading_module(x)
+highlight_loaded_default = lambda y,x: attr('dim')+x+" found modules: "+", ".join(highlight_loading_module(m) for m in y)+attr('reset')
 highlight_loaded_none = lambda x: fg('red')+x+attr('reset')
 highlight_loaded = lambda x, y: attr('underlined')+x+attr('reset')+" "+fg('green')+attr('bold')+", ".join(y)+attr('reset')
 highlight_event = lambda x: fg('light_yellow')+x+attr('reset')
-highlight_blue_line = lambda x: fg('blue')+attr('bold')+x+attr('reset')
 highlight_type = lambda x: fg('cyan')+x+attr('reset')
 highlight_val = lambda x: fg('white')+x+attr('reset')
 highlight_val_overwrite = lambda x: fg('red')+attr('bold')+x+attr('reset')
