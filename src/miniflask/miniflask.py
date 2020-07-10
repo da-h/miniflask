@@ -583,7 +583,7 @@ class miniflask():
     def run(self, modules=["settings"], call="main"):
         try:
 
-            self.print_heading("Loading Modules:")
+            self.print_heading("Loading Modules")
 
             # load required modules
             self.load(modules)
@@ -596,7 +596,7 @@ class miniflask():
 
                 # optional init event
                 if hasattr(self.event,'init'):
-                    self.print_heading("Init Event")
+                    self.print_heading("init Event")
                     self.event.optional.init()
 
                 # call event if exists
