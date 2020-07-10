@@ -1,7 +1,9 @@
 from .dummy import dummy_fn
+from .exceptions import RegisterError
 import collections
 import inspect
 from functools import partial
+from colored import fg, attr
 
 class outervar():
     pass
@@ -79,6 +81,8 @@ class event(dict):
                             kwargs["altfn"] = altfn
                         return fn(*miniflask_args,*args,**kwargs)
                 else:
+                    if not has_altfn and self.optional_value:
+                        raise RegisterError(("The event %s was called using `event.optional(..., alftn=...)`, but the function does not catch this argument.\n\n"+fg('red')+"Possible Solutions:"+attr('reset')+"\n  - add `**kwargs` or `altfn=None` to your event-function definition.\n  - Alternatively, add either `event` or `state` or both to the event-function definition. In that case miniflask can catch altfn itself, however, this may adversely affect performance if this function is callled often.") % (fg('red')+name+attr('reset')))
                     return fn
                 return fn_wrap
 
