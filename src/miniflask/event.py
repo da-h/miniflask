@@ -84,6 +84,8 @@ class event():
 
             if eobj.unique:
                 fn_wrap = fn_wrap_scope(eobj.fn, eobj.modules.state, eobj.modules.event, eobj.modules)
+                setattr(fn_wrap, 'modules', [eobj.modules.module_id])
+                setattr(fn_wrap, 'fns', [fn_wrap])
             else:
                 def multiple_fn_wrap_scope(orig_fns, modules=eobj.modules):
                     fns = [fn_wrap_scope(fn, state=module.state, event=module.event, module=module, skip_twice=True) for fn, module in zip(orig_fns,modules)]
@@ -92,8 +94,10 @@ class event():
                         for i,fn in enumerate(fns):
                             results.append(fn(*args, **kwargs))
                         return results
-                    return fn_wrap
-                fn_wrap = multiple_fn_wrap_scope(eobj.fn)
+                    return fn_wrap, fns
+                fn_wrap, fns = multiple_fn_wrap_scope(eobj.fn)
+                setattr(fn_wrap, 'modules', [m.module_id for m in eobj.modules])
+                setattr(fn_wrap, 'fns', fns)
 
         setattr(self,name, fn_wrap)
         return fn_wrap
