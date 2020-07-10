@@ -10,14 +10,13 @@ def save_traceback():
         # ignore this very function in the traceback
         return full_tb[:-1]
 
-class RegisteringException(Exception):
+class RegisterError(Exception):
 
     def __str__(self):
         base_exc = super().__str__()
-        traceback = format_traceback_list(self.traceback)
-        return base_exc + "\n\n"+fg('red')+"The variable definition occured in"+attr('reset')+":\n"""+traceback
+        return base_exc + ("\n\n"+fg('red')+"The variable definition occured in"+attr('reset')+":\n"""+format_traceback_list(self.traceback) if self.traceback is not None else "")
 
-    def __init__(self, msg='', traceback=tb.extract_stack(), *args, **kwargs):
+    def __init__(self, msg='', traceback=None, *args, **kwargs):
 
         # storing the traceback which provides useful information about where the exception occurred
         self.traceback = traceback

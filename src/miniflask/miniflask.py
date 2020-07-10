@@ -1,5 +1,5 @@
 # package modules
-from .exceptions import save_traceback, format_traceback_list, RegisteringException
+from .exceptions import save_traceback, format_traceback_list, RegisterError
 from .event import event, event_obj
 from .state import state, like
 from .dummy import miniflask_dummy
@@ -318,7 +318,7 @@ class miniflask():
         # check if is unique event. if yes, check if event already registered
         if name in self.event_objs and (unique or self.event_objs[name].unique):
             eobj = self.event_objs[name].modules if not self.event_objs[name].unique else [self.event_objs[name].modules]
-            raise ValueError(highlight_error()+"Event '%s' is unique, and thus, cannot be imported twice.\n\t(Imported by %s)" % (highlight_event(name),", ".join(["'"+highlight_module(e.module_name)+"'" for e in eobj])))
+            raise RegisterError(highlight_error()+"Event '%s' is unique, and thus, cannot be imported twice.\n\t(Imported by %s)" % (highlight_event(name),", ".join(["'"+highlight_module(e.module_name)+"'" for e in eobj])))
 
         # register event
         if name in self.event_objs:
@@ -382,7 +382,7 @@ class miniflask():
         # lists are just multiple arguments
         if isinstance(val,list):
             if len(val) == 0:
-                raise RegisteringException("Variable '%s' is registered as list (see exception below), however it is required to define the type of the list arguments for it to become accessible from cli.\n\nYour options are:\n\t- define a default list, e.g. [\"a\", \"b\", \"c\"]\n\t- define the list type, e.g. [str]\n\t- define the variable as a helper using register_helpers(...)" % (fg('red')+varname+attr('reset')), traceback=callee_traceback)
+                raise RegisterError("Variable '%s' is registered as list (see exception below), however it is required to define the type of the list arguments for it to become accessible from cli.\n\nYour options are:\n\t- define a default list, e.g. [\"a\", \"b\", \"c\"]\n\t- define the list type, e.g. [str]\n\t- define the variable as a helper using register_helpers(...)" % (fg('red')+varname+attr('reset')), traceback=callee_traceback)
             self._settings_parser_add(varname, varname_short, val[0], callee_traceback, nargs="+", default=val)
             return
 
@@ -481,7 +481,7 @@ class miniflask():
 
                 # check if exists
                 if overwrite and varname not in self.settings_parse_later:
-                    raise RegisteringException("Variable '%s' is not registered yet, however it seems like you wold like to overwrite it (see exception below)." % (fg('red')+varname+attr('reset')), traceback=callee_traceback)
+                    raise RegisterError("Variable '%s' is not registered yet, however it seems like you wold like to overwrite it (see exception below)." % (fg('red')+varname+attr('reset')), traceback=callee_traceback)
 
                 # eval dependencies/like expressions
                 if callable(val) and type(val) != type and parsefn:
@@ -613,7 +613,7 @@ class miniflask():
                     print("No event '{0}' registered. "
                           "Please make sure to register the event '{0}', "
                           "or provide a suitable event to call with mf.run(call=\"myevent\").".format(call))
-        except RegisteringException as e:
+        except RegisterError as e:
             gettrace = getattr(sys, 'gettrace', None)
 
             # check if debugger will catch this
