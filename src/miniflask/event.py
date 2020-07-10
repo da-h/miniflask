@@ -16,7 +16,7 @@ class event_obj():
             self.fn = [fn]
             self.modules = [module]
 
-class event():
+class event(dict):
     def __init__(self, mf, optional=False):
         self._mf = mf
         self.optional_value = optional

@@ -297,6 +297,8 @@ class miniflask():
 
         # register events
         mod.register(mod.miniflask_obj)
+        self.event[module_name] = mod.miniflask_obj._defined_events
+        self.event.optional[module_name] = mod.miniflask_obj._defined_events
 
         # loading message
         if verbose:
@@ -644,6 +646,7 @@ class miniflask_wrapper(miniflask):
         self.wrapped_class = mf.wrapped_class if hasattr(mf, 'wrapped_class') else mf
         self.state = state(module_name, self.wrapped_class.state, self.wrapped_class.state_default)
         self._recently_loaded = []
+        self._defined_events = {}
 
     def _get_relative_module_id(self, module_name, offset=0):
         was_relative = False
@@ -715,6 +718,11 @@ class miniflask_wrapper(miniflask):
 
         # call load (but ensure no querying is made if relative imports were given)
         super().load(module_name, auto_query=auto_query, verbose=False, **kwargs)
+
+    # overwrite state defaults
+    def register_event(self, name, fn, **kwargs):
+        self._defined_events[name] = fn
+        super().register_event(name, fn, **kwargs)
 
     # overwrite state defaults
     def register_defaults(self, defaults, scope=None, **kwargs):
