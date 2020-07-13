@@ -318,6 +318,13 @@ class miniflask():
         # check if is unique event. if yes, check if event already registered
         if name in self.event_objs and (unique or self.event_objs[name].unique):
             eobj = self.event_objs[name].modules if not self.event_objs[name].unique else [self.event_objs[name].modules]
+
+            # catch some user errors
+            if not unique and self.event_objs[name].unique:
+                raise RegisterError(highlight_error()+"Event '%s' has been registered as `unique` before, but as `non-unique` now. Please check the registrations.\n\t(Imported by %s)" % (highlight_event(name),", ".join(["'"+highlight_module(e.module_name)+"'" for e in eobj])))
+            if unique and not self.event_objs[name].unique:
+                raise RegisterError(highlight_error()+"Event '%s' has been registered as `non-unique` before, but as `unique` now. Please check the registrations.\n\t(Imported by %s)" % (highlight_event(name),", ".join(["'"+highlight_module(e.module_name)+"'" for e in eobj])))
+
             raise RegisterError(highlight_error()+"Event '%s' is unique, and thus, cannot be imported twice.\n\t(Imported by %s)" % (highlight_event(name),", ".join(["'"+highlight_module(e.module_name)+"'" for e in eobj])))
 
         # register event
