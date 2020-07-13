@@ -12,7 +12,7 @@ class miniflask_dummy():
     def getEvents(self):
         return list(zip(self.event_objs.keys(),self.event_objs.values()))
 
-    def register_event(self,name,fn,unique=False):
+    def register_event(self, name, fn, unique=False, call_before_after=True):
         self.event_objs[name] = unique
 
     def register_defaults(self,*args, **kwargs):

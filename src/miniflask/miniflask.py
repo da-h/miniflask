@@ -313,7 +313,7 @@ class miniflask():
         self.default_modules.append((glob, module))
 
     # saves function to a given (event-)name
-    def register_event(self,name,fn,unique=False):
+    def register_event(self, name, fn, unique=False, call_before_after=True):
 
         # check if is unique event. if yes, check if event already registered
         if name in self.event_objs and (unique or self.event_objs[name].unique):
@@ -332,7 +332,7 @@ class miniflask():
             self.event_objs[name].fn.append(fn)
             self.event_objs[name].modules.append(self)
         else:
-            self.event_objs[name] = event_obj(fn, unique, self)
+            self.event_objs[name] = event_obj(fn, unique, self, call_before_after)
 
     # overwrite state defaults
     # Note: the problem lies in the fact that the true id of a variable is defined as scope.key,
