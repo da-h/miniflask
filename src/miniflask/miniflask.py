@@ -272,7 +272,7 @@ class miniflask():
         # load list of modules
         if isinstance(module_name,list):
             for m in module_name:
-                self.load(m)
+                self.load(m, verbose=verbose, auto_query=auto_query, loading_text=loading_text)
             return
 
         # get id
