@@ -52,6 +52,7 @@ class miniflask():
         self._settings_parse_later_overwrites = {}
         self.settings_parser_required_arguments = []
         self.default_modules = []
+        self.bind_events = True
 
         # internal
         self.halt_parse = False
@@ -267,12 +268,12 @@ class miniflask():
         return None, ".".join(varid_list)
 
     # loads module (once)
-    def load(self, module_name, verbose=True, auto_query=True, loading_text=highlight_loading):
+    def load(self, module_name, verbose=True, auto_query=True, loading_text=highlight_loading, as_id=None, bind_events=True):
 
         # load list of modules
         if isinstance(module_name,list):
             for m in module_name:
-                self.load(m, verbose=verbose, auto_query=auto_query, loading_text=loading_text)
+                self.load(m, verbose=verbose, auto_query=auto_query, loading_text=loading_text, as_id=as_id, bind_events=bind_events)
             return
 
         # get id
@@ -282,14 +283,16 @@ class miniflask():
             raise ValueError(highlight_error()+"Module '%s' not known." % highlight_module(module_name))
 
         # check if already loaded
-        if module_name in self.modules_loaded:
+        if module_name in self.modules_loaded and as_id is None:
             return
 
         # load module
         mod = import_module(self.modules_avail[module_name]["importpath"])
         if not hasattr(mod,"register"):
             raise ValueError(highlight_error()+"Module '%s' does not register itself." % module_name)
+        module_name = module_name if as_id is None else as_id
         mod.miniflask_obj = miniflask_wrapper(module_name, self)
+        mod.miniflask_obj.bind_events = bind_events
 
         # remember loaded modules
         self.modules_loaded[module_name] = mod
@@ -314,6 +317,8 @@ class miniflask():
 
     # saves function to a given (event-)name
     def register_event(self, name, fn, unique=False, call_before_after=True):
+        if not self.bind_events:
+            return
 
         # check if is unique event. if yes, check if event already registered
         if name in self.event_objs and (unique or self.event_objs[name].unique):
@@ -706,8 +711,12 @@ class miniflask_wrapper(miniflask):
             scope, was_relative = self._get_relative_module_id(scope)
         return like(varname, alt, scope=scope, scope_name=scope_name)
 
+    # loads module dependencies as child module
+    def load_as_child(self, module_name, **kwargs):
+        self.load(module_name, as_id='.', bind_events=False, **kwargs)
+
     # enables relative imports
-    def load(self, module_name, auto_query=True, **kwargs):
+    def load(self, module_name, as_id=None, auto_query=True, **kwargs):
 
         # if nothing given, ignore
         if module_name is None:
@@ -716,15 +725,20 @@ class miniflask_wrapper(miniflask):
         # if list given, iterate over list
         if isinstance(module_name, list):
             for mname in module_name:
-                self.load(mname, auto_query=auto_query, **kwargs)
+                self.load(mname, as_id=as_id, auto_query=auto_query, **kwargs)
             return
+
+        # if as_id given, determine new module_name
+        if as_id.endswith("."):
+            as_id += module_name.split(".")[-1]
+        as_id, _ = self._get_relative_module_id(as_id, offset=1)
 
         # parse relative imports first
         module_name, was_relative = self._get_relative_module_id(module_name)
         auto_query = not was_relative
 
         # call load (but ensure no querying is made if relative imports were given)
-        super().load(module_name, auto_query=auto_query, verbose=False, **kwargs)
+        super().load(module_name, auto_query=auto_query, verbose=False, as_id=as_id, **kwargs)
 
     # overwrite state defaults
     def register_event(self, name, fn, **kwargs):
