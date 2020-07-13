@@ -48,8 +48,8 @@ class miniflask():
 
         # arguments from cli-stdin
         self.settings_parser = ArgumentParser(usage=sys.argv[0]+" modulelist [optional arguments]")
-        self.settings_parse_later = {}
-        self.settings_parse_later_overwrites = {}
+        self._settings_parse_later = {}
+        self._settings_parse_later_overwrites = {}
         self.settings_parser_required_arguments = []
         self.default_modules = []
 
@@ -380,9 +380,9 @@ class miniflask():
 
             # actual initialization is done when all modules has been parsed
             if overwrite:
-                self.settings_parse_later_overwrites[varname] = (varname_short, val, cliargs, parsefn, callee_traceback)
+                self._settings_parse_later_overwrites[varname] = (varname_short, val, cliargs, parsefn, callee_traceback)
             else:
-                self.settings_parse_later[varname] = (varname_short, val, cliargs, parsefn, callee_traceback)
+                self._settings_parse_later[varname] = (varname_short, val, cliargs, parsefn, callee_traceback)
 
     def _settings_parser_add(self, varname, varname_short, val, callee_traceback, nargs=None, default=None):
 
@@ -482,12 +482,12 @@ class miniflask():
                 print(highlight_loaded_default(found,glob))
 
         # add variables to argparse and remember defaults
-        for settings in [self.settings_parse_later,self.settings_parse_later_overwrites]:
-            overwrite = settings == self.settings_parse_later_overwrites 
+        for settings in [self._settings_parse_later,self._settings_parse_later_overwrites]:
+            overwrite = settings == self._settings_parse_later_overwrites 
             for varname, (varname_short, val, cliargs, parsefn, callee_traceback) in settings.items():
 
                 # check if exists
-                if overwrite and varname not in self.settings_parse_later:
+                if overwrite and varname not in self._settings_parse_later:
                     raise RegisterError("Variable '%s' is not registered yet, however it seems like you wold like to overwrite it (see exception below)." % (fg('red')+varname+attr('reset')), traceback=callee_traceback)
 
                 # eval dependencies/like expressions
@@ -505,7 +505,7 @@ class miniflask():
 
                     # add to argument parser
                     # Note: the the last value (an overwrite-variable) should be the one that generates the argparser)
-                    if overwrite or varname not in self.settings_parse_later_overwrites:
+                    if overwrite or varname not in self._settings_parse_later_overwrites:
                         self._settings_parser_add(varname, varname_short, the_val, callee_traceback)
 
                     # remember default state
@@ -576,7 +576,7 @@ class miniflask():
             self.settings_parser.error(linesep+linesep.join(["The following argument is required: "+" or ".join(["--"+arg for arg in reversed(args)]) for args in missing_arguments]))
 
         # finally parse lambda-dependencies
-        for varname, (varname_short, val, cliargs, parsefn, callee_traceback) in self.settings_parse_later.items():
+        for varname, (varname_short, val, cliargs, parsefn, callee_traceback) in self._settings_parse_later.items():
             # Note: if current state equals state_default it has not been overwritten by user, thus lambda can be evaluated again
             # Three cases exist in wich lambda expression shall be recalculated:
             # The value is a function AND one of

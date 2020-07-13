@@ -106,7 +106,7 @@ class event(dict):
                 setattr(fn_wrap, 'modules', [m.module_id for m in eobj.modules])
                 setattr(fn_wrap, 'fns', fns)
 
-        setattr(self,name, fn_wrap)
+        setattr(self, name, fn_wrap)
         return fn_wrap
 
 
