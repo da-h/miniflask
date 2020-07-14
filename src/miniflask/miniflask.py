@@ -486,6 +486,10 @@ class miniflask():
                 if not event in self.event_objs:
                     self.load(module, loading_text=lambda x: highlight_loading_default(event,x))
                 else:
+                    found = self.event_objs[event].modules
+                    if not isinstance(found,list):
+                        found = [found]
+                    found = [f.module_id for f in found]
                     print(highlight_loaded_default(found,event))
             elif glob:
                 found = [highlight_loading_module(x) for x in keys if re.search(glob, x)]
