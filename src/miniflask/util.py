@@ -7,14 +7,14 @@ def getModulesAvail(module_dirs, f={}):
         basename_dir = path.basename(dir)
         for (dirpath, dirnames, filenames) in walk(dir):
             module_name_id = base_module_name+"."+dirpath[len(dir)+1:].replace(path.sep,".")
-            import_path = basename_dir+"."+dirpath[len(dir)+1:].replace(path.sep,".")
+            import_path = ((basename_dir+".") if not basename_dir.endswith('.') else "") +dirpath[len(dir)+1:].replace(path.sep,".")
 
             # empty module id is not allowed
             if len(module_name_id) == 0:
                 continue
 
             # ignore sub directories
-            if path.exists(path.join(dirpath,".ignoredir")) or path.basename(dirpath).startswith("."):
+            if path.exists(path.join(dirpath,".ignoredir")) or (path.basename(dirpath).startswith(".") and not dirpath.endswith('.')):
                 dirnames[:] = []
                 continue
 
