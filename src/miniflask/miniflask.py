@@ -729,9 +729,10 @@ class miniflask_wrapper(miniflask):
             return
 
         # if as_id given, determine new module_name
-        if as_id.endswith("."):
-            as_id += module_name.split(".")[-1]
-        as_id, _ = self._get_relative_module_id(as_id, offset=1)
+        if as_id:
+            if as_id.endswith("."):
+                as_id += module_name.split(".")[-1]
+            as_id, _ = self._get_relative_module_id(as_id, offset=1)
 
         # parse relative imports first
         module_name, was_relative = self._get_relative_module_id(module_name)
