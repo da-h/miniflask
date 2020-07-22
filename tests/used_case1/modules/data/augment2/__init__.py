@@ -1,9 +1,13 @@
+from random import randrange
 
 def augment(state, event, ds):
-    return [state["fn"]+"("]+ds+[")"]
+    d = list(ds)
+    i = randrange(0,len(d))
+    d[i] = "·"
+    return "".join(d)
 
 def register(mf):
     mf.register_defaults({
-        "fn": "transform"
+        "remove": "a"
     })
     mf.register_event("dataset_augment", augment, unique=True)

@@ -1,9 +1,12 @@
+from colored import fg
+
 def dataloader(state, event):
-    ds = event.dataset()
-    for i in range(state["size"]):
-        ds_batch = event.optional.dataset_augment(ds)
-        yield ds_batch+" Batch N°"+str(i)+ " of "+str(state.all["data.batches.size"])
-    print(ds)
+    ds = list(event.dataset())
+    for i in range(len(ds)//state["size"]):
+        batch = ds[i*state["size"]:(i+1)*state["size"]]
+        batch = event.optional.dataset_augment(batch, altfn=lambda x:x)
+        yield fg('blue')+"".join(batch)+fg('white')+" Batch N°"+str(i)+ " of "+str(state.all["modules.data.batches.size"])
+    # print(ds)
 
 def register(mf):
     mf.register_defaults({

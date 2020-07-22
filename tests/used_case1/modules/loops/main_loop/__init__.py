@@ -1,4 +1,3 @@
-import module3
 
 def loop(state, event):
     for i in range(state["epoch"]):
