@@ -271,6 +271,8 @@ class miniflask():
     def load(self, module_name, verbose=True, auto_query=True, loading_text=highlight_loading, as_id=None, bind_events=True):
 
         # load list of modules
+        if isinstance(module_name, str) and "," in module_name:
+            module_name = module_name.split(",")
         if isinstance(module_name,list):
             for m in module_name:
                 self.load(m, verbose=verbose, auto_query=auto_query, loading_text=loading_text, as_id=as_id, bind_events=bind_events)
@@ -737,6 +739,8 @@ class miniflask_wrapper(miniflask):
             return
 
         # if list given, iterate over list
+        if isinstance(module_name, str) and "," in module_name:
+            module_name = module_name.split(",")
         if isinstance(module_name, list):
             for mname in module_name:
                 self.load(mname, as_id=as_id, auto_query=auto_query, **kwargs)
