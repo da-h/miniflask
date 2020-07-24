@@ -1,3 +1,4 @@
+import sys
 from colored import fg, bg, attr
 import re
 from .util import get_varid_from_fuzzy, highlight_error, highlight_module
@@ -15,15 +16,13 @@ class state(dict):
     def scope(self, module_name, local=False):
         return state(self.module_id+"."+module_name if local else module_name, self.state, self.state_default)
 
-    def _get_fuzzy(self, name):
-        module_id, name = self._mf._getModuleIdFromVarId(name)
-        name, was_relative = self._mf._get_relative_module_id(name)
-        return name
-
     def __contains__(self, name):
         # check if key already known from this state-object
         if name in self.fuzzy_names:
             return True
+
+        # intern the string
+        name = sys.intern(name)
 
         # check if is internal variable
         module_name = self.module_id+"."+name
@@ -50,11 +49,15 @@ class state(dict):
         # cache for next use
         self.fuzzy_names[found_varids[0]] = name
         return True
+
     def __getitem__(self, name):
 
         # check if key already known from this state-object
         if name in self.fuzzy_names:
             return self.all[self.fuzzy_names[name]]
+
+        # intern the string
+        name = sys.intern(name)
 
         # check if is internal variable
         module_name = self.module_id+"."+name
@@ -81,12 +84,16 @@ class state(dict):
         # cache for next use
         self.fuzzy_names[found_varids[0]] = name
         return self.all[found_varids[0]]
+
     def __setitem__(self, name, val):
 
         # check if key already known from this state-object
         if name in self.fuzzy_names:
             self.all[self.fuzzy_names[name]] = val
             return
+
+        # intern the string
+        name = sys.intern(name)
 
         # check if is internal variable
         module_name = self.module_id+"."+name
