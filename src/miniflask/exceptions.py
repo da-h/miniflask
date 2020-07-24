@@ -23,6 +23,21 @@ class RegisterError(Exception):
 
         super().__init__(msg)
 
+class StateKeyError(Exception):
+
+    def __str__(self):
+        base_exc = super().__str__()
+        return base_exc + ("\n\n"+fg('red')+"The Key Error occured in"+attr('reset')+":\n"""+format_traceback_list(self.traceback) if self.traceback is not None else "")
+
+    def __init__(self, msg='', traceback=None, *args, **kwargs):
+
+        # storing the traceback which provides useful information about where the exception occurred
+        self.traceback = traceback
+
+        super().__init__(msg)
+
+
+
 class TracebackException(Exception):
     pass
 

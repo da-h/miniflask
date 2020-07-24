@@ -1,10 +1,10 @@
 # package modules
-from .exceptions import save_traceback, format_traceback_list, RegisterError
+from .exceptions import save_traceback, format_traceback_list, RegisterError, StateKeyError
 from .event import event, event_obj
 from .state import state, like
 from .dummy import miniflask_dummy
 from .util import getModulesAvail
-from .util import highlight_error, highlight_name, highlight_module, highlight_loading, highlight_loading_default, highlight_loaded_default, highlight_loading_module, highlight_loaded_none, highlight_loaded, highlight_event, highlight_type, highlight_val, highlight_val_overwrite, str2bool
+from .util import highlight_error, highlight_name, highlight_module, highlight_loading, highlight_loading_default, highlight_loaded_default, highlight_loading_module, highlight_loaded_none, highlight_loaded, highlight_event, highlight_type, highlight_val, highlight_val_overwrite, str2bool, get_varid_from_fuzzy
 
 
 from .modules import registerPredefined
@@ -237,27 +237,30 @@ class miniflask():
         return None
 
     # maps 'folder.subfolder.module.list.of.vars' to 'folder.subfoldder.module'
-    def _getModuleIdFromVarId(self, varid, varid_list, scope=None):
+    def _getModuleIdFromVarId(self, varid, varid_list=None, scope=None):
 
         # try to use scope.default as module id
-        try:
-            module_id = self.getModuleId(scope+".default")
-            if varid.startswith(scope):
-                varid = varid[len(scope)+1:]
-            return module_id, varid
-        except ValueError as e:
-            pass
+        if scope is not None:
+            try:
+                module_id = self.getModuleId(scope+".default")
+                if varid.startswith(scope):
+                    varid = varid[len(scope)+1:]
+                return module_id, varid
+            except ValueError as e:
+                pass
 
-        # try to use scope as module id
-        try:
-            module_id = self.getModuleId(scope)
-            if varid.startswith(scope):
-                varid = varid[len(scope)+1:]
-            return module_id, varid
-        except ValueError as e:
-            pass
+            # try to use scope as module id
+            try:
+                module_id = self.getModuleId(scope)
+                if varid.startswith(scope):
+                    varid = varid[len(scope)+1:]
+                return module_id, varid
+            except ValueError as e:
+                pass
 
         # no we have to work out which module may be meant
+        if varid_list is None:
+            varid_list = varid.split(".")
         for i in range(len(varid_list)-1,0,-1):
             test_id = ".".join(varid_list[:i])
             try:
@@ -539,7 +542,7 @@ class miniflask():
                         self.state_default[varname] = the_val
 
         # add help message
-        self.settings_parser.print_help = lambda: (print("usage: modulelist [optional arguments]"),print(),print("optional arguments (and their defaults):"),print(listsettings(state("",self.state,self.state_default),self.event)))
+        self.settings_parser.print_help = lambda: (print("usage: modulelist [optional arguments]"),print(),print("optional arguments (and their defaults):"),print(listsettings(state("",self.state,self.state_default),self.event, self)))
 
         # fuzzy matching the settings
         if fuzzy_args:
@@ -559,18 +562,8 @@ class miniflask():
                 if varid in self._varid_list:
                     continue
 
-                # check for direct match first
-                r = re.compile("^(.*\.)?%s$" % varid)
-                found_varids = list(filter(r.match, self._varid_list))
-
-                # if no matching varid found, check for fuzzy identifier
-                if len(found_varids) == 0:
-                    r = re.compile("^(.*\.)?%s$" % varid.replace(".","\.(.*\.)*"))
-                    found_varids = list(filter(r.match, self._varid_list))
-
-                # if more than one module found, use default module-variables
-                if len(found_varids) > 1:
-                    found_varids = list(filter(lambda x: "default." in x, found_varids))
+                # fuzzy match with all variable ids
+                found_varids = get_varid_from_fuzzy(varid, self._varid_list)
 
                 # if no matching varid found, check for fuzzy identifier
                 if len(found_varids) > 1:
@@ -645,7 +638,7 @@ class miniflask():
                     print("No event '{0}' registered. "
                           "Please make sure to register the event '{0}', "
                           "or provide a suitable event to call with mf.run(call=\"myevent\").".format(call))
-        except RegisterError as e:
+        except (RegisterError,StateKeyError) as e:
             gettrace = getattr(sys, 'gettrace', None)
 
             # check if debugger will catch this
@@ -676,7 +669,7 @@ class miniflask_wrapper(miniflask):
         self.module_name = module_name.split(".")[-1]
         self.module_base = module_name.split(".")[0]
         self.wrapped_class = mf.wrapped_class if hasattr(mf, 'wrapped_class') else mf
-        self.state = state(module_name, self.wrapped_class.state, self.wrapped_class.state_default)
+        self.state = state(module_name, self.wrapped_class.state, self.wrapped_class.state_default, self)
         self._recently_loaded = []
         self._defined_events = {}
 
