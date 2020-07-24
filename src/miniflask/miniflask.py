@@ -381,7 +381,7 @@ class miniflask():
 
             # actual initialization is done when all modules has been parsed
             if overwrite:
-                self._settings_parse_later_overwrites_list.append((varname, val, cliargs, parsefn, callee_traceback) )
+                self._settings_parse_later_overwrites_list.append((varname, val, cliargs, parsefn, callee_traceback, self) )
             else:
 
                 # pre-initialize variable for possible lambda expressions in second pass
@@ -390,7 +390,7 @@ class miniflask():
                 else:
                     self.state[varname] = val
 
-                self._settings_parse_later[varname] = (val, cliargs, parsefn, callee_traceback)
+                self._settings_parse_later[varname] = (val, cliargs, parsefn, callee_traceback, self)
 
     def _settings_parser_add(self, varname, val, callee_traceback, nargs=None, default=None):
 
@@ -494,7 +494,7 @@ class miniflask():
                     print(highlight_loaded_default(found,glob))
 
         # check fuzzy matching of overwrites
-        for varname, val, cliargs, parsefn, callee_traceback in self._settings_parse_later_overwrites_list:
+        for varname, val, cliargs, parsefn, callee_traceback, self in self._settings_parse_later_overwrites_list:
             if varname not in self._settings_parse_later:
                 found_varids = get_varid_from_fuzzy(varname,self._settings_parse_later.keys()) 
                 if len(found_varids) == 0:
@@ -502,14 +502,14 @@ class miniflask():
                 elif len(found_varids) > 1:
                     raise RegisterError("Variable-Identifier '%s' is not unique. Found %i variables:\n\t%s\n\n    Call:\n        %s" % (highlight_module(found_varids), len(found_varids), "\n\t".join(found_varids), " ".join(found_varids)), traceback=callee_traceback)
                 else:
-                    self._settings_parse_later_overwrites[found_varids[0]] = (val, cliargs, parsefn, callee_traceback)
+                    self._settings_parse_later_overwrites[found_varids[0]] = (val, cliargs, parsefn, callee_traceback, self)
             else:
-                self._settings_parse_later_overwrites[varname] = (val, cliargs, parsefn, callee_traceback)
+                self._settings_parse_later_overwrites[varname] = (val, cliargs, parsefn, callee_traceback, self)
 
         # add variables to argparse and remember defaults
         for settings in [self._settings_parse_later,self._settings_parse_later_overwrites]:
             overwrite = settings == self._settings_parse_later_overwrites 
-            for varname, (val, cliargs, parsefn, callee_traceback) in settings.items():
+            for varname, (val, cliargs, parsefn, callee_traceback, _mf) in settings.items():
                 varname_orig = varname
 
                 # eval dependencies/like expressions
@@ -588,7 +588,7 @@ class miniflask():
             self.settings_parser.error(linesep+linesep.join(["The following argument is required: "+" or ".join(["--"+arg for arg in reversed(args)]) for args in missing_arguments]))
 
         # finally parse lambda-dependencies
-        for varname, (val, cliargs, parsefn, callee_traceback) in self._settings_parse_later.items():
+        for varname, (val, cliargs, parsefn, callee_traceback, _mf) in self._settings_parse_later.items():
             # Note: if current state equals state_default it has not been overwritten by user, thus lambda can be evaluated again
             # Three cases exist in wich lambda expression shall be recalculated:
             # The value is a function AND one of
@@ -596,7 +596,7 @@ class miniflask():
             # 2. the value has not been overwritten by user and the value is a normal lambda/function
             # 3. the value has not been overwritten by user and the value is a like expression
             while callable(val) and type(val) != type and parsefn and (not cliargs or self.state[varname] == self.state_default[varname] or (isinstance(self.state_default[varname], like) and self.state[varname] == self.state_default[varname].default)):
-                val = val(self.state,self.event)
+                val = val(_mf.state,_mf.event)
                 self.state[varname] = val
         
         self.argparse_called = True
