@@ -49,6 +49,7 @@ class miniflask():
         # arguments from cli-stdin
         self.settings_parser = ArgumentParser(usage=sys.argv[0]+" modulelist [optional arguments]")
         self._settings_parse_later = {}
+        self._settings_parse_later_overwrites_list = []
         self._settings_parse_later_overwrites = {}
         self.settings_parser_required_arguments = []
         self.default_modules = []
@@ -367,45 +368,37 @@ class miniflask():
             varname = scope+"."+key if len(scope) > 0 else key
             key_split = varname.split(".")
 
-            # short name is only given iff corresponding module has a unique short id
-            varname_short = None
-
             # get module id from global varname identifier
             module_id, key = self._getModuleIdFromVarId(varname,key_split,scope=scope)
             if module_id is not None:
 
                 # retrieve real local key name
                 module_short_id = self.getModuleShortId(module_id)
-                if module_short_id is not None:
-                    varname_short = module_short_id+"."+key
 
                 # recreate actual key
                 module_id = self.getModuleId(module_id)
                 varname = module_id + "." + key
 
-            # ignore if short varname is varname
-            if varname_short == varname:
-                varname_short = None
-
-            # pre-initialize variable for possible lambda expressions in second pass
-            if hasattr(self.state,"all"):
-                self.state.all[varname] = val
-            else:
-                self.state[varname] = val
-
             # actual initialization is done when all modules has been parsed
             if overwrite:
-                self._settings_parse_later_overwrites[varname] = (varname_short, val, cliargs, parsefn, callee_traceback)
+                self._settings_parse_later_overwrites_list.append((varname, val, cliargs, parsefn, callee_traceback) )
             else:
-                self._settings_parse_later[varname] = (varname_short, val, cliargs, parsefn, callee_traceback)
 
-    def _settings_parser_add(self, varname, varname_short, val, callee_traceback, nargs=None, default=None):
+                # pre-initialize variable for possible lambda expressions in second pass
+                if hasattr(self.state,"all"):
+                    self.state.all[varname] = val
+                else:
+                    self.state[varname] = val
+
+                self._settings_parse_later[varname] = (val, cliargs, parsefn, callee_traceback)
+
+    def _settings_parser_add(self, varname, val, callee_traceback, nargs=None, default=None):
 
         # lists are just multiple arguments
         if isinstance(val,list):
             if len(val) == 0:
                 raise RegisterError("Variable '%s' is registered as list (see exception below), however it is required to define the type of the list arguments for it to become accessible from cli.\n\nYour options are:\n\t- define a default list, e.g. [\"a\", \"b\", \"c\"]\n\t- define the list type, e.g. [str]\n\t- define the variable as a helper using register_helpers(...)" % (fg('red')+varname+attr('reset')), traceback=callee_traceback)
-            self._settings_parser_add(varname, varname_short, val[0], callee_traceback, nargs="+", default=val)
+            self._settings_parser_add(varname, val[0], callee_traceback, nargs="+", default=val)
             return
 
         # get argument type from value (this an be int, but also 42 for instance)
@@ -421,10 +414,7 @@ class miniflask():
         if type(val) != type:
             kwarg_long["default"] = kwarg_short["default"] = default if default is not None else val
         else:
-            if varname_short:
-                self.settings_parser_required_arguments.append([varname,varname_short])
-            else:
-                self.settings_parser_required_arguments.append([varname])
+            self.settings_parser_required_arguments.append([varname])
 
         # for bool: enable --varname as alternative for --varname true
         if argtype == str2bool and nargs != '+':
@@ -434,8 +424,6 @@ class miniflask():
         # define the actual arguments
         if argtype in [int,str,float,str2bool]:
             self.settings_parser.add_argument( "--"+varname, **kwarg_long)
-            if varname_short:
-                self.settings_parser.add_argument( "--"+varname_short, **kwarg_short)
         else:
             raise ValueError("Type '%s' not supported. (Used for setting '%s')" % (type(val), varname))
 
@@ -443,8 +431,6 @@ class miniflask():
         # Note: this has to be defined AFTER --varname
         if argtype == str2bool and nargs != '+':
             self.settings_parser.add_argument('--no-'+varname, dest=varname, action='store_false')
-            if varname_short:
-                self.settings_parser.add_argument('--no-'+varname_short, dest=varname, action='store_false', help=argparse_SUPPRESS)
 
         # remember the varname also for fuzzy searching
         self._varid_list.append(varname)
@@ -507,14 +493,24 @@ class miniflask():
                 else:
                     print(highlight_loaded_default(found,glob))
 
+        # check fuzzy matching of overwrites
+        for varname, val, cliargs, parsefn, callee_traceback in self._settings_parse_later_overwrites_list:
+            if varname not in self._settings_parse_later:
+                found_varids = get_varid_from_fuzzy(varname,self._settings_parse_later.keys()) 
+                if len(found_varids) == 0:
+                    raise RegisterError("Variable '%s' is not registered yet, however it seems like you wold like to overwrite it (see exception below)." % (fg('red')+varname+attr('reset')), traceback=callee_traceback)
+                elif len(found_varids) > 1:
+                    raise RegisterError("Variable-Identifier '%s' is not unique. Found %i variables:\n\t%s\n\n    Call:\n        %s" % (highlight_module(found_varids), len(found_varids), "\n\t".join(found_varids), " ".join(found_varids)), traceback=callee_traceback)
+                else:
+                    self._settings_parse_later_overwrites[found_varids[0]] = (val, cliargs, parsefn, callee_traceback)
+            else:
+                self._settings_parse_later_overwrites[varname] = (val, cliargs, parsefn, callee_traceback)
+
         # add variables to argparse and remember defaults
         for settings in [self._settings_parse_later,self._settings_parse_later_overwrites]:
             overwrite = settings == self._settings_parse_later_overwrites 
-            for varname, (varname_short, val, cliargs, parsefn, callee_traceback) in settings.items():
-
-                # check if exists
-                if overwrite and varname not in self._settings_parse_later:
-                    raise RegisterError("Variable '%s' is not registered yet, however it seems like you wold like to overwrite it (see exception below)." % (fg('red')+varname+attr('reset')), traceback=callee_traceback)
+            for varname, (val, cliargs, parsefn, callee_traceback) in settings.items():
+                varname_orig = varname
 
                 # eval dependencies/like expressions
                 if callable(val) and type(val) != type and parsefn:
@@ -532,7 +528,7 @@ class miniflask():
                     # add to argument parser
                     # Note: the the last value (an overwrite-variable) should be the one that generates the argparser)
                     if overwrite or varname not in self._settings_parse_later_overwrites:
-                        self._settings_parser_add(varname, varname_short, the_val, callee_traceback)
+                        self._settings_parser_add(varname, the_val, callee_traceback)
 
                     # remember default state
                     if isinstance(val,like):
@@ -592,7 +588,7 @@ class miniflask():
             self.settings_parser.error(linesep+linesep.join(["The following argument is required: "+" or ".join(["--"+arg for arg in reversed(args)]) for args in missing_arguments]))
 
         # finally parse lambda-dependencies
-        for varname, (varname_short, val, cliargs, parsefn, callee_traceback) in self._settings_parse_later.items():
+        for varname, (val, cliargs, parsefn, callee_traceback) in self._settings_parse_later.items():
             # Note: if current state equals state_default it has not been overwritten by user, thus lambda can be evaluated again
             # Three cases exist in wich lambda expression shall be recalculated:
             # The value is a function AND one of
