@@ -56,6 +56,7 @@ class miniflask():
 
         # internal
         self.halt_parse = False
+        self.argparse_called = False
         self.event_objs = {}
         self.event = event(self, optional=False)
         self.event.optional = event(self, optional=True)
@@ -452,7 +453,8 @@ class miniflask():
         self.halt_parse = True
 
     def parse_args(self, argv=None, optional=True, fuzzy_args=True):
-        self.halt_parse = False
+        if self.argparse_called:
+            raise SystemError("The function `parse_args` has been called already. Did you maybe called `mf.parse_args()` and `mf.run()` in the same script? Solutions are:\n\t- Please use only one of those functions.\n\t- If you actually need both functions, please do not hesitate to write an issue on\n\t\thttps://github/da-h/miniflask/issues\n\t  to explain you used case.\n\t  (It's not hard to implement, but I need to know, if and when this functionality is needed. ;) )")
 
         if not argv:
             argv = sys.argv#[1:]
@@ -607,6 +609,8 @@ class miniflask():
             while callable(val) and type(val) != type and parsefn and (not cliargs or self.state[varname] == self.state_default[varname] or (isinstance(self.state_default[varname], like) and self.state[varname] == self.state_default[varname].default)):
                 val = val(self.state,self.event)
                 self.state[varname] = val
+        
+        self.argparse_called = True
 
     def run(self, modules=["settings"], call="main"):
         try:
