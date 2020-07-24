@@ -379,16 +379,16 @@ class miniflask():
                 module_id = self.getModuleId(module_id)
                 varname = module_id + "." + key
 
+            # pre-initialize variable for possible lambda expressions in second pass
+            if hasattr(self.state,"all"):
+                self.state.all[varname] = val
+            else:
+                self.state[varname] = val
+
             # actual initialization is done when all modules has been parsed
             if overwrite:
                 self._settings_parse_later_overwrites_list.append((varname, val, cliargs, parsefn, callee_traceback, self) )
             else:
-
-                # pre-initialize variable for possible lambda expressions in second pass
-                if hasattr(self.state,"all"):
-                    self.state.all[varname] = val
-                else:
-                    self.state[varname] = val
 
                 self._settings_parse_later[varname] = (val, cliargs, parsefn, callee_traceback, self)
 
@@ -493,6 +493,7 @@ class miniflask():
                 else:
                     print(highlight_loaded_default(found,glob))
 
+
         # check fuzzy matching of overwrites
         for varname, val, cliargs, parsefn, callee_traceback, self in self._settings_parse_later_overwrites_list:
             if varname not in self._settings_parse_later:
@@ -581,7 +582,7 @@ class miniflask():
 
         # check if required arguments are given by now
         missing_arguments = []
-        for variables  in self.settings_parser_required_arguments:
+        for variables in self.settings_parser_required_arguments:
             if self.state[variables[0]] is None:
                 missing_arguments.append(variables)
         if len(missing_arguments) > 0:
@@ -598,7 +599,7 @@ class miniflask():
             while callable(val) and type(val) != type and parsefn and (not cliargs or self.state[varname] == self.state_default[varname] or (isinstance(self.state_default[varname], like) and self.state[varname] == self.state_default[varname].default)):
                 val = val(_mf.state,_mf.event)
                 self.state[varname] = val
-        
+
         self.argparse_called = True
 
     def run(self, modules=["settings"], call="main"):
