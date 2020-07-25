@@ -64,7 +64,6 @@ import miniflask
 
 # initialize miniflask
 mf = miniflask.init(module_dirs="./modules")
-mf.parse_args()
 mf.run()
 ```
 
