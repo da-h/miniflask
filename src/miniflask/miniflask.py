@@ -379,16 +379,17 @@ class miniflask():
                 module_id = self.getModuleId(module_id)
                 varname = module_id + "." + key
 
-            # pre-initialize variable for possible lambda expressions in second pass
-            if hasattr(self.state,"all"):
-                self.state.all[varname] = val
-            else:
-                self.state[varname] = val
-
             # actual initialization is done when all modules has been parsed
             if overwrite:
                 self._settings_parse_later_overwrites_list.append((varname, val, cliargs, parsefn, callee_traceback, self) )
             else:
+
+                # pre-initialize variable for possible lambda expressions in second pass
+                # (we can only be sure, that the varname is the unique varid if we are not overwriting)
+                if hasattr(self.state,"all"):
+                    self.state.all[varname] = val
+                else:
+                    self.state[varname] = val
 
                 self._settings_parse_later[varname] = (val, cliargs, parsefn, callee_traceback, self)
 
@@ -508,17 +509,19 @@ class miniflask():
                 self._settings_parse_later_overwrites[varname] = (val, cliargs, parsefn, callee_traceback, self)
 
         # add variables to argparse and remember defaults
-        for settings in [self._settings_parse_later,self._settings_parse_later_overwrites]:
+        settings_recheck = {}
+        for settings in [self._settings_parse_later,self._settings_parse_later_overwrites, settings_recheck]:
             overwrite = settings == self._settings_parse_later_overwrites 
+            recheck = settings == settings_recheck
             for varname, (val, cliargs, parsefn, callee_traceback, _mf) in settings.items():
-                varname_orig = varname
+                is_fn = callable(val) and type(val) != type and parsefn
 
                 # eval dependencies/like expressions
-                if callable(val) and type(val) != type and parsefn:
+                if is_fn:
                     try:
                         the_val = val
                         while callable(the_val) and type(the_val) != type:
-                            the_val = the_val(self.state,self.event)
+                            the_val = the_val(_mf.state,self.event)
                     except RecursionError as e:
                         raise RecursionError("In parsing of value '%s'." % varname)
                 else:
@@ -526,17 +529,24 @@ class miniflask():
 
                 if cliargs:
 
-                    # add to argument parser
-                    # Note: the the last value (an overwrite-variable) should be the one that generates the argparser)
-                    if overwrite or varname not in self._settings_parse_later_overwrites:
-                        self._settings_parser_add(varname, the_val, callee_traceback)
-
                     # remember default state
                     if isinstance(val,like):
                         val.default = the_val
                         self.state_default[varname] = val
                     else:
                         self.state_default[varname] = the_val
+                    self.state[varname] = the_val
+
+                    # repeat function parsing later
+                    # (in case we have overwritten a dependency during second pass, overwrite == True)
+                    if is_fn and not recheck:
+                        settings_recheck[varname] = (val, cliargs, parsefn, callee_traceback, _mf)
+
+                    # add to argument parser
+                    # Note: the condition ensures that the last value (an overwrite-variable) should be the one that generates the argparser)
+                    if recheck or overwrite and varname not in settings_recheck or varname not in self._settings_parse_later_overwrites and varname not in settings_recheck:
+                        self._settings_parser_add(varname, the_val, callee_traceback)
+
 
         # add help message
         self.settings_parser.print_help = lambda: (print("usage: modulelist [optional arguments]"),print(),print("optional arguments (and their defaults):"),print(listsettings(state("",self.state,self.state_default),self.event, self)))
