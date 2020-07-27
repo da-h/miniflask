@@ -316,15 +316,13 @@ class miniflask():
             self._recently_loaded = []
 
 
-
-
     # register default module that is loaded if none of glob is matched
-    def register_default_module(self, module, required_event=None, required_id=None):
+    def register_default_module(self, module, required_event=None, required_id=None, overwrite_globals={}):
         if required_event and required_id:
             raise RegisterError("Default Modules should depend either on a event interface OR a regular expression. However, both are given")
         if not required_event and not required_id:
             raise RegisterError("Default Modules should depend either on a event interface OR a regular expression. However, none are given")
-        self.default_modules.append((module, required_event, required_id))
+        self.default_modules.append((module, required_event, required_id, overwrite_globals))
 
     # saves function to a given (event-)name
     def register_event(self, name, fn, unique=False, call_before_after=True):
@@ -475,10 +473,11 @@ class miniflask():
         keys = self.modules_loaded.keys()
         if len(self.default_modules) > 1:
             self.print_heading("Loading Automatically Requested Default Modules")
-        for module, event, glob in self.default_modules:
+        for module, event, glob, overwrite_globals in self.default_modules:
             if event:
                 if not event in self.event_objs:
                     self.load(module, loading_text=lambda x: highlight_loading_default(event,x))
+                    self.register_defaults(overwrite_globals, scope="", overwrite=True)
                 else:
                     found = self.event_objs[event].modules
                     if not isinstance(found,list):
@@ -489,6 +488,7 @@ class miniflask():
                 found = [highlight_loading_module(x) for x in keys if re.search(glob, x)]
                 if len(found) == 0:
                     self.load(module, loading_text=lambda x: highlight_loading_default(glob,x))
+                    self.register_defaults(overwrite_globals, scope="", overwrite=True)
                 elif len(found) > 1:
                     print(highlight_loaded_default(found,glob))
                 else:
