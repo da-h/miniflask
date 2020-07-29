@@ -2,6 +2,7 @@ from miniflask.dummy import miniflask_dummy
 from colored import fg, bg, attr
 from miniflask.miniflask import highlight_module
 import re
+import typing
 
 def color_module(moduleid, short=False):
     moduleid = moduleid.split(".")
@@ -54,11 +55,12 @@ def list_func_calls(fn):
     bytecode = Bytecode(fn)
     instrs = list(reversed([instr for instr in bytecode]))
     for (ix, instr) in enumerate(instrs):
-        if instr.opname=="CALL_METHOD":
-            if instrs[ix + instr.arg + 2].argval == "event" or \
-               instrs[ix + instr.arg + 2].argval == "optional" and instrs[ix + instr.arg + 3].argval == "event":
-                load_func_instr = instrs[ix + instr.arg + 1]
-                funcs.append(load_func_instr.argval)
+        if instr.opname=="LOAD_FAST" and instr.argval == "event" and ix-2 > 0 and instrs[ix-1].opname == "LOAD_METHOD":
+            funcs.append(instrs[ix-1].argval)
+        elif instr.opname=="LOAD_FAST" and instr.argval == "event" and ix-1 > 0 and instrs[ix-1].opname == "LOAD_ATTR" and instrs[ix-1].argval == "optional" and instrs[ix-2].opname == "LOAD_METHOD":
+            funcs.append(instrs[ix-2].argval)
+        elif instr.opname=="LOAD_FAST" and instr.argval == "event" and ix-1 > 0 and instrs[ix-1].opname == "LOAD_ATTR" and instrs[ix-1].argval not in ["_mf"]:
+            funcs.append(instrs[ix-1].argval)
     return ["%s" % funcname for funcname in reversed(funcs)]
 
 
@@ -83,8 +85,15 @@ def get_event_tree(state, event, eventname, event_tree={}, only_loaded=True):
     fns = []
     for fn in _fns:
         if isinstance(fn,type):
-            continue
-            # fns = [f for f in dir(fn)]
+            for fname in dir(fn):
+                f = getattr(fn,fname)
+                if fname.startswith("__") and fname.endswith("__") and fname != "__init__":
+                    continue
+                if not callable(f) or type(f) == type:
+                    continue
+                if type(f) == typing.TypeVar:
+                    continue
+                fns.append(f)
         else:
             fns += [fn]
 
