@@ -25,26 +25,102 @@ def register(mf):
         # note all events
         module_events = mf.getModuleEvents(module_id)
         for e in module_events:
-            if e in events:
-                events[e].append(module_id)
+            event_key = (e[0],e[1][0])
+            if event_key in events:
+                events[event_key][0].append(module_id)
+                events[event_key][1].append(e[1][1])
             else:
-                events[e] = [module_id]
+                events[event_key] = ([module_id],[e[1][1]])
                 
     # register actual module
     mf.register_defaults({
         "event": "",
         "module": "",
         "long": False,
+        "tree": True,
     })
     mf.register_helpers({
         "events": events
     })
     mf.register_event('init', init)
+    mf.register_event('get_event_tree', get_event_tree, unique=True)
 
 
-def init(state):
+# adapted from https://stackoverflow.com/a/51904019
+from dis import Bytecode
+def list_func_calls(fn):
+    funcs = []
+    bytecode = Bytecode(fn)
+    instrs = list(reversed([instr for instr in bytecode]))
+    for (ix, instr) in enumerate(instrs):
+        if instr.opname=="CALL_METHOD":
+            if instrs[ix + instr.arg + 2].argval == "event" or \
+               instrs[ix + instr.arg + 2].argval == "optional" and instrs[ix + instr.arg + 3].argval == "event":
+                load_func_instr = instrs[ix + instr.arg + 1]
+                funcs.append(load_func_instr.argval)
+    return ["%s" % funcname for funcname in reversed(funcs)]
 
-    # print it
+
+def get_event_tree(state, event, eventname, event_tree={}, only_loaded=True):
+    _fns = []
+    if only_loaded:
+        modules = []
+        if (eventname,False) in state["events"]:
+            modules += state["events"][(eventname,False)][0]
+        if (eventname,True) in state["events"]:
+            modules += state["events"][(eventname,True)][0]
+        for m in modules:
+            if not m in event._mf.modules_loaded:
+                continue
+            _fns.append(event[m][eventname])
+    else:
+        if (eventname,False) in state["events"]:
+            _fns += state["events"][(eventname,False)][1]
+        if (eventname,True) in state["events"]:
+            _fns += state["events"][(eventname,True)][1]
+
+    fns = []
+    for fn in _fns:
+        if isinstance(fn,type):
+            continue
+            # fns = [f for f in dir(fn)]
+        else:
+            fns += [fn]
+
+    subevents, subevents_tree = [], []
+    for fn in fns:
+        fn_calls = list_func_calls(fn)
+        # used = set()
+        # fn_calls = [x for x in fn_calls if x not in used and (used.add(x) or True)]
+        for s in fn_calls:
+            subevents.append(s)
+            if s in event_tree:
+                subevents_tree.append(True)
+            else:
+                # breakpoint()
+                # event_tree[s] = (subevents, subevents_tree)
+                (s1,s2,_) = event.get_event_tree(s, event_tree, only_loaded=only_loaded)
+                event_tree[s] = (s1, s2)
+                subevents_tree.append((s1,s2))
+    return subevents, subevents_tree, event_tree
+
+def print_event_tree(state,event,tree,full_tree,depth=0):
+    if depth == 0:
+        print()
+        print(fg('yellow')+attr('underlined')+"Event-Calltree"+attr('reset'))
+    for name,subtree in zip(*tree):
+        unique_flag = ">"
+        print("   "*depth+fg('yellow')+unique_flag+' '+attr('reset')+name+attr('reset'))
+        if subtree != True:
+            if len(subtree) > 0:
+                print_event_tree(state,event,subtree,full_tree,depth+1)
+        else:
+            if len(full_tree[name][1]) > 0:
+                print("   "*(depth+2)+attr('dim')+"as above"+attr('reset'))
+    if depth == 0:
+        print() 
+
+def print_event_list(state,event):
     print()
     print(fg('yellow')+attr('underlined')+"Available events"+attr('reset'))
     event_list = state["events"].keys()
@@ -64,3 +140,13 @@ def init(state):
         unique_flag = "!" if e[1] else ">"
         print(fg('yellow')+unique_flag+' '+e[0]+attr('reset')+" used in "+", ".join([color_module(ev, short=not state["long"]) for ev in state["events"][e]])+attr('reset'))
     print()
+
+def init(state, event):
+
+    # print it
+    if state["tree"]:
+        event_names, event_subtrees, full_tree = event.get_event_tree('main',only_loaded=True)
+        print_event_tree(state,event,[['main'],[(event_names,event_subtrees)]],full_tree)
+    else:
+        print_event_list(state,event)
+
