@@ -527,15 +527,18 @@ class miniflask():
                 else:
                     the_val = val
 
+                # remember caculated values for other lambda expressions
+                self.state[varname] = the_val
+
+                # register user-changeable variables
                 if cliargs:
 
-                    # remember default state
+                    # remember default state for 'settings' module
                     if isinstance(val,like):
                         val.default = the_val
                         self.state_default[varname] = val
                     else:
                         self.state_default[varname] = the_val
-                    self.state[varname] = the_val
 
                     # repeat function parsing later
                     # (in case we have overwritten a dependency during second pass, overwrite == True)
@@ -551,23 +554,27 @@ class miniflask():
         # add help message
         self.settings_parser.print_help = lambda: (print("usage: modulelist [optional arguments]"),print(),print("optional arguments (and their defaults):"),print(listsettings(state("",self.state,self.state_default),self.event, self)))
 
-        # fuzzy matching the settings
-        if fuzzy_args:
-            for i in range(len(argv)):
-                varid = argv[i]
-                if not varid.startswith("--"):
-                    continue
+        # remember varids from user-args & fuzzy matching the settings
+        user_varids = {}
+        for i in range(len(argv)):
+            varid = argv[i]
+            if not varid.startswith("--"):
+                continue
 
-                # extract varid from argument
-                varid = varid[2:]
-                was_false_bool = False
-                if varid.startswith("no-"):
-                    varid = varid[3:]
-                    was_false_bool = True
+            # extract varid from argument
+            varid = varid[2:]
+            was_false_bool = False
+            if varid.startswith("no-"):
+                varid = varid[3:]
+                was_false_bool = True
 
-                # check for global direct match first
-                if varid in self._varid_list:
-                    continue
+            # check for global direct match first
+            if varid in self._varid_list:
+                # remember this varid has been overwritten by the user
+                user_varids[varid] = True
+                continue
+
+            if fuzzy_args:
 
                 # fuzzy match with all variable ids
                 found_varids = get_varid_from_fuzzy(varid, self._varid_list)
@@ -582,8 +589,14 @@ class miniflask():
                     argv[i] = highlight_module(argv[i])
                     raise ValueError(highlight_error()+"Variable '--%s' not known.\n\n    Call:\n       %s" % (highlight_module(varid)," ".join(argv)))
 
+                varid = found_varids[0]
+
                 # replace with fuzzy-found varid
                 argv[i] = ("--no-" if was_false_bool else "--")+found_varids[0]
+
+            # remember this varid has been overwritten by the user
+            user_varids[varid] = True
+
 
         # parse user overwrites (first time, s.t. lambdas change adaptively)
         settings_args = self.settings_parser.parse_args(argv[2:])
@@ -600,13 +613,12 @@ class miniflask():
 
         # finally parse lambda-dependencies
         for varname, (val, cliargs, parsefn, callee_traceback, _mf) in self._settings_parse_later.items():
-            # Note: if current state equals state_default it has not been overwritten by user, thus lambda can be evaluated again
+            # Note: if has not been overwritten by user lambda can be evaluated again
             # Three cases exist in wich lambda expression shall be recalculated:
             # The value is a function AND one of
             # 1. was helper variable, thus no cli-argument can overwrite it anyway
-            # 2. the value has not been overwritten by user and the value is a normal lambda/function
-            # 3. the value has not been overwritten by user and the value is a like expression
-            while callable(val) and type(val) != type and parsefn and (not cliargs or self.state[varname] == self.state_default[varname] or (isinstance(self.state_default[varname], like) and self.state[varname] == self.state_default[varname].default)):
+            # 2. the value has not been overwritten by user
+            while callable(val) and type(val) != type and parsefn and (not cliargs or varname not in user_varids):
                 val = val(_mf.state,_mf.event)
                 self.state[varname] = val
 
