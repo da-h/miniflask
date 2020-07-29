@@ -55,11 +55,11 @@ def list_func_calls(fn):
     bytecode = Bytecode(fn)
     instrs = list(reversed([instr for instr in bytecode]))
     for (ix, instr) in enumerate(instrs):
-        if instr.opname=="LOAD_FAST" and instr.argval == "event" and ix-2 > 0 and instrs[ix-1].opname == "LOAD_METHOD":
+        if instr.argval == "event" and ix-2 > 0 and instrs[ix-1].opname == "LOAD_METHOD":
             funcs.append(instrs[ix-1].argval)
-        elif instr.opname=="LOAD_FAST" and instr.argval == "event" and ix-1 > 0 and instrs[ix-1].opname == "LOAD_ATTR" and instrs[ix-1].argval == "optional" and instrs[ix-2].opname == "LOAD_METHOD":
+        elif instr.argval == "event" and ix-1 > 0 and instrs[ix-1].opname == "LOAD_ATTR" and instrs[ix-1].argval == "optional" and instrs[ix-2].opname == "LOAD_METHOD":
             funcs.append(instrs[ix-2].argval)
-        elif instr.opname=="LOAD_FAST" and instr.argval == "event" and ix-1 > 0 and instrs[ix-1].opname == "LOAD_ATTR" and instrs[ix-1].argval not in ["_mf"]:
+        elif instr.argval == "event" and ix-1 > 0 and instrs[ix-1].opname == "LOAD_ATTR" and instrs[ix-1].argval not in ["_mf"]:
             if instrs[ix-1].argval == "optional":
                 if ix - 2 > 0:
                     funcs.append(instrs[ix-2].argval)
