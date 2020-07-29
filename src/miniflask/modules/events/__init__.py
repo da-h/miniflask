@@ -60,7 +60,11 @@ def list_func_calls(fn):
         elif instr.opname=="LOAD_FAST" and instr.argval == "event" and ix-1 > 0 and instrs[ix-1].opname == "LOAD_ATTR" and instrs[ix-1].argval == "optional" and instrs[ix-2].opname == "LOAD_METHOD":
             funcs.append(instrs[ix-2].argval)
         elif instr.opname=="LOAD_FAST" and instr.argval == "event" and ix-1 > 0 and instrs[ix-1].opname == "LOAD_ATTR" and instrs[ix-1].argval not in ["_mf"]:
-            funcs.append(instrs[ix-1].argval)
+            if instrs[ix-1].argval == "optional":
+                if ix - 2 > 0:
+                    funcs.append(instrs[ix-2].argval)
+            else:
+                funcs.append(instrs[ix-1].argval)
     return ["%s" % funcname for funcname in reversed(funcs)]
 
 
