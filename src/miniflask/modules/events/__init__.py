@@ -38,6 +38,7 @@ def register(mf):
         "module": "",
         "long": False,
         "tree": True,
+        "only_loaded": True,
     })
     mf.register_helpers({
         "events": events
@@ -145,7 +146,7 @@ def init(state, event):
 
     # print it
     if state["tree"]:
-        event_names, event_subtrees, full_tree = event.get_event_tree('main',only_loaded=True)
+        event_names, event_subtrees, full_tree = event.get_event_tree('main',only_loaded=state["only_loaded"])
         print_event_tree(state,event,[['main'],[(event_names,event_subtrees)]],full_tree)
     else:
         print_event_list(state,event)
