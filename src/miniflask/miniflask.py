@@ -552,7 +552,13 @@ class miniflask():
 
 
         # add help message
-        self.settings_parser.print_help = lambda: (print("usage: modulelist [optional arguments]"),print(),print("optional arguments (and their defaults):"),print(listsettings(state("",self.state,self.state_default),self.event, self)))
+        print_help = False
+        if "-h" in argv:
+            argv.remove("-h")
+            print_help = True
+        if "--help" in argv:
+            argv.remove("--help")
+            print_help = True
 
         # remember varids from user-args & fuzzy matching the settings
         user_varids = {}
@@ -621,6 +627,12 @@ class miniflask():
                 val = val(_mf.state,_mf.event)
                 self.state[varname] = val
 
+        # print help message when everything is parsed
+        self.settings_parser.print_help = lambda: (print("usage: modulelist [optional arguments]"),print(),print("optional arguments (and their defaults):"),print(listsettings(state("",self.state,self.state_default),self.event)))
+        if print_help:
+            self.settings_parser.parse_args(['--help'])
+
+        # mark this instance as run
         self.argparse_called = True
 
     def run(self, modules=["settings"], call="main"):
