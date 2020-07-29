@@ -6,12 +6,11 @@ from .exceptions import StateKeyError
 
 relative_import_re = re.compile("(\.+)(.*)")
 class state(dict):
-    def __init__(self, module_name, state, state_default, mf):
+    def __init__(self, module_name, state, state_default):
         self.all = state
         self.default = state_default
         self.module_id = module_name
         self.fuzzy_names = {}
-        self._mf = mf
 
     def scope(self, module_name, local=False):
         return state(self.module_id+"."+module_name if local else module_name, self.state, self.state_default)

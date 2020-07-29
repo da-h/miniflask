@@ -496,7 +496,7 @@ class miniflask():
 
 
         # check fuzzy matching of overwrites
-        for varname, val, cliargs, parsefn, callee_traceback, self in self._settings_parse_later_overwrites_list:
+        for varname, val, cliargs, parsefn, callee_traceback, _mf in self._settings_parse_later_overwrites_list:
             if varname not in self._settings_parse_later:
                 found_varids = get_varid_from_fuzzy(varname,self._settings_parse_later.keys()) 
                 if len(found_varids) == 0:
@@ -504,9 +504,9 @@ class miniflask():
                 elif len(found_varids) > 1:
                     raise RegisterError("Variable-Identifier '%s' is not unique. Found %i variables:\n\t%s\n\n    Call:\n        %s" % (highlight_module(found_varids), len(found_varids), "\n\t".join(found_varids), " ".join(found_varids)), traceback=callee_traceback)
                 else:
-                    self._settings_parse_later_overwrites[found_varids[0]] = (val, cliargs, parsefn, callee_traceback, self)
+                    self._settings_parse_later_overwrites[found_varids[0]] = (val, cliargs, parsefn, callee_traceback, _mf)
             else:
-                self._settings_parse_later_overwrites[varname] = (val, cliargs, parsefn, callee_traceback, self)
+                self._settings_parse_later_overwrites[varname] = (val, cliargs, parsefn, callee_traceback, _mf)
 
         # add variables to argparse and remember defaults
         settings_recheck = {}
@@ -596,7 +596,6 @@ class miniflask():
 
             # remember this varid has been overwritten by the user
             user_varids[varid] = True
-
 
         # parse user overwrites (first time, s.t. lambdas change adaptively)
         settings_args = self.settings_parser.parse_args(argv[2:])
@@ -688,7 +687,7 @@ class miniflask_wrapper(miniflask):
         self.module_name = module_name.split(".")[-1]
         self.module_base = module_name.split(".")[0]
         self.wrapped_class = mf.wrapped_class if hasattr(mf, 'wrapped_class') else mf
-        self.state = state(module_name, self.wrapped_class.state, self.wrapped_class.state_default, self)
+        self.state = state(module_name, self.wrapped_class.state, self.wrapped_class.state_default)
         self._recently_loaded = []
         self._defined_events = {}
 
