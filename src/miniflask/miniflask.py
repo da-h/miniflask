@@ -534,7 +534,7 @@ class miniflask():
                 if cliargs:
 
                     # remember default state for 'settings' module
-                    if isinstance(val,like):
+                    if is_fn:
                         val.default = the_val
                         self.state_default[varname] = val
                     else:

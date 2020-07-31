@@ -2,6 +2,7 @@ import sys
 import os
 from itertools import zip_longest
 from miniflask.miniflask import highlight_module, highlight_val, highlight_name, highlight_val_overwrite, like
+from colored import attr
 
 html_module = lambda x: x
 html_name= lambda x: x
@@ -31,7 +32,7 @@ def listsettings(state, asciicodes=True):
 
         klen = len(k)
         korig = k
-        overwritten = v != (state.default[k].default if isinstance(state.default[k],like) else state.default[k])
+        overwritten = v != (state.default[k].default if hasattr(state.default[k],'default') else state.default[k])
         k = k.split(".")
         if len(k) > 1:
             k_hidden = [" "*len(ki) if ki==ki2 and asciicodes else ki for ki,ki2 in zip_longest(k,last_k) if ki is not None]
@@ -45,8 +46,10 @@ def listsettings(state, asciicodes=True):
             k_hidden = k
             k_hidden[-1] = color_module(k_hidden[-1])
 
+        is_lambda = callable(state.default[korig]) and type(state.default[korig]) != type and not isinstance(state.default[korig],like)
+        value_str = attr('dim')+"λ ⟶   "+attr('reset')+str(state.default[korig].default) if is_lambda else str(state.default[korig])
         append = "" if not overwritten else " ⟶   "+color_val_overwrite(str(v))
-        text += "│".join(k_hidden)+(" "*(maxklen-klen))+" = "+color_val(str(state.default[korig]))+append+linesep
+        text += "│".join(k_hidden)+(" "*(maxklen-klen))+" = "+color_val(value_str)+append+linesep
 
     return text
 
