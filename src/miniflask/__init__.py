@@ -4,7 +4,7 @@ from .modules import *
 from .state import like
 
 # meta
-__version__       = "1.25.4"
+__version__       = "1.25.5"
 __title__         = "miniflask"
 __description__   = "Small research-oriented hook-based plugin engine."
 __url__           = "https://github.com/da-h/miniflask"

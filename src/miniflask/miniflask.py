@@ -69,7 +69,11 @@ class miniflask():
         registerPredefined(self.modules_avail)
         self._varid_list = []
         self._recently_loaded = []
-        self._consolecolumns, self._consolerows = get_terminal_size(0)
+        try:
+            self._consolecolumns, self._consolerows = get_terminal_size(0)
+        except:
+            self._consolecolumns, self._consolerows = 80, 40
+
 
 
     # ------- #
