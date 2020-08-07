@@ -564,12 +564,18 @@ class miniflask():
             argv.remove("--help")
             print_help = True
 
+        # split --varname=value expressions
+        argv = [v  for val in argv for v in val.split("=")]
+
         # remember varids from user-args & fuzzy matching the settings
         user_varids = {}
         for i in range(len(argv)):
             varid = argv[i]
             if not varid.startswith("--"):
-                continue
+                if varid.startswith("-"):
+                    varid = argv[i] = "-"+argv[i]
+                else:
+                    continue
 
             # extract varid from argument
             varid = varid[2:]
@@ -681,6 +687,7 @@ class miniflask():
                 print()
                 print(fg("red")+"Uncatched Exception occured. Traceback:"+attr("reset"))
                 print(format_traceback_list(tb, exc=e, ignore_miniflask=False))
+                sys.exit(1)
             else:
                 raise
         except Exception as e:
@@ -692,6 +699,7 @@ class miniflask():
                 print()
                 print(fg("red")+"Uncatched Exception occured. Traceback:"+attr("reset"))
                 print(format_traceback_list(tb, exc=e, ignore_miniflask=not self.debug))
+                sys.exit(1)
             else:
                 raise
 
