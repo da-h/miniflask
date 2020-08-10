@@ -17,7 +17,7 @@ def listsettings(state, asciicodes=True):
     color_val = highlight_val if asciicodes else html_val
     color_val_overwrite = highlight_val_overwrite if asciicodes else html_val_overwrite
     linesep = os.linesep if asciicodes else "\n"
-    attr = lambda x: '' if not asciicodes else attr
+    attr_fn = (lambda x: '') if not asciicodes else attr
 
     last_k = []
     if len(state.all) == 0:
@@ -48,7 +48,7 @@ def listsettings(state, asciicodes=True):
             k_hidden[-1] = color_module(k_hidden[-1])
 
         is_lambda = callable(state.default[korig]) and type(state.default[korig]) != type and not isinstance(state.default[korig],like)
-        value_str = attr('dim')+"λ ⟶   "+attr('reset')+str(state.default[korig].default) if is_lambda else state.default[korig].str(asciicodes=False) if hasattr(state.default[korig],'str') else str(state.default[korig])
+        value_str = attr_fn('dim')+"λ ⟶   "+attr_fn('reset')+str(state.default[korig].default) if is_lambda else state.default[korig].str(asciicodes=False) if hasattr(state.default[korig],'str') else str(state.default[korig])
         append = "" if not overwritten else " ⟶   "+color_val_overwrite(str(v))
         text += "│".join(k_hidden)+(" "*(maxklen-klen))+" = "+color_val(value_str)+append+linesep
 
