@@ -151,6 +151,10 @@ class like:
     def __call__(self, state, event):
         return self.fn(state,event)
 
-    def __str__(self):
+    def str(self, asciicodes=True):
+        if not asciicodes:
+            attr = lambda x: ''
         return attr('dim')+"'"+str(self.varname)+"' or '"+str(self.alt)+"' ⟶   "+attr('reset')+str(self.default)
+    def __str__(self):
+        return self.str()
 
