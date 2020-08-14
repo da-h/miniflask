@@ -479,7 +479,10 @@ class miniflask():
             self.print_heading("Loading Automatically Requested Default Modules")
         for module, event, glob, overwrite_globals in self.default_modules:
             if event:
-                if not event in self.event_objs:
+                if not isinstance(module,list):
+                    module = [module]
+                modules_already_loaded = all(self.getModuleId(m) in self.modules_loaded for m in module)
+                if not modules_already_loaded and not event in self.event_objs:
                     self.load(module, loading_text=lambda x: highlight_loading_default(event,x))
                     self.register_defaults(overwrite_globals, scope="", overwrite=True)
                 else:
@@ -488,6 +491,11 @@ class miniflask():
                         found = [found]
                     found = [f.module_id for f in found]
                     print(highlight_loaded_default(found,event))
+
+                # overwrite defaults if loaded default module itself or did not load module yet
+                if modules_already_loaded:
+                    self.register_defaults(overwrite_globals, scope="", overwrite=True)
+
             elif glob:
                 found = [highlight_loading_module(x) for x in keys if re.search(glob, x)]
                 if len(found) == 0:
