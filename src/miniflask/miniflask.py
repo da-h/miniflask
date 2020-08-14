@@ -572,7 +572,7 @@ class miniflask():
         for i in range(len(argv)):
             varid = argv[i]
             if not varid.startswith("--"):
-                if varid.startswith("-") and not varid[1:].isnumeric():
+                if varid.startswith("-") and not varid[1:].replace('.','',1).isdigit():
                     varid = argv[i] = "-"+argv[i]
                 else:
                     continue
