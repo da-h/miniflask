@@ -32,13 +32,13 @@ def register(mf):
                 events[event_key][1].append(e[1][1])
             else:
                 events[event_key] = ([module_id],[e[1][1]])
-                
+
     # register actual module
     mf.register_defaults({
         "event": "",
         "module": "",
         "long": False,
-        "tree": True,
+        "list": False,
         "only_loaded": True,
     })
     mf.register_helpers({
@@ -152,15 +152,15 @@ def print_event_list(state,event):
         event_list = list(filter(lambda e: e in state["events"],event_list))
     for e in sorted(event_list):
         unique_flag = "!" if e[1] else ">"
-        print(fg('yellow')+unique_flag+' '+e[0]+attr('reset')+" used in "+", ".join([color_module(ev, short=not state["long"]) for ev in state["events"][e]])+attr('reset'))
+        print(fg('yellow')+unique_flag+' '+e[0]+attr('reset')+" used in "+", ".join([color_module(ev, short=not state["long"]) for ev in state["events"][e][0]])+attr('reset'))
     print()
 
 def init(state, event):
 
     # print it
-    if state["tree"]:
+    if state["list"]:
+        print_event_list(state,event)
+    else:
         event_names, event_subtrees, full_tree = event.get_event_tree('main',only_loaded=state["only_loaded"])
         print_event_tree(state,event,[['main'],[(event_names,event_subtrees)]],full_tree)
-    else:
-        print_event_list(state,event)
 
