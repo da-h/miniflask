@@ -326,7 +326,7 @@ class miniflask():
             raise RegisterError("Default Modules should depend either on a event interface OR a regular expression. However, both are given")
         if not required_event and not required_id:
             raise RegisterError("Default Modules should depend either on a event interface OR a regular expression. However, none are given")
-        self.default_modules.append((module, required_event, required_id, overwrite_globals))
+        self.default_modules.append((module, required_event, required_id, overwrite_globals, save_traceback()))
 
     # saves function to a given (event-)name
     def register_event(self, name, fn, unique=False, call_before_after=True):
@@ -356,12 +356,13 @@ class miniflask():
     # Note: the problem lies in the fact that the true id of a variable is defined as scope.key,
     #       however scope can be empty if key is meant as a reference in the global scope=="".
     #       Otherwise, this function would be a lot simpler.
-    def register_defaults(self, defaults, scope="", overwrite=False, cliargs=True, parsefn=True):
+    def register_defaults(self, defaults, scope="", overwrite=False, cliargs=True, parsefn=True, caller_traceback=None):
         if scope is None:
             scope = ""
 
         # save exception for later
-        caller_traceback = save_traceback()
+        if not caller_traceback:
+            caller_traceback = save_traceback()
 
         # now register every key-value pair
         for key, val in defaults.items():
@@ -477,14 +478,14 @@ class miniflask():
         keys = self.modules_loaded.keys()
         if len(self.default_modules) > 1:
             self.print_heading("Loading Automatically Requested Default Modules")
-        for module, event, glob, overwrite_globals in self.default_modules:
+        for module, event, glob, overwrite_globals, caller_traceback in self.default_modules:
             if event:
                 if not isinstance(module,list):
                     module = [module]
                 modules_already_loaded = all(self.getModuleId(m) in self.modules_loaded for m in module)
                 if not modules_already_loaded and not event in self.event_objs:
                     self.load(module, loading_text=lambda x: highlight_loading_default(event,x))
-                    self.register_defaults(overwrite_globals, scope="", overwrite=True)
+                    self.register_defaults(overwrite_globals, scope="", overwrite=True, caller_traceback=caller_traceback)
                 else:
                     found = self.event_objs[event].modules
                     if not isinstance(found,list):
@@ -494,13 +495,13 @@ class miniflask():
 
                 # overwrite defaults if loaded default module itself or did not load module yet
                 if modules_already_loaded:
-                    self.register_defaults(overwrite_globals, scope="", overwrite=True)
+                    self.register_defaults(overwrite_globals, scope="", overwrite=True, caller_traceback=caller_traceback)
 
             elif glob:
                 found = [highlight_loading_module(x) for x in keys if re.search(glob, x)]
                 if len(found) == 0:
                     self.load(module, loading_text=lambda x: highlight_loading_default(glob,x))
-                    self.register_defaults(overwrite_globals, scope="", overwrite=True)
+                    self.register_defaults(overwrite_globals, scope="", overwrite=True, caller_traceback=caller_traceback)
                 elif len(found) > 1:
                     print(highlight_loaded_default(found,glob))
                 else:
