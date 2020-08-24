@@ -11,6 +11,7 @@ from .modules import registerPredefined
 from .modules.settings import listsettings
 
 # global modules
+import inspect
 import traceback
 import sys
 from os import path, listdir, linesep, get_terminal_size
@@ -23,6 +24,15 @@ import re
 
 def print_info(*args,color=fg('green'),msg="INFO"):
     print(color+attr('bold')+msg+attr('reset')+color+": "+attr('reset'),*args,attr('reset'))
+
+def get_default_args(func):
+    signature = inspect.signature(func)
+    return {
+        k: v.default
+        for k, v in signature.parameters.items()
+        if v.default is not inspect.Parameter.empty
+    }
+
 
 # ================ #
 # MiniFlask Kernel #
