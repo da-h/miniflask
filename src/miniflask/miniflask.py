@@ -409,7 +409,7 @@ class miniflask():
     def _settings_parser_add(self, varname, val, caller_traceback, nargs=None, default=None):
 
         # lists are just multiple arguments
-        if isinstance(val,list):
+        if isinstance(val,list) or isinstance(val,tuple):
             if len(val) == 0:
                 raise RegisterError("Variable '%s' is registered as list (see exception below), however it is required to define the type of the list arguments for it to become accessible from cli.\n\nYour options are:\n\t- define a default list, e.g. [\"a\", \"b\", \"c\"]\n\t- define the list type, e.g. [str]\n\t- define the variable as a helper using register_helpers(...)" % (fg('red')+varname+attr('reset')), traceback=caller_traceback)
             self._settings_parser_add(varname, val[0], caller_traceback, nargs="+", default=val)
