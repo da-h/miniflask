@@ -385,9 +385,6 @@ class miniflask():
             module_id, key = self._getModuleIdFromVarId(varname,key_split,scope=scope)
             if module_id is not None:
 
-                # retrieve real local key name
-                module_short_id = self.getModuleShortId(module_id)
-
                 # recreate actual key
                 module_id = self.getModuleId(module_id)
                 varname = module_id + "." + key
