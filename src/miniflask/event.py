@@ -1,4 +1,3 @@
-from .dummy import dummy_fn
 from .exceptions import RegisterError
 import collections
 import inspect
@@ -25,12 +24,35 @@ class event(dict):
         self.optional_value = optional
         self.locals = {}
 
+    def make_dummy_fn(self, name, call_before_after=True):
+        # automatic before/after events
+        name_before = 'before_'+name
+        name_after  = 'after_'+name
+        has_before  = name_before in self._mf.event_objs and call_before_after
+        has_after   = name_after in self._mf.event_objs and call_before_after
+        fn_after    = getattr(self._mf.event, name_after) if has_after else None
+        fn_before   = getattr(self._mf.event, name_before) if has_before else None
+
+        def dummy_fn(*args, altfn=None, **kwargs):
+            if callable(altfn):
+                if has_before:
+                    for fn_b in fn_before.fns:
+                        args, kwargs = fn_b(*args, **kwargs)
+                res = altfn(*args, **kwargs)
+                if has_after:
+                    for fn_a in fn_after.fns:
+                        res, args, kwargs = fn_a(res, *args, **kwargs)
+                return res
+            return []
+
+        return dummy_fn
+
     def __getattr__(self, name):
 
         if name not in self._mf.event_objs:
             if not self.optional_value:
                 raise AttributeError("The Event '%s' has not been registered yet." % name)
-            fn_wrap = dummy_fn
+            fn_wrap = self.make_dummy_fn(name, call_before_after=True)
 
         else:
 
