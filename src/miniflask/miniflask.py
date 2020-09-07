@@ -249,7 +249,7 @@ class miniflask():
                     pass
             except ValueError as e:
                 pass
-        return None
+        return module
 
     # maps 'folder.subfolder.module.list.of.vars' to 'folder.subfoldder.module'
     def _getModuleIdFromVarId(self, varid, varid_list=None, scope=None):
