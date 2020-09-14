@@ -4,6 +4,23 @@ import re
 from .util import get_varid_from_fuzzy, highlight_error, highlight_module
 from .exceptions import StateKeyError
 
+class temporary_state(dict):
+    def __init__(self, state, variables):
+        self.variables = variables
+        self.state = state
+        self.saved = {}
+
+    def __enter__(self):
+        for key, val in self.variables.items():
+            self.saved[key] = self.state[key]
+            self.state[key] = val
+        return self.state
+
+    def __exit__(self, type, value, traceback):
+        del type, value, traceback
+        for key, val in self.saved.items():
+            self.state[key] = val
+
 relative_import_re = re.compile("(\.+)(.*)")
 class state(dict):
     def __init__(self, module_name, state, state_default):
@@ -11,9 +28,13 @@ class state(dict):
         self.default = state_default
         self.module_id = module_name
         self.fuzzy_names = {}
+        # self.temporary = temporary_state(self)
 
     def scope(self, module_name, local=False):
         return state(self.module_id+"."+module_name if local else module_name, self.state, self.state_default)
+
+    def temporary(self, variables):
+        return temporary_state(self, variables)
 
     def __contains__(self, name):
         # check if key already known from this state-object
