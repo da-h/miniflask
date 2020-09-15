@@ -60,7 +60,8 @@ def init(state):
 
 def settings_html(state):
     html = listsettings(state, asciicodes=False)
-    html = html.replace('=','</td><td style="padding: 0 0.5em;">=</td><td><code>')
+    html = html.split("\n")
+    html = "\n".join([h.replace('=','</td><td style="padding: 0 0.5em;">=</td><td><code>',1) for h in html])
     html = html.replace('\n','</code></td></tr>\n<tr><td style="text-align:left;">')
     html = html[:-8]
     html = "<table><tr><td style='padding: 0 0.5em; font-weight: bold; text-align: left;'>"+html+"</table>"
