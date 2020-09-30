@@ -46,7 +46,7 @@ highlight_loaded_none = lambda x: fg('red')+x+attr('reset')
 highlight_loaded = lambda x, y: attr('underlined')+x+attr('reset')+" "+fg('green')+attr('bold')+", ".join(y)+attr('reset')
 highlight_event = lambda x: fg('light_yellow')+x+attr('reset')
 highlight_type = lambda x: fg('cyan')+x+attr('reset')
-highlight_val = lambda x: fg('white')+x+attr('reset')
+highlight_val = lambda x: x
 highlight_val_overwrite = lambda x: fg('red')+attr('bold')+x+attr('reset')
 
 
