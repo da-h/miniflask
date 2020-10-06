@@ -9,10 +9,14 @@ class temporary_state(dict):
         self.variables = variables
         self.state = state
         self.saved = {}
+        self.did_not_exist = []
 
     def __enter__(self):
         for key, val in self.variables.items():
-            self.saved[key] = self.state[key]
+            if key in self.state:
+                self.saved[key] = self.state[key]
+            else:
+                self.did_not_exist.append(key)
             self.state[key] = val
         return self.state
 
@@ -20,6 +24,8 @@ class temporary_state(dict):
         del type, value, traceback
         for key, val in self.saved.items():
             self.state[key] = val
+        for key in self.did_not_exist:
+            del self.state[key]
 
 relative_import_re = re.compile("(\.+)(.*)")
 class state(dict):
