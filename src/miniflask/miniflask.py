@@ -417,24 +417,23 @@ class miniflask():
             argtype = val if val != bool else str2bool
         else:
             argtype = type(val) if type(val) != bool else str2bool
-        kwarg_long  = {'dest': varname, 'type': argtype, 'nargs': nargs}
-        kwarg_short = {'dest': varname, 'type': argtype, 'nargs': nargs, 'help': argparse_SUPPRESS}
+        kwarg = {'dest': varname, 'type': argtype, 'nargs': nargs}
 
         # we know the default argument, if the value is given
         # otherwise the value is a required argument (to be tested later)
         if type(val) != type:
-            kwarg_long["default"] = kwarg_short["default"] = default if default is not None else val
+            kwarg["default"] = default if default is not None else val
         else:
             self.settings_parser_required_arguments.append([varname])
 
         # for bool: enable --varname as alternative for --varname true
         if argtype == str2bool and nargs != '+':
-            kwarg_long["nargs"]  = kwarg_short["nargs"] = '?'
-            kwarg_long["const"]  = kwarg_short["const"] = True
+            kwarg["nargs"] = '?'
+            kwarg["const"] = True
 
         # define the actual arguments
         if argtype in [int,str,float,str2bool]:
-            self.settings_parser.add_argument( "--"+varname, **kwarg_long)
+            self.settings_parser.add_argument( "--"+varname, **kwarg)
         else:
             raise ValueError("Type '%s' not supported. (Used for setting '%s')" % (type(val), varname))
 
