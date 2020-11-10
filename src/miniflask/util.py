@@ -1,5 +1,7 @@
 from os import walk, path, linesep
 from colored import attr, fg
+from argparse import Action
+from enum import Enum
 
 # get modules in a directory
 def getModulesAvail(module_dirs, f={}):
@@ -79,3 +81,28 @@ def get_varid_from_fuzzy(varid, varid_list):
 
         return found_varids
 
+
+# Argparse action for handling Enums
+class EnumAction(Action):
+    def __init__(self, **kwargs):
+        enum = kwargs.pop("type", None)
+        self._enum = enum
+
+        # enum defines argparse choices elready
+        choices = set([*(e.name for e in enum), *(e.name.lower() for e in enum)])
+        kwargs.setdefault("choices", choices)
+
+        # actually register argparse action
+        super(EnumAction, self).__init__(**kwargs)
+
+    def __call__(self, parser, namespace, values, option_string=None, return_enum=False):
+        if isinstance(values, list):
+            enum = [self(parser, namespace, v, option_string=option_string, return_enum=True) for v in values]
+        else:
+            try:
+                enum = self._enum[values.upper()]
+            except:
+                enum = self._enum(values)
+            if return_enum:
+                return enum
+        setattr(namespace, self.dest, enum)

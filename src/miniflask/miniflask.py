@@ -3,7 +3,7 @@ from .exceptions import save_traceback, format_traceback_list, RegisterError, St
 from .event import event, event_obj
 from .state import state, like
 from .dummy import miniflask_dummy
-from .util import getModulesAvail
+from .util import getModulesAvail, EnumAction
 from .util import highlight_error, highlight_name, highlight_module, highlight_loading, highlight_loading_default, highlight_loaded_default, highlight_loading_module, highlight_loaded_none, highlight_loaded, highlight_event, highlight_type, highlight_val, highlight_val_overwrite, str2bool, get_varid_from_fuzzy
 
 
@@ -21,6 +21,7 @@ from copy import copy
 from argparse import ArgumentParser, SUPPRESS as argparse_SUPPRESS
 from queue import Queue
 import re
+from enum import Enum, EnumMeta
 
 def print_info(*args,color=fg('green'),msg="INFO"):
     print(color+attr('bold')+msg+attr('reset')+color+": "+attr('reset'),*args,attr('reset'))
@@ -412,8 +413,12 @@ class miniflask():
             self._settings_parser_add(varname, val[0], caller_traceback, nargs="+", default=val)
             return
 
-        # get argument type from value (this an be int, but also 42 for instance)
-        if type(val) == type:
+        # get argument type from value (this can be int, but also 42 for instance)
+        if isinstance(val, Enum):
+            argtype = Enum
+        elif type(val) == EnumMeta:
+            argtype = Enum
+        elif type(val) == type or type(val) == EnumMeta:
             argtype = val if val != bool else str2bool
         else:
             argtype = type(val) if type(val) != bool else str2bool
@@ -421,18 +426,21 @@ class miniflask():
 
         # we know the default argument, if the value is given
         # otherwise the value is a required argument (to be tested later)
-        if type(val) != type:
+        if type(val) != type and type(val) != EnumMeta:
             kwarg["default"] = default if default is not None else val
         else:
             self.settings_parser_required_arguments.append([varname])
 
         # for bool: enable --varname as alternative for --varname true
-        if argtype == str2bool and nargs != '+':
+        if argtype == Enum:
+            kwarg["action"] = EnumAction
+            kwarg["type"] = val if type(val) == EnumMeta else type(val)
+        elif argtype == str2bool and nargs != '+':
             kwarg["nargs"] = '?'
             kwarg["const"] = True
 
         # define the actual arguments
-        if argtype in [int,str,float,str2bool]:
+        if argtype in [int,str,float,str2bool,Enum]:
             self.settings_parser.add_argument( "--"+varname, **kwarg)
         else:
             raise ValueError("Type '%s' not supported. (Used for setting '%s')" % (type(val), varname))
@@ -533,7 +541,7 @@ class miniflask():
             overwrite = settings == self._settings_parse_later_overwrites 
             recheck = settings == settings_recheck
             for varname, (val, cliargs, parsefn, caller_traceback, _mf) in settings.items():
-                is_fn = callable(val) and type(val) != type and parsefn
+                is_fn = callable(val) and type(val) != type and type(val) != EnumMeta and parsefn
 
                 # eval dependencies/like expressions
                 if is_fn:
@@ -648,7 +656,7 @@ class miniflask():
             # The value is a function AND one of
             # 1. was helper variable, thus no cli-argument can overwrite it anyway
             # 2. the value has not been overwritten by user
-            while callable(val) and type(val) != type and parsefn and (not cliargs or varname not in user_varids):
+            while callable(val) and type(val) != type and type(val) != EnumMeta and parsefn and (not cliargs or varname not in user_varids):
                 val = val(_mf.state,_mf.event)
                 self.state[varname] = val
 
