@@ -1,5 +1,6 @@
 import sys
 import os
+from enum import EnumMeta
 from itertools import zip_longest
 from miniflask.miniflask import highlight_module, highlight_val, highlight_name, highlight_val_overwrite, like
 from colored import attr
@@ -47,7 +48,7 @@ def listsettings(state, asciicodes=True):
             k_hidden = k
             k_hidden[-1] = color_module(k_hidden[-1])
 
-        is_lambda = callable(state.default[korig]) and type(state.default[korig]) != type and not isinstance(state.default[korig],like)
+        is_lambda = callable(state.default[korig]) and type(state.default[korig]) != type and type(state.default[korig]) != EnumMeta and not isinstance(state.default[korig],like)
         value_str = attr_fn('dim')+"λ ⟶   "+attr_fn('reset')+str(state.default[korig].default) if is_lambda else state.default[korig].str(asciicodes=False) if hasattr(state.default[korig],'str') else str(state.default[korig])
         append = "" if not overwritten else " ⟶   "+color_val_overwrite(str(v))
         text += "│".join(k_hidden)+(" "*(maxklen-klen))+" = "+color_val(value_str)+append+linesep
