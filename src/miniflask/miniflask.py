@@ -305,7 +305,7 @@ class miniflask():
             raise ValueError(highlight_error()+"Module '%s' not known." % highlight_module(module_name))
 
         # check if already loaded
-        if module_name in self.modules_loaded and as_id is None:
+        if module_name+".default" in self.modules_loaded or module_name in self.modules_loaded and as_id is None:
             return
 
         # load module
