@@ -1,7 +1,7 @@
 import sys
-from colored import fg, bg, attr
+from colored import fg, attr
 import re
-from .util import get_varid_from_fuzzy, highlight_error, highlight_module
+from .util import get_varid_from_fuzzy, highlight_module
 from .exceptions import StateKeyError
 
 class temporary_state(dict):
