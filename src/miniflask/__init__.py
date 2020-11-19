@@ -16,4 +16,3 @@ __tracker__       = __url__ + '/issues'
 __author__        = "David Hartmann"
 __license__       = "MIT License"
 __copyright__     = "Copyright (c) 2020 " + __author__
-
