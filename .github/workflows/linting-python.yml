@@ -28,5 +28,9 @@ jobs:
     - name: Static Analysis
       run: |
         flake8 . --count --ignore E501 --statistics
+        pylint -d W0511 -d C0114 -d C0116 -d C0115 -d C0301 -d C0103 -d R0913 -d R0914 -d R0902 -d R0912 -d R0801 -d W0212 -d W0223 -d E1101 -d W0221 -d E1102 src/miniflask
+        pylint --exit-zero src/miniflask
+    - name: Static Analysis of Tests
+      run: |
         pylint -d W0511 -d C0114 -d C0116 -d C0115 -d C0301 -d C0103 -d R0913 -d R0914 -d R0902 -d R0912 -d R0801 -d W0212 -d W0223 -d E1101 -d W0221 -d E1102 `find . -type f -name '.module' -printf '%h\0' | sort -zu | sed -z 's/$/\n/'`
         pylint --exit-zero `find . -type f -name '.module' -printf '%h\0' | sort -zu | sed -z 's/$/\n/'`
