@@ -19,8 +19,6 @@ def register(mf):
     # precompute events
     events = {}
     for module_id in mf.modules_avail.keys():
-        module_path = mf.modules_avail[module_id]["importpath"]
-
         # ignore self
         if __name__ == mf.getModuleId(module_id):
             continue
