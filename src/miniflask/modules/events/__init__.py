@@ -3,6 +3,7 @@ from miniflask.miniflask import highlight_module
 import re
 import typing
 
+
 def color_module(moduleid, short=False):
     moduleid = moduleid.split(".")
     moduleid[0] = attr('dim')+moduleid[0]
@@ -10,6 +11,7 @@ def color_module(moduleid, short=False):
     if short:
         return moduleid[-1]
     return ".".join(moduleid)
+
 
 def register(mf):
 
@@ -49,6 +51,8 @@ def register(mf):
 
 # adapted from https://stackoverflow.com/a/51904019
 from dis import Bytecode
+
+
 def list_func_calls(fn):
     funcs = []
     bytecode = Bytecode(fn)
@@ -117,6 +121,7 @@ def get_event_tree(state, event, eventname, event_tree={}, only_loaded=True):
                 subevents_tree.append((s1,s2))
     return subevents, subevents_tree, event_tree
 
+
 def print_event_tree(state,event,tree,full_tree,depth=0):
     if depth == 0:
         print()
@@ -132,6 +137,7 @@ def print_event_tree(state,event,tree,full_tree,depth=0):
                 print("   "*(depth+2)+attr('dim')+"as above"+attr('reset'))
     if depth == 0:
         print() 
+
 
 def print_event_list(state,event):
     print()
@@ -154,6 +160,7 @@ def print_event_list(state,event):
         print(fg('yellow')+unique_flag+' '+e[0]+attr('reset')+" used in "+", ".join([color_module(ev, short=not state["long"]) for ev in state["events"][e][0]])+attr('reset'))
     print()
 
+
 def init(state, event):
 
     # print it
@@ -162,4 +169,3 @@ def init(state, event):
     else:
         event_names, event_subtrees, full_tree = event.get_event_tree('main',only_loaded=state["only_loaded"])
         print_event_tree(state,event,[['main'],[(event_names,event_subtrees)]],full_tree)
-
