@@ -82,7 +82,7 @@ class miniflask():
         self._recently_loaded = []
         try:
             self._consolecolumns, self._consolerows = get_terminal_size(0)
-        except:
+        except:  # noqa: E722
             self._consolecolumns, self._consolerows = 80, 40
 
     # ------- #
@@ -102,14 +102,14 @@ class miniflask():
             is_last = i == len(self._recently_loaded) - 1
             has_children = len(mod.miniflask_obj._recently_loaded) > 0
             if is_last:
-                tree_symb         = "    "  # "└── "
-                tree_symb_current = "╰── "
+                tree_symb         = "    "  # noqa: E221
+                tree_symb_current = "╰── "  # "└── "
             elif has_children:
-                tree_symb         = "│   "
+                tree_symb         = "│   "  # noqa: E221
                 tree_symb_current = "│   "
             else:
-                tree_symb         = "│   "  # "├── "
-                tree_symb_current = "├── "
+                tree_symb         = "│   "  # noqa: E221
+                tree_symb_current = "├── "  # "├── "
             if prepend == "":
                 print(loading_text(module_id))
             else:
@@ -135,7 +135,7 @@ class miniflask():
         return dummy.getEvents()
 
     # pretty print of all available modules
-    def showModules(self, dir=None, prepend="", id_pre=None, with_event=True):
+    def showModules(self, dir=None, prepend="", id_pre=None, with_event=True):  # noqa: C901 too-complex
         if not dir:
             for basename, dir in self.module_dirs.items():
                 self.showModules(dir, prepend=prepend, id_pre=basename if id_pre is None else id_pre + "." + basename, with_event=with_event)
@@ -249,7 +249,7 @@ class miniflask():
         return module
 
     # maps 'folder.subfolder.module.list.of.vars' to 'folder.subfoldder.module'
-    def _getModuleIdFromVarId(self, varid, varid_list=None, scope=None):
+    def _getModuleIdFromVarId(self, varid, varid_list=None, scope=None):  # noqa: C901 too-complex
 
         # try to use scope.default as module id
         if scope is not None:
@@ -399,7 +399,7 @@ class miniflask():
 
                 self._settings_parse_later[varname] = (val, cliargs, parsefn, caller_traceback, self)
 
-    def _settings_parser_add(self, varname, val, caller_traceback, nargs=None, default=None):
+    def _settings_parser_add(self, varname, val, caller_traceback, nargs=None, default=None):  # noqa: C901 too-complex
 
         # lists are just multiple arguments
         if isinstance(val, list) or isinstance(val, tuple):
@@ -454,7 +454,7 @@ class miniflask():
     def stop_parse(self):
         self.halt_parse = True
 
-    def parse_args(self, argv=None, optional=True, fuzzy_args=True):
+    def parse_args(self, argv=None, optional=True, fuzzy_args=True):  # noqa: C901 too-complex
         if self.argparse_called:
             raise SystemError("The function `parse_args` has been called already. Did you maybe called `mf.parse_args()` and `mf.run()` in the same script? Solutions are:\n\t- Please use only one of those functions.\n\t- If you actually need both functions, please do not hesitate to write an issue on\n\t\thttps://github/da-h/miniflask/issues\n\t  to explain you used case.\n\t  (It's not hard to implement, but I need to know, if and when this functionality is needed. ;) )")
 
