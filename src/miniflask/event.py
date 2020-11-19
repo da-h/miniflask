@@ -1,7 +1,9 @@
 import inspect
 
+
 class outervar():
     pass
+
 
 class event_obj():
     def __init__(self, fn, unique, module, call_before_after=True):
@@ -13,6 +15,7 @@ class event_obj():
         else:
             self.fn = [fn]
             self.modules = [module]
+
 
 class event(dict):
     def __init__(self, mf, optional=False):
@@ -158,5 +161,3 @@ class event(dict):
 
         setattr(self, name, fn_wrap)
         return fn_wrap
-
-
