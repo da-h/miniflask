@@ -244,7 +244,7 @@ class miniflask():
                     return shortid
                 else:
                     pass
-            except ValueError as e:
+            except ValueError:
                 pass
         return module
 
@@ -258,7 +258,7 @@ class miniflask():
                 if varid.startswith(scope):
                     varid = varid[len(scope) + 1:]
                 return module_id, varid
-            except ValueError as e:
+            except ValueError:
                 pass
 
             # try to use scope as module id
@@ -267,7 +267,7 @@ class miniflask():
                 if varid.startswith(scope):
                     varid = varid[len(scope) + 1:]
                 return module_id, varid
-            except ValueError as e:
+            except ValueError:
                 pass
 
         # no we have to work out which module may be meant
@@ -277,7 +277,7 @@ class miniflask():
             test_id = ".".join(varid_list[:i])
             try:
                 return self.getModuleId(test_id), ".".join(varid_list[i:])
-            except ValueError as e:
+            except ValueError:
                 pass
 
         # no id could be derived
@@ -543,7 +543,7 @@ class miniflask():
                         the_val = val
                         while callable(the_val) and type(the_val) != type:
                             the_val = the_val(_mf.state, self.event)
-                    except RecursionError as e:
+                    except RecursionError:
                         raise RecursionError("In parsing of value '%s'." % varname)
                 else:
                     the_val = val
