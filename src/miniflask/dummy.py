@@ -13,17 +13,17 @@ class miniflask_dummy():
             self.event = miniflask_dummy(with_child=False)
 
     def getEvents(self):
-        return list(zip(self.event_objs.keys(),self.event_objs.values()))
+        return list(zip(self.event_objs.keys(), self.event_objs.values()))
 
     def register_event(self, name, fn, unique=False, call_before_after=True):
-        self.event_objs[name] = (unique,fn)
+        self.event_objs[name] = (unique, fn)
 
-    def register_defaults(self,*args, **kwargs):
+    def register_defaults(self, *args, **kwargs):
         pass
 
     # ignore all other function calls
     def __getattr__(self, name):
-        if name in ["event","modules_avail","modules_loaded","register_event","register_defaults"]:
+        if name in ["event", "modules_avail", "modules_loaded", "register_event", "register_defaults"]:
             return super().__getattribute__(name)
         return dummy_fn
     # def load(self,*args):
