@@ -9,6 +9,7 @@ html_name= lambda x: x
 html_val = lambda x: x
 html_val_overwrite = lambda x: x
 
+
 def listsettings(state, asciicodes=True):
 
     # colors
@@ -57,6 +58,7 @@ def listsettings(state, asciicodes=True):
 
 def init(state):
     print(listsettings(state))
+
 
 def settings_html(state):
     html = listsettings(state, asciicodes=False)
