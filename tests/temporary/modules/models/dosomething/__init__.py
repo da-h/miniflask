@@ -2,6 +2,7 @@ from miniflask.exceptions import StateKeyError
 
 
 def dosomething(state, event):
+    del event  # unused
     print("in event: variable =", state["variable"])
     if "new_variable" in state:
         print("in event: new_variable =", state["new_variable"])

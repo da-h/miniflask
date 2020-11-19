@@ -1,4 +1,5 @@
 def func(x, **kwargs):
+    del kwargs  # unused
     return x
 
 

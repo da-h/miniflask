@@ -1,5 +1,6 @@
 
 def augment(state, event, ds):
+    del event  # unused
     return [state["fn"] + "("] + ds + [")"]
 
 
