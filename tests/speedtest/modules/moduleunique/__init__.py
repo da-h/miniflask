@@ -1,8 +1,10 @@
 def func(state, event, x):
+    del state, event  # unused
     return x
 
 
 def before_func(state, event, *args, **kwargs):
+    del state, event  # unused
     return args, kwargs
 
 

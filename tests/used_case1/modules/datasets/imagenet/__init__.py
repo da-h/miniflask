@@ -1,5 +1,6 @@
 
 def dataset(state, event):
+    del state, event  # unused
     return "imagenet"
 
 

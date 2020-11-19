@@ -1,9 +1,11 @@
 
 def test(state):
+    del state  # unused
     print("test")
 
 
 def main(state, event):
+    del state  # unused
     print(event.test.modules)
     print(event.test.fns)
     print(event["modules.a"])

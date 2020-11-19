@@ -2,6 +2,7 @@ from miniflask import outervar
 
 
 def main(state, event, varA=outervar):
+    del state, event  # unused
     print("outervar:", varA)
 
 

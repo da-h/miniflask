@@ -1,4 +1,5 @@
 def func(state, event, x):
+    del state, event  # unused
     return x
 
 
