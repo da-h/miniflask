@@ -1,8 +1,4 @@
-from .exceptions import RegisterError
-import collections
 import inspect
-from functools import partial
-from colored import fg, attr
 
 class outervar():
     pass
