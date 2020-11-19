@@ -1,5 +1,5 @@
 import traceback as tb
-from colored import fg, bg, attr
+from colored import fg, attr
 
 def save_traceback():
     try:
