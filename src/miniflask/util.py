@@ -59,7 +59,7 @@ import argparse
 
 def str2bool(v):
     if isinstance(v, bool):
-       return v
+        return v
     if v.lower() in ('yes', 'true', 't', 'y', '1'):
         return True
     elif v.lower() in ('no', 'false', 'f', 'n', '0'):
@@ -72,20 +72,20 @@ import re
 
 
 def get_varid_from_fuzzy(varid, varid_list):
-        # check for direct match first
-        r = re.compile("^(.*\.)?%s$" % varid)
+    # check for direct match first
+    r = re.compile("^(.*\.)?%s$" % varid)
+    found_varids = list(filter(r.match, varid_list))
+
+    # if no matching varid found, check for fuzzy identifier
+    if len(found_varids) == 0:
+        r = re.compile("^(.*\.)?%s$" % varid.replace(".", "\.(.*\.)*"))
         found_varids = list(filter(r.match, varid_list))
 
-        # if no matching varid found, check for fuzzy identifier
-        if len(found_varids) == 0:
-            r = re.compile("^(.*\.)?%s$" % varid.replace(".","\.(.*\.)*"))
-            found_varids = list(filter(r.match, varid_list))
+    # if more than one module found, use default module-variables
+    if len(found_varids) > 1:
+        found_varids = list(filter(lambda x: "default." in x, found_varids))
 
-        # if more than one module found, use default module-variables
-        if len(found_varids) > 1:
-            found_varids = list(filter(lambda x: "default." in x, found_varids))
-
-        return found_varids
+    return found_varids
 
 
 # Argparse action for handling Enums
