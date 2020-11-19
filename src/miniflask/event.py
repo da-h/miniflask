@@ -148,7 +148,8 @@ class event(dict):
                     setattr(fn_wrap, 'fns', [fn_wrap])
             else:
                 def multiple_fn_wrap_scope(orig_fns, modules=eobj.modules):
-                    fns, have_signature = zip(*[fn_wrap_scope(fn, state=module.state, event=module.event, module=module, skip_twice=True) for fn, module in zip(orig_fns,modules)])
+                    fns, have_signature = zip(*[fn_wrap_scope(fn, state=module.state, event=module.event, module=module, skip_twice=True) for fn, module in zip(orig_fns, modules)])
+
                     def fn_wrap(*args, altfn=None, **kwargs):
                         results = []
                         for i, fn in enumerate(fns):
