@@ -1,6 +1,7 @@
 import traceback as tb
 from colored import fg, attr
 
+
 def save_traceback():
     try:
         raise TracebackException("Could not register Variable.")
@@ -9,6 +10,7 @@ def save_traceback():
 
         # ignore this very function in the traceback
         return full_tb[:-1]
+
 
 class RegisterError(Exception):
 
@@ -22,6 +24,7 @@ class RegisterError(Exception):
         self.traceback = traceback
 
         super().__init__(msg)
+
 
 class StateKeyError(Exception):
 
@@ -37,9 +40,9 @@ class StateKeyError(Exception):
         super().__init__(msg)
 
 
-
 class TracebackException(Exception):
     pass
+
 
 def format_traceback_list(traceback_list, ignore_miniflask=True, exc=None):
     if ignore_miniflask:
