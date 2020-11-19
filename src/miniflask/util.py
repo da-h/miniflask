@@ -1,6 +1,8 @@
 from os import walk, path
 from colored import attr, fg
 from argparse import Action
+import argparse
+import re
 
 
 # get modules in a directory
@@ -54,9 +56,6 @@ highlight_val = lambda x: x
 highlight_val_overwrite = lambda x: fg('red') + attr('bold') + x + attr('reset')
 
 
-import argparse
-
-
 def str2bool(v):
     if isinstance(v, bool):
         return v
@@ -66,9 +65,6 @@ def str2bool(v):
         return False
     else:
         raise argparse.ArgumentTypeError('Boolean value expected.')
-
-
-import re
 
 
 def get_varid_from_fuzzy(varid, varid_list):
