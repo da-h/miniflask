@@ -5,7 +5,7 @@ from colored import fg, attr
 def save_traceback():
     try:
         raise TracebackException("Could not register Variable.")
-    except TracebackException as e:
+    except TracebackException:
         full_tb = tb.extract_stack()
 
         # ignore this very function in the traceback
