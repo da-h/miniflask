@@ -1,5 +1,4 @@
-from miniflask.dummy import miniflask_dummy
-from colored import fg, bg, attr
+from colored import fg, attr
 from miniflask.miniflask import highlight_module
 import re
 import typing
