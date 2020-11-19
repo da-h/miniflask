@@ -76,7 +76,7 @@ def get_event_tree(state, event, eventname, event_tree={}, only_loaded=True):  #
         if (eventname, True) in state["events"]:
             modules += state["events"][(eventname, True)][0]
         for m in modules:
-            if not m in event._mf.modules_loaded:
+            if m not in event._mf.modules_loaded:
                 continue
             _fns.append(event[m][eventname])
     else:
