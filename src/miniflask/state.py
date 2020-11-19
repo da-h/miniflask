@@ -68,7 +68,7 @@ class state(dict):
         # search for fuzzy global variable
         found_varids = get_varid_from_fuzzy(name, self.all.keys())
 
-         # if no matching varid found, alert user
+        # if no matching varid found, alert user
         if len(found_varids) > 1:
             raise StateKeyError("Variable-Identifier '%s' is not unique. Found %i variables:\n\t%s\n\n    Call:\n        %s" % (highlight_module(name), len(found_varids), "\n\t".join(found_varids), " ".join(name)))
 
@@ -105,7 +105,7 @@ class state(dict):
         # search for fuzzy global variable
         found_varids = get_varid_from_fuzzy(name, self.all.keys())
 
-         # if no matching varid found, alert user
+        # if no matching varid found, alert user
         if len(found_varids) > 1:
             raise StateKeyError("Variable-Identifier '%s' is not unique. Found %i variables:\n\t%s\n\n    Call:\n        %s" % (highlight_module(name), len(found_varids), "\n\t".join(found_varids), " ".join(name)))
 
@@ -139,7 +139,7 @@ class state(dict):
         # search for fuzzy global variable
         found_varids = get_varid_from_fuzzy(name, self.all.keys())
 
-         # if no matching varid found, alert user
+        # if no matching varid found, alert user
         if len(found_varids) > 1:
             raise StateKeyError("Variable-Identifier '%s' is not unique. Found %i variables:\n\t%s\n\n    Call:\n        %s" % (highlight_module(name), len(found_varids), "\n\t".join(found_varids), " ".join(name)))
 
@@ -177,7 +177,7 @@ class state(dict):
         # search for fuzzy global variable
         found_varids = get_varid_from_fuzzy(name, self.all.keys())
 
-         # if no matching varid found, alert user
+        # if no matching varid found, alert user
         if len(found_varids) > 1:
             raise StateKeyError("Variable-Identifier '%s' is not unique. Found %i variables:\n\t%s\n\n    Call:\n        %s" % (highlight_module(name), len(found_varids), "\n\t".join(found_varids), " ".join(name)))
 
