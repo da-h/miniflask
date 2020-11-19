@@ -4,7 +4,7 @@ from .event import event, event_obj
 from .state import state, like
 from .dummy import miniflask_dummy
 from .util import getModulesAvail, EnumAction
-from .util import highlight_error, highlight_name, highlight_module, highlight_loading, highlight_loading_default, highlight_loaded_default, highlight_loading_module, highlight_loaded_none, highlight_loaded, highlight_event, highlight_type, highlight_val, highlight_val_overwrite, str2bool, get_varid_from_fuzzy
+from .util import highlight_error, highlight_name, highlight_module, highlight_loading, highlight_loading_default, highlight_loaded_default, highlight_loading_module, highlight_loaded_none, highlight_loaded, highlight_event, str2bool, get_varid_from_fuzzy
 
 
 from .modules import registerPredefined
@@ -15,11 +15,9 @@ import inspect
 import traceback
 import sys
 from os import path, listdir, linesep, get_terminal_size
-from colored import fg, bg, attr
+from colored import fg, attr
 from importlib import import_module
-from copy import copy
-from argparse import ArgumentParser, SUPPRESS as argparse_SUPPRESS
-from queue import Queue
+from argparse import ArgumentParser
 import re
 from enum import Enum, EnumMeta
 
