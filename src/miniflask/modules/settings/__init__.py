@@ -4,10 +4,10 @@ from itertools import zip_longest
 from miniflask.miniflask import highlight_module, highlight_val, highlight_name, highlight_val_overwrite, like
 from colored import attr
 
-html_module = lambda x: x
-html_name= lambda x: x
-html_val = lambda x: x
-html_val_overwrite = lambda x: x
+html_module = lambda x: x  # noqa: E731 no-lambda
+html_name = lambda x: x  # noqa: E731 no-lambda
+html_val = lambda x: x  # noqa: E731 no-lambda
+html_val_overwrite = lambda x: x  # noqa: E731 no-lambda
 
 
 def listsettings(state, asciicodes=True):
