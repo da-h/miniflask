@@ -8,3 +8,10 @@ exclude =
     venv,
     build,
     dist
+per-file-ignores =
+    # E731 do not assign a lambda expression, use a def
+    src/miniflask/util.py: E731
+    # E221 multiple spaces before operator
+    # F401 imported but unused
+    # F403 unable to detect undefined names
+    src/miniflask/__init__.py: E221,F401,F403
