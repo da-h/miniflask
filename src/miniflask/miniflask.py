@@ -661,7 +661,7 @@ class miniflask():
         # mark this instance as run
         self.argparse_called = True
 
-    def run(self, modules=["settings"], call="main"):
+    def run(self, modules=["settings"], call="main", argv=None):
         try:
 
             self.print_heading("Loading Modules")
@@ -670,7 +670,7 @@ class miniflask():
             self.load(modules)
 
             # parse command line arguments & overwrite default parameters
-            self.parse_args()
+            self.parse_args(argv=argv)
 
             # check if all requested modules are loaded
             if not self.halt_parse:
