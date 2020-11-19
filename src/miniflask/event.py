@@ -26,11 +26,11 @@ class event(dict):
     def make_dummy_fn(self, name, call_before_after=True):
         # automatic before/after events
         name_before = 'before_' + name
-        name_after  = 'after_' + name
-        has_before  = name_before in self._mf.event_objs and call_before_after
-        has_after   = name_after in self._mf.event_objs and call_before_after
-        fn_after    = getattr(self._mf.event, name_after) if has_after else None
-        fn_before   = getattr(self._mf.event, name_before) if has_before else None
+        name_after = 'after_' + name
+        has_before = name_before in self._mf.event_objs and call_before_after
+        has_after = name_after in self._mf.event_objs and call_before_after
+        fn_after = getattr(self._mf.event, name_after) if has_after else None
+        fn_before = getattr(self._mf.event, name_before) if has_before else None
 
         def dummy_fn(*args, altfn=None, **kwargs):
             if callable(altfn):
@@ -46,7 +46,7 @@ class event(dict):
 
         return dummy_fn
 
-    def __getattr__(self, name):
+    def __getattr__(self, name):  # noqa: C901 too-complex
 
         if name not in self._mf.event_objs:
             if not self.optional_value:
@@ -84,11 +84,11 @@ class event(dict):
 
                 # automatic before/after events
                 name_before = 'before_' + name
-                name_after  = 'after_' + name
-                has_before  = name_before in self._mf.event_objs and call_before_after
-                has_after   = name_after in self._mf.event_objs and call_before_after
-                fn_after    = getattr(self._mf.event, name_after) if has_after else None
-                fn_before   = getattr(self._mf.event, name_before) if has_before else None
+                name_after = 'after_' + name
+                has_before = name_before in self._mf.event_objs and call_before_after
+                has_after = name_after in self._mf.event_objs and call_before_after
+                fn_after = getattr(self._mf.event, name_after) if has_after else None
+                fn_before = getattr(self._mf.event, name_before) if has_before else None
 
                 # get index of "state" / "event"
                 if len(arg_names) > 0:
