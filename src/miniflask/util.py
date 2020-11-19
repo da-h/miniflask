@@ -102,7 +102,7 @@ class EnumAction(Action):
         else:
             try:
                 enum = self._enum[values.upper()]
-            except:
+            except:  # noqa: E722
                 enum = self._enum(values)
             if return_enum:
                 return enum
