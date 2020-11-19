@@ -41,7 +41,7 @@ class state(dict):
         # self.temporary = temporary_state(self)
 
     def scope(self, module_name, local=False):
-        return state(self.module_id+"."+module_name if local else module_name, self.state, self.state_default)
+        return state(self.module_id + "." + module_name if local else module_name, self.state, self.state_default)
 
     def temporary(self, variables):
         return temporary_state(self, variables)
@@ -55,7 +55,7 @@ class state(dict):
         name = sys.intern(name)
 
         # check if is internal variable
-        module_name = self.module_id+"."+name
+        module_name = self.module_id + "." + name
         if module_name in self.all:
             self.fuzzy_names[name] = module_name
             return True
@@ -92,7 +92,7 @@ class state(dict):
         name = sys.intern(name)
 
         # check if is internal variable
-        module_name = self.module_id+"."+name
+        module_name = self.module_id + "." + name
         if module_name in self.all:
             del self.all[module_name]
             return
@@ -111,7 +111,7 @@ class state(dict):
 
         # no module found with both variants
         elif len(found_varids) == 0:
-            raise StateKeyError("Variable '%s' not known. (Module %s attempted to access this variable.)\n\nI tried the following interpretations:\n\t- as module variable: '%s'\n\t- as global Variable: '%s'\n\t- finally, I tried any ordered selection that contains the keys: [%s]." % (fg('green')+name+attr('reset'),highlight_module(self.module_id),fg('green')+module_name+attr('reset'),fg('green')+name+attr('reset'),', '.join("'"+fg('green')+n+attr('reset')+"'" for n in name.split("."))))
+            raise StateKeyError("Variable '%s' not known. (Module %s attempted to access this variable.)\n\nI tried the following interpretations:\n\t- as module variable: '%s'\n\t- as global Variable: '%s'\n\t- finally, I tried any ordered selection that contains the keys: [%s]." % (fg('green') + name + attr('reset'), highlight_module(self.module_id), fg('green') + module_name + attr('reset'), fg('green') + name + attr('reset'), ', '.join("'" + fg('green') + n + attr('reset') + "'" for n in name.split("."))))
 
         # cache for next use
         del self.all[found_varids[0]]
@@ -126,7 +126,7 @@ class state(dict):
         name = sys.intern(name)
 
         # check if is internal variable
-        module_name = self.module_id+"."+name
+        module_name = self.module_id + "." + name
         if module_name in self.all:
             self.fuzzy_names[name] = module_name
             return self.all[module_name]
@@ -145,7 +145,7 @@ class state(dict):
 
         # no module found with both variants
         elif len(found_varids) == 0:
-            raise StateKeyError("Variable '%s' not known. (Module %s attempted to access this variable.)\n\nI tried the following interpretations:\n\t- as module variable: '%s'\n\t- as global Variable: '%s'\n\t- finally, I tried any ordered selection that contains the keys: [%s]." % (fg('green')+name+attr('reset'),highlight_module(self.module_id),fg('green')+module_name+attr('reset'),fg('green')+name+attr('reset'),', '.join("'"+fg('green')+n+attr('reset')+"'" for n in name.split("."))))
+            raise StateKeyError("Variable '%s' not known. (Module %s attempted to access this variable.)\n\nI tried the following interpretations:\n\t- as module variable: '%s'\n\t- as global Variable: '%s'\n\t- finally, I tried any ordered selection that contains the keys: [%s]." % (fg('green') + name + attr('reset'), highlight_module(self.module_id), fg('green') + module_name + attr('reset'), fg('green') + name + attr('reset'), ', '.join("'" + fg('green') + n + attr('reset') + "'" for n in name.split("."))))
 
         # cache for next use
         self.fuzzy_names[found_varids[0]] = name
@@ -162,7 +162,7 @@ class state(dict):
         name = sys.intern(name)
 
         # check if is internal variable
-        module_name = self.module_id+"."+name
+        module_name = self.module_id + "." + name
         if module_name in self.all:
             self.fuzzy_names[name] = module_name
             self.all[module_name] = val
@@ -201,7 +201,7 @@ class state(dict):
             if upmodule == offset:
                 module_name = self.module_id + ("." + relative_module if relative_module else "")
             else:
-                module_name = ".".join(self.module_id.split(".")[:-upmodule+offset]) + ("." + relative_module if relative_module else "")
+                module_name = ".".join(self.module_id.split(".")[:-upmodule + offset]) + ("." + relative_module if relative_module else "")
             was_relative = True
         return module_name, was_relative
 
@@ -211,17 +211,17 @@ class like:
         if scope_name is None:
             scope_name = scope
         global_varname = varname if scope is None else scope + "." + varname
-        self.varname = scope_name+"."+varname if scope_name is not None else varname
+        self.varname = scope_name + "." + varname if scope_name is not None else varname
         self.alt = alt
-        self.fn = lambda state,event: state[global_varname] if global_varname in state else alt
+        self.fn = lambda state, event: state[global_varname] if global_varname in state else alt
 
     def __call__(self, state, event):
-        return self.fn(state,event)
+        return self.fn(state, event)
 
     def str(self, asciicodes=True):
         if not asciicodes:
             attr = lambda x: ''
-        return attr('dim')+"'"+str(self.varname)+"' or '"+str(self.alt)+"' ⟶   "+attr('reset')+str(self.default)
+        return attr('dim') + "'" + str(self.varname) + "' or '" + str(self.alt) + "' ⟶   " + attr('reset') + str(self.default)
 
     def __str__(self):
         return self.str()
