@@ -1,9 +1,11 @@
 from miniflask.exceptions import StateKeyError
 
+
 def dosomething(state, event):
     print("in event: variable =", state["variable"])
     if "new_variable" in state:
         print("in event: new_variable =", state["new_variable"])
+
 
 def main(state, event):
 
@@ -37,6 +39,5 @@ def register(mf):
     mf.register_defaults({
         "variable": 0
     })
-    mf.register_event('dosomething',dosomething)
-    mf.register_event('main',main)
-
+    mf.register_event('dosomething', dosomething)
+    mf.register_event('main', main)

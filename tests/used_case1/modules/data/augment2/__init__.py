@@ -1,10 +1,12 @@
 from random import randrange
 
+
 def augment(state, event, ds):
     d = list(ds)
-    i = randrange(0,len(d))
+    i = randrange(0, len(d))
     d[i] = "·"
     return "".join(d)
+
 
 def register(mf):
     mf.register_defaults({

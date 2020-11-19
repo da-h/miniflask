@@ -1,9 +1,10 @@
 
 def loop(state, event):
     for i in range(state["epoch"]):
-        print("Epoch "+str(i+1))
+        print("Epoch " + str(i + 1))
         for b in event.dataloader():
             print(b)
+
 
 def register(mf):
     defaults = {
