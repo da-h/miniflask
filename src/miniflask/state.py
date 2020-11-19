@@ -4,6 +4,7 @@ import re
 from .util import get_varid_from_fuzzy, highlight_module
 from .exceptions import StateKeyError
 
+
 class temporary_state(dict):
     def __init__(self, state, variables):
         self.variables = variables
@@ -27,7 +28,10 @@ class temporary_state(dict):
         for key in self.did_not_exist:
             del self.state[key]
 
+
 relative_import_re = re.compile("(\.+)(.*)")
+
+
 class state(dict):
     def __init__(self, module_name, state, state_default):
         self.all = state
@@ -111,7 +115,6 @@ class state(dict):
 
         # cache for next use
         del self.all[found_varids[0]]
-
 
     def __getitem__(self, name):
 
@@ -219,6 +222,6 @@ class like:
         if not asciicodes:
             attr = lambda x: ''
         return attr('dim')+"'"+str(self.varname)+"' or '"+str(self.alt)+"' ⟶   "+attr('reset')+str(self.default)
+
     def __str__(self):
         return self.str()
-
