@@ -213,14 +213,14 @@ class like:
         global_varname = varname if scope is None else scope + "." + varname
         self.varname = scope_name + "." + varname if scope_name is not None else varname
         self.alt = alt
-        self.fn = lambda state, event: state[global_varname] if global_varname in state else alt
+        self.fn = lambda state, event: state[global_varname] if global_varname in state else alt  # noqa: E731 no-lambda
 
     def __call__(self, state, event):
         return self.fn(state, event)
 
     def str(self, asciicodes=True):
         if not asciicodes:
-            attr = lambda x: ''
+            attr = lambda x: ''  # noqa: E731 no-lambda
         return attr('dim') + "'" + str(self.varname) + "' or '" + str(self.alt) + "' ⟶   " + attr('reset') + str(self.default)
 
     def __str__(self):
