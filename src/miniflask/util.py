@@ -37,7 +37,7 @@ def getModulesAvail(module_dirs, f={}):
 def highlight_loading_module(x):
     l = len(x)
     x = x.split(".")
-    return fg('light_gray')+".".join(x[:-1])+("" if len(x) == 1 else ".") + attr('reset') + fg('green') + attr('bold') + x[-1] + attr('reset')
+    return fg('light_gray') + ".".join(x[:-1]) + ("" if len(x) == 1 else ".") + attr('reset') + fg('green') + attr('bold') + x[-1] + attr('reset')
 
 
 highlight_error = lambda: fg('red') + attr('bold') + "Error:" + attr('reset') + " "
