@@ -1,7 +1,7 @@
-from os import walk, path, linesep
+from os import walk, path
 from colored import attr, fg
 from argparse import Action
-from enum import Enum
+
 
 # get modules in a directory
 def getModulesAvail(module_dirs, f={}):
