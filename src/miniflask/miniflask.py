@@ -194,20 +194,20 @@ class miniflask():
     # get unique id of a moodule
     def getModuleId(self, module_id):
         module_ids = self.modules_avail.keys()
-        module = module_id.replace(".", "\.(.*\.)*")
+        module = module_id.replace(".", r"\.(.*\.)*")
 
         # first search for a default module
-        r = re.compile("^(.*\.)?%s(\..*)?\.(default|%s)$" % (module, module_id.split(".")[-1]))
+        r = re.compile(r"^(.*\.)?%s(\..*)?\.(default|%s)$" % (module, module_id.split(".")[-1]))
         found_modules = list(filter(r.match, module_ids))
 
         # if no default module found, check for direct identifier
         if len(found_modules) == 0:
-            r = re.compile("^(.*\.)?%s$" % module)
+            r = re.compile(r"^(.*\.)?%s$" % module)
             found_modules = list(filter(r.match, module_ids))
 
         # if no default module found, check for related identifier
         if len(found_modules) == 0:
-            r = re.compile("^(.*\.)?%s(\..*)?$" % module)
+            r = re.compile(r"^(.*\.)?%s(\..*)?$" % module)
             found_modules = list(filter(r.match, module_ids))
 
         # if more than one module found, exclude all low-priority modules
@@ -720,7 +720,7 @@ class miniflask():
                 raise
 
 
-relative_import_re = re.compile("(\.+)(.*)")
+relative_import_re = re.compile(r"(\.+)(.*)")
 
 
 class miniflask_wrapper(miniflask):
