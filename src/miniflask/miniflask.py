@@ -21,8 +21,10 @@ from argparse import ArgumentParser
 import re
 from enum import Enum, EnumMeta
 
+
 def print_info(*args,color=fg('green'),msg="INFO"):
     print(color+attr('bold')+msg+attr('reset')+color+": "+attr('reset'),*args,attr('reset'))
+
 
 def get_default_args(func):
     signature = inspect.signature(func)
@@ -83,8 +85,6 @@ class miniflask():
         except:
             self._consolecolumns, self._consolerows = 80, 40
 
-
-
     # ------- #
     # helpers #
     # ------- #
@@ -116,7 +116,6 @@ class miniflask():
                 print(prepend+tree_symb_current+loading_text(module_id))
             if len(mod.miniflask_obj._recently_loaded) > 0:
                 mod.miniflask_obj.print_recently_loaded(prepend+tree_symb, loading_text)
-
 
     # ==================== #
     # module introspection #
@@ -187,7 +186,6 @@ class miniflask():
         if len(self.modules_loaded) == 0:
             return highlight_loaded_none("No Loaded Modules")
         return highlight_loaded("Loaded Modules:", self.modules_loaded.keys())
-
 
     # =================== #
     # module registration #
@@ -327,7 +325,6 @@ class miniflask():
         if verbose:
             self.print_recently_loaded(prepend="", loading_text=loading_text)
             self._recently_loaded = []
-
 
     # register default module that is loaded if none of glob is matched
     def register_default_module(self, module, required_event=None, required_id=None, overwrite_globals={}):
@@ -519,7 +516,6 @@ class miniflask():
                 else:
                     print(highlight_loaded_default(found,glob))
 
-
         # check fuzzy matching of overwrites
         for varname, val, cliargs, parsefn, caller_traceback, _mf in self._settings_parse_later_overwrites_list:
             if varname not in self._settings_parse_later:
@@ -574,7 +570,6 @@ class miniflask():
                     # Note: the condition ensures that the last value (an overwrite-variable) should be the one that generates the argparser)
                     if recheck or overwrite and varname not in settings_recheck or varname not in self._settings_parse_later_overwrites and varname not in settings_recheck:
                         self._settings_parser_add(varname, the_val, caller_traceback)
-
 
         # add help message
         print_help = False
@@ -724,7 +719,10 @@ class miniflask():
             else:
                 raise
 
+
 relative_import_re = re.compile("(\.+)(.*)")
+
+
 class miniflask_wrapper(miniflask):
     def __init__(self, module_name, mf):
         self.module_id = module_name
@@ -847,4 +845,3 @@ class miniflask_wrapper(miniflask):
     # overwrites previously registered variables
     def overwrite_defaults(self, defaults, scope=None, **kwargs):
         self.register_defaults(defaults, scope=scope, overwrite=True, **kwargs)
-
