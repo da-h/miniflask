@@ -25,8 +25,8 @@ class event(dict):
 
     def make_dummy_fn(self, name, call_before_after=True):
         # automatic before/after events
-        name_before = 'before_'+name
-        name_after  = 'after_'+name
+        name_before = 'before_' + name
+        name_after  = 'after_' + name
         has_before  = name_before in self._mf.event_objs and call_before_after
         has_after   = name_after in self._mf.event_objs and call_before_after
         fn_after    = getattr(self._mf.event, name_after) if has_after else None
@@ -83,8 +83,8 @@ class event(dict):
                     has_signature = False
 
                 # automatic before/after events
-                name_before = 'before_'+name
-                name_after  = 'after_'+name
+                name_before = 'before_' + name
+                name_after  = 'after_' + name
                 has_before  = name_before in self._mf.event_objs and call_before_after
                 has_after   = name_after in self._mf.event_objs and call_before_after
                 fn_after    = getattr(self._mf.event, name_after) if has_after else None
@@ -115,7 +115,7 @@ class event(dict):
                         if has_before:
                             for fn_b in fn_before.fns:
                                 args, kwargs = fn_b(*args, **kwargs)
-                        res = fn(*miniflask_args,*args,**outer_locals,**kwargs)
+                        res = fn(*miniflask_args, *args, **outer_locals, **kwargs)
                         if has_after:
                             for fn_a in fn_after.fns:
                                 res, args, kwargs = fn_a(res, *args, **kwargs)
@@ -151,7 +151,7 @@ class event(dict):
                     fns, have_signature = zip(*[fn_wrap_scope(fn, state=module.state, event=module.event, module=module, skip_twice=True) for fn, module in zip(orig_fns,modules)])
                     def fn_wrap(*args, altfn=None, **kwargs):
                         results = []
-                        for i,fn in enumerate(fns):
+                        for i, fn in enumerate(fns):
                             results.append(fn(*args, **kwargs))
                         return results
                     return fn_wrap, fns, have_signature
