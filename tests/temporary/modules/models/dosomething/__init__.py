@@ -20,7 +20,7 @@ def main(state, event):
     print("after event", state["variable"])
 
     try:
-        state["new_variable"]
+        _ = state["new_variable"]
         print("variable 'new_variable' should not exist")
     except StateKeyError:
         pass
@@ -29,7 +29,7 @@ def main(state, event):
     }):
         event.dosomething()
     try:
-        state["new_variable"]
+        _ = state["new_variable"]
         print("variable 'new_variable' should not exist")
     except StateKeyError:
         pass
