@@ -228,7 +228,7 @@ class miniflask():
 
     # get short id of a moodule
     def getModuleShortId(self, module):
-        if not module in self.modules_avail:
+        if module not in self.modules_avail:
             raise ValueError(highlight_error() + "Module '%s' not known." % highlight_module(module))
         uniqueId = self.modules_avail[module]["id"].split(".")
 
@@ -297,7 +297,7 @@ class miniflask():
         # get id
         if auto_query:
             module_name = self.getModuleId(module_name)
-        elif not module_name in self.modules_avail:
+        elif module_name not in self.modules_avail:
             raise ValueError(highlight_error() + "Module '%s' not known." % highlight_module(module_name))
 
         # check if already loaded
@@ -492,7 +492,7 @@ class miniflask():
                 if not isinstance(module, list):
                     module = [module]
                 modules_already_loaded = all(self.getModuleId(m) in self.modules_loaded for m in module)
-                if not modules_already_loaded and not event in self.event_objs:
+                if not modules_already_loaded and event not in self.event_objs:
                     self.load(module, loading_text=lambda x: highlight_loading_default(event, x))
                     self.register_defaults(overwrite_globals, scope="", overwrite=True, caller_traceback=caller_traceback)
                 else:
