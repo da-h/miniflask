@@ -32,11 +32,13 @@ def getModulesAvail(module_dirs, f={}):
             }
     return f
 
+
 # coloring
 def highlight_loading_module(x):
     l = len(x)
     x = x.split(".")
     return fg('light_gray')+".".join(x[:-1])+("" if len(x) == 1 else ".") + attr('reset') + fg('green') + attr('bold') + x[-1] + attr('reset')
+
 
 highlight_error = lambda: fg('red') + attr('bold') + "Error:" + attr('reset') + " "
 highlight_name = lambda x: fg('blue') + attr('bold') + x + attr('reset')
@@ -53,6 +55,8 @@ highlight_val_overwrite = lambda x: fg('red') + attr('bold') + x + attr('reset')
 
 
 import argparse
+
+
 def str2bool(v):
     if isinstance(v, bool):
        return v
@@ -65,6 +69,8 @@ def str2bool(v):
 
 
 import re
+
+
 def get_varid_from_fuzzy(varid, varid_list):
         # check for direct match first
         r = re.compile("^(.*\.)?%s$" % varid)
