@@ -2,6 +2,7 @@ from colored import fg, attr
 from miniflask.miniflask import highlight_module
 import re
 import typing
+from dis import Bytecode
 
 
 def color_module(moduleid, short=False):
@@ -50,9 +51,6 @@ def register(mf):
 
 
 # adapted from https://stackoverflow.com/a/51904019
-from dis import Bytecode
-
-
 def list_func_calls(fn):
     funcs = []
     bytecode = Bytecode(fn)
