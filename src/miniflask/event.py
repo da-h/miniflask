@@ -68,13 +68,20 @@ class event(dict):
                     miniflask_args = []
 
                 # get kwargs of fn wit outervar as default
-                signature = inspect.signature(fn)
-                needed_locals = [
-                    k for k, v in signature.parameters.items()
-                    if v.default is not inspect.Parameter.empty and v.default is outervar
-                ]
-                arg_names = [k for k, v in signature.parameters.items()]
-                has_altfn = "altfn" in arg_names
+                try:
+                    signature = inspect.signature(fn)
+                    needed_locals = [
+                        k for k, v in signature.parameters.items()
+                        if v.default is not inspect.Parameter.empty and v.default is outervar
+                    ]
+                    arg_names = [k for k, v in signature.parameters.items()]
+                    has_altfn = "altfn" in arg_names
+                    has_signature = True
+                except ValueError:
+                    needed_locals = []
+                    arg_names = []
+                    has_altfn = False
+                    has_signature = False
 
                 # automatic before/after events
                 name_before = 'before_'+name
@@ -132,25 +139,26 @@ class event(dict):
                     # (up until we have a clean concept for this, we do not catch these definition errors)
                     # if not has_altfn and self.optional_value:
                     #     raise RegisterError(("The event %s was called using `event.optional(..., alftn=...)`, but the function does not catch this argument.\n\n"+fg('red')+"Possible Solutions:"+attr('reset')+"\n  - add `**kwargs` or `altfn=None` to your event-function definition.\n  - Alternatively, add either `event` or `state` or both to the event-function definition. In that case miniflask can catch altfn itself, however, this may adversely affect performance if this function is callled often.") % (fg('red')+name+attr('reset')))
-                    return fn
-                return fn_wrap
+                    return fn, has_signature
+                return fn_wrap, has_signature
 
             if eobj.unique:
-                fn_wrap = fn_wrap_scope(eobj.fn, eobj.modules.state, eobj.modules.event, eobj.modules)
-                setattr(fn_wrap, 'modules', [eobj.modules.module_id])
-                setattr(fn_wrap, 'fns', [fn_wrap])
+                fn_wrap, has_signature = fn_wrap_scope(eobj.fn, eobj.modules.state, eobj.modules.event, eobj.modules)
+                if has_signature:
+                    setattr(fn_wrap, 'modules', [eobj.modules.module_id])
+                    setattr(fn_wrap, 'fns', [fn_wrap])
             else:
                 def multiple_fn_wrap_scope(orig_fns, modules=eobj.modules):
-                    fns = [fn_wrap_scope(fn, state=module.state, event=module.event, module=module, skip_twice=True) for fn, module in zip(orig_fns,modules)]
+                    fns, have_signature = zip(*[fn_wrap_scope(fn, state=module.state, event=module.event, module=module, skip_twice=True) for fn, module in zip(orig_fns,modules)])
                     def fn_wrap(*args, altfn=None, **kwargs):
                         results = []
                         for i,fn in enumerate(fns):
                             results.append(fn(*args, **kwargs))
                         return results
-                    return fn_wrap, fns
-                fn_wrap, fns = multiple_fn_wrap_scope(eobj.fn)
-                setattr(fn_wrap, 'modules', [m.module_id for m in eobj.modules])
-                setattr(fn_wrap, 'fns', fns)
+                    return fn_wrap, fns, have_signature
+                fn_wrap, fns, have_signature = multiple_fn_wrap_scope(eobj.fn)
+                setattr(fn_wrap, 'modules', [m.module_id for m, has_sig in zip(eobj.modules, have_signature) if has_sig])
+                setattr(fn_wrap, 'fns', [fn for fn, has_sig in zip(fns, have_signature) if has_sig])
 
         setattr(self, name, fn_wrap)
         return fn_wrap
