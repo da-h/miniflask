@@ -29,7 +29,7 @@ class temporary_state(dict):
             del self.state[key]
 
 
-relative_import_re = re.compile("(\.+)(.*)")
+relative_import_re = re.compile(r"(\.+)(.*)")
 
 
 class state(dict):
