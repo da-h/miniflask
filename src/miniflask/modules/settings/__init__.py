@@ -1,4 +1,3 @@
-import sys
 import os
 from enum import EnumMeta
 from itertools import zip_longest
