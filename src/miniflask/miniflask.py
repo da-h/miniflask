@@ -22,8 +22,8 @@ import re
 from enum import Enum, EnumMeta
 
 
-def print_info(*args,color=fg('green'),msg="INFO"):
-    print(color+attr('bold')+msg+attr('reset')+color+": "+attr('reset'),*args,attr('reset'))
+def print_info(*args, color=fg('green'), msg="INFO"):
+    print(color + attr('bold') + msg + attr('reset') + color + ": " + attr('reset'), *args, attr('reset'))
 
 
 def get_default_args(func):
@@ -46,19 +46,19 @@ class miniflask():
             return
 
         # module dir to be read from
-        if isinstance(module_dirs,list):
-            self.module_dirs = {path.basename(m):m for m in module_dirs}
-        elif isinstance(module_dirs,str):
-            self.module_dirs = {path.basename(module_dirs):module_dirs}
-        elif isinstance(module_dirs,dict):
+        if isinstance(module_dirs, list):
+            self.module_dirs = {path.basename(m): m for m in module_dirs}
+        elif isinstance(module_dirs, str):
+            self.module_dirs = {path.basename(module_dirs): module_dirs}
+        elif isinstance(module_dirs, dict):
             self.module_dirs = module_dirs
         else:
             raise ValueError("Only dict or list allowed for `module_dirs'. Found type '%s'." % type(module_dirs))
         for dir in self.module_dirs.values():
-            sys.path.insert(0,dir+path.sep+path.pardir)
+            sys.path.insert(0, dir + path.sep + path.pardir)
 
         # arguments from cli-stdin
-        self.settings_parser = ArgumentParser(usage=sys.argv[0]+" modulelist [optional arguments]")
+        self.settings_parser = ArgumentParser(usage=sys.argv[0] + " modulelist [optional arguments]")
         self._settings_parse_later = {}
         self._settings_parse_later_overwrites_list = []
         self._settings_parse_later_overwrites = {}
@@ -76,7 +76,7 @@ class miniflask():
         self.state_default = {}
         self.modules_loaded = {}
         self.modules_avail = getModulesAvail(self.module_dirs)
-        self.miniflask_objs = {} # local modified versions of miniflask
+        self.miniflask_objs = {}  # local modified versions of miniflask
         registerPredefined(self.modules_avail)
         self._varid_list = []
         self._recently_loaded = []
@@ -88,13 +88,13 @@ class miniflask():
     # ------- #
     # helpers #
     # ------- #
-    def print_heading(self,*args,color=fg('green'),margin=8):
-        line = "—"*self._consolecolumns
+    def print_heading(self, *args, color=fg('green'), margin=8):
+        line = "—" * self._consolecolumns
         if len(args) > 0:
             s = " ".join(args)
-            line = line[:margin] + " " + s + " " + line[margin+len(s)+2:]
+            line = line[:margin] + " " + s + " " + line[margin + len(s) + 2:]
         print()
-        print(fg('blue')+attr('bold')+line+attr('reset'))
+        print(fg('blue') + attr('bold') + line + attr('reset'))
 
     def print_recently_loaded(self, prepend="", loading_text=highlight_loading):
         for i, mod in enumerate(self._recently_loaded):
@@ -102,20 +102,20 @@ class miniflask():
             is_last = i == len(self._recently_loaded) - 1
             has_children = len(mod.miniflask_obj._recently_loaded) > 0
             if is_last:
-                tree_symb         = "    " #"└── "
+                tree_symb         = "    "  # "└── "
                 tree_symb_current = "╰── "
             elif has_children:
                 tree_symb         = "│   "
                 tree_symb_current = "│   "
             else:
-                tree_symb         = "│   " #"├── "
+                tree_symb         = "│   "  # "├── "
                 tree_symb_current = "├── "
             if prepend == "":
                 print(loading_text(module_id))
             else:
-                print(prepend+tree_symb_current+loading_text(module_id))
+                print(prepend + tree_symb_current + loading_text(module_id))
             if len(mod.miniflask_obj._recently_loaded) > 0:
-                mod.miniflask_obj.print_recently_loaded(prepend+tree_symb, loading_text)
+                mod.miniflask_obj.print_recently_loaded(prepend + tree_symb, loading_text)
 
     # ==================== #
     # module introspection #
@@ -128,7 +128,7 @@ class miniflask():
 
         # load module
         mod = import_module(self.modules_avail[module]["importpath"])
-        if not hasattr(mod,"register"):
+        if not hasattr(mod, "register"):
             return []
 
         mod.register(dummy)
@@ -138,7 +138,7 @@ class miniflask():
     def showModules(self, dir=None, prepend="", id_pre=None, with_event=True):
         if not dir:
             for basename, dir in self.module_dirs.items():
-                self.showModules(dir, prepend=prepend, id_pre=basename if id_pre is None else id_pre+"."+basename, with_event=with_event)
+                self.showModules(dir, prepend=prepend, id_pre=basename if id_pre is None else id_pre + "." + basename, with_event=with_event)
             return
 
         if id_pre is None:
@@ -146,29 +146,29 @@ class miniflask():
         if len(prepend) == 0:
             print()
             print(highlight_name(path.basename(id_pre)))
-        dirs = [d for d in listdir(dir) if path.isdir(path.join(dir,d)) and not d.startswith("_")]
+        dirs = [d for d in listdir(dir) if path.isdir(path.join(dir, d)) and not d.startswith("_")]
         for i, d in enumerate(dirs):
             if d.startswith("."):
                 continue
-            if path.exists(path.join(dir,d,".ignoredir")):
+            if path.exists(path.join(dir, d, ".ignoredir")):
                 continue
             module_id = id_pre + "." + d if id_pre != "" else d
 
-            is_module = path.exists(path.join(dir,d,".module"))
-            is_lowpriority_module = path.exists(path.join(dir,d,".lowpriority"))
+            is_module = path.exists(path.join(dir, d, ".module"))
+            is_lowpriority_module = path.exists(path.join(dir, d, ".lowpriority"))
             if is_module:
                 shortestid = self.getModuleShortId(module_id)
             has_shortid = is_module and shortestid == d
 
-            if i == len(dirs)-1:
+            if i == len(dirs) - 1:
                 tree_symb = "└── "
                 is_last = True
             else:
                 tree_symb = "├── "
                 is_last = False
-            append = " "+fg('blue')+"("+shortestid+")"+attr('reset') if is_module and not has_shortid else ""
-            append += attr('dim')+" (low-priority module)"+attr('reset') if is_lowpriority_module else ""
-            print(prepend+tree_symb+(highlight_name(d) if is_module else d)+append)
+            append = " " + fg('blue') + "(" + shortestid + ")" + attr('reset') if is_module and not has_shortid else ""
+            append += attr('dim') + " (low-priority module)" + attr('reset') if is_lowpriority_module else ""
+            print(prepend + tree_symb + (highlight_name(d) if is_module else d) + append)
 
             tree_symb_next = "     " if is_last else "│    "
             if is_module:
@@ -177,9 +177,9 @@ class miniflask():
                     if len(events) > 0:
                         for e in events:
                             unique_flag = "!" if e[1] else ">"
-                            print(prepend+tree_symb_next+unique_flag+" "+highlight_event(e[0]))
+                            print(prepend + tree_symb_next + unique_flag + " " + highlight_event(e[0]))
                 continue
-            self.showModules(path.join(dir,d),prepend=prepend+tree_symb_next, id_pre=module_id, with_event=with_event)
+            self.showModules(path.join(dir, d), prepend=prepend + tree_symb_next, id_pre=module_id, with_event=with_event)
 
     # pretty print loaded modules
     def __str__(self):
@@ -194,7 +194,7 @@ class miniflask():
     # get unique id of a moodule
     def getModuleId(self, module_id):
         module_ids = self.modules_avail.keys()
-        module = module_id.replace(".","\.(.*\.)*")
+        module = module_id.replace(".", "\.(.*\.)*")
 
         # first search for a default module
         r = re.compile("^(.*\.)?%s(\..*)?\.(default|%s)$" % (module, module_id.split(".")[-1]))
@@ -216,11 +216,11 @@ class miniflask():
 
         # if more than one module found let the user know
         if len(found_modules) > 1:
-            raise ValueError(highlight_error()+"Module-Identifier '%s' is not unique. Found %i modules:\n\t%s" % (highlight_module(module_id), len(found_modules), "\n\t".join(found_modules)))
+            raise ValueError(highlight_error() + "Module-Identifier '%s' is not unique. Found %i modules:\n\t%s" % (highlight_module(module_id), len(found_modules), "\n\t".join(found_modules)))
 
         # no module found with both variants
         elif len(found_modules) == 0:
-            raise ValueError(highlight_error()+"Module '%s' not known." % highlight_module(module_id))
+            raise ValueError(highlight_error() + "Module '%s' not known." % highlight_module(module_id))
 
         # module_id is a unique identifier
         module = found_modules[0]
@@ -229,7 +229,7 @@ class miniflask():
     # get short id of a moodule
     def getModuleShortId(self, module):
         if not module in self.modules_avail:
-            raise ValueError(highlight_error()+"Module '%s' not known." % highlight_module(module))
+            raise ValueError(highlight_error() + "Module '%s' not known." % highlight_module(module))
         uniqueId = self.modules_avail[module]["id"].split(".")
 
         # modA.default -> modA
@@ -237,7 +237,7 @@ class miniflask():
             uniqueId = uniqueId[:-1]
 
         # find the shortest substring to match a module uniquely
-        for i in range(len(uniqueId)-1,0,-1):
+        for i in range(len(uniqueId) - 1, 0, -1):
             shortid = ".".join(uniqueId[i:])
             try:
                 if module == self.getModuleId(shortid):
@@ -254,9 +254,9 @@ class miniflask():
         # try to use scope.default as module id
         if scope is not None:
             try:
-                module_id = self.getModuleId(scope+".default")
+                module_id = self.getModuleId(scope + ".default")
                 if varid.startswith(scope):
-                    varid = varid[len(scope)+1:]
+                    varid = varid[len(scope) + 1:]
                 return module_id, varid
             except ValueError as e:
                 pass
@@ -265,7 +265,7 @@ class miniflask():
             try:
                 module_id = self.getModuleId(scope)
                 if varid.startswith(scope):
-                    varid = varid[len(scope)+1:]
+                    varid = varid[len(scope) + 1:]
                 return module_id, varid
             except ValueError as e:
                 pass
@@ -273,7 +273,7 @@ class miniflask():
         # no we have to work out which module may be meant
         if varid_list is None:
             varid_list = varid.split(".")
-        for i in range(len(varid_list)-1,0,-1):
+        for i in range(len(varid_list) - 1, 0, -1):
             test_id = ".".join(varid_list[:i])
             try:
                 return self.getModuleId(test_id), ".".join(varid_list[i:])
@@ -289,7 +289,7 @@ class miniflask():
         # load list of modules
         if isinstance(module_name, str) and "," in module_name:
             module_name = module_name.split(",")
-        if isinstance(module_name,list):
+        if isinstance(module_name, list):
             for m in module_name:
                 self.load(m, verbose=verbose, auto_query=auto_query, loading_text=loading_text, as_id=as_id, bind_events=bind_events)
             return
@@ -298,16 +298,16 @@ class miniflask():
         if auto_query:
             module_name = self.getModuleId(module_name)
         elif not module_name in self.modules_avail:
-            raise ValueError(highlight_error()+"Module '%s' not known." % highlight_module(module_name))
+            raise ValueError(highlight_error() + "Module '%s' not known." % highlight_module(module_name))
 
         # check if already loaded
-        if module_name+".default" in self.modules_loaded or module_name in self.modules_loaded and as_id is None:
+        if module_name + ".default" in self.modules_loaded or module_name in self.modules_loaded and as_id is None:
             return
 
         # load module
         mod = import_module(self.modules_avail[module_name]["importpath"])
-        if not hasattr(mod,"register"):
-            raise ValueError(highlight_error()+"Module '%s' does not register itself." % module_name)
+        if not hasattr(mod, "register"):
+            raise ValueError(highlight_error() + "Module '%s' does not register itself." % module_name)
         module_name = module_name if as_id is None else as_id
         mod.miniflask_obj = miniflask_wrapper(module_name, self)
         mod.miniflask_obj.bind_events = bind_events
@@ -345,11 +345,11 @@ class miniflask():
 
             # catch some user errors
             if not unique and self.event_objs[name].unique:
-                raise RegisterError(highlight_error()+"Event '%s' has been registered as `unique` before, but as `non-unique` now. Please check the registrations.\n\t(Imported by %s)" % (highlight_event(name),", ".join(["'"+highlight_module(e.module_name)+"'" for e in eobj])))
+                raise RegisterError(highlight_error() + "Event '%s' has been registered as `unique` before, but as `non-unique` now. Please check the registrations.\n\t(Imported by %s)" % (highlight_event(name), ", ".join(["'" + highlight_module(e.module_name) + "'" for e in eobj])))
             if unique and not self.event_objs[name].unique:
-                raise RegisterError(highlight_error()+"Event '%s' has been registered as `non-unique` before, but as `unique` now. Please check the registrations.\n\t(Imported by %s)" % (highlight_event(name),", ".join(["'"+highlight_module(e.module_name)+"'" for e in eobj])))
+                raise RegisterError(highlight_error() + "Event '%s' has been registered as `non-unique` before, but as `unique` now. Please check the registrations.\n\t(Imported by %s)" % (highlight_event(name), ", ".join(["'" + highlight_module(e.module_name) + "'" for e in eobj])))
 
-            raise RegisterError(highlight_error()+"Event '%s' is unique, and thus, cannot be imported twice.\n\t(Imported by %s)" % (highlight_event(name),", ".join(["'"+highlight_module(e.module_name)+"'" for e in eobj])))
+            raise RegisterError(highlight_error() + "Event '%s' is unique, and thus, cannot be imported twice.\n\t(Imported by %s)" % (highlight_event(name), ", ".join(["'" + highlight_module(e.module_name) + "'" for e in eobj])))
 
         # register event
         if name in self.event_objs:
@@ -374,11 +374,11 @@ class miniflask():
         for key, val in defaults.items():
 
             # unique & full varname is fully defined using scope
-            varname = scope+"."+key if len(scope) > 0 else key
+            varname = scope + "." + key if len(scope) > 0 else key
             key_split = varname.split(".")
 
             # get module id from global varname identifier
-            module_id, key = self._getModuleIdFromVarId(varname,key_split,scope=scope)
+            module_id, key = self._getModuleIdFromVarId(varname, key_split, scope=scope)
             if module_id is not None:
 
                 # recreate actual key
@@ -387,12 +387,12 @@ class miniflask():
 
             # actual initialization is done when all modules has been parsed
             if overwrite:
-                self._settings_parse_later_overwrites_list.append((varname, val, cliargs, parsefn, caller_traceback, self) )
+                self._settings_parse_later_overwrites_list.append((varname, val, cliargs, parsefn, caller_traceback, self))
             else:
 
                 # pre-initialize variable for possible lambda expressions in second pass
                 # (we can only be sure, that the varname is the unique varid if we are not overwriting)
-                if hasattr(self.state,"all"):
+                if hasattr(self.state, "all"):
                     self.state.all[varname] = val
                 else:
                     self.state[varname] = val
@@ -402,9 +402,9 @@ class miniflask():
     def _settings_parser_add(self, varname, val, caller_traceback, nargs=None, default=None):
 
         # lists are just multiple arguments
-        if isinstance(val,list) or isinstance(val,tuple):
+        if isinstance(val, list) or isinstance(val, tuple):
             if len(val) == 0:
-                raise RegisterError("Variable '%s' is registered as list (see exception below), however it is required to define the type of the list arguments for it to become accessible from cli.\n\nYour options are:\n\t- define a default list, e.g. [\"a\", \"b\", \"c\"]\n\t- define the list type, e.g. [str]\n\t- define the variable as a helper using register_helpers(...)" % (fg('red')+varname+attr('reset')), traceback=caller_traceback)
+                raise RegisterError("Variable '%s' is registered as list (see exception below), however it is required to define the type of the list arguments for it to become accessible from cli.\n\nYour options are:\n\t- define a default list, e.g. [\"a\", \"b\", \"c\"]\n\t- define the list type, e.g. [str]\n\t- define the variable as a helper using register_helpers(...)" % (fg('red') + varname + attr('reset')), traceback=caller_traceback)
             self._settings_parser_add(varname, val[0], caller_traceback, nargs="+", default=val)
             return
 
@@ -435,15 +435,15 @@ class miniflask():
             kwarg["const"] = True
 
         # define the actual arguments
-        if argtype in [int,str,float,str2bool,Enum]:
-            self.settings_parser.add_argument( "--"+varname, **kwarg)
+        if argtype in [int, str, float, str2bool, Enum]:
+            self.settings_parser.add_argument("--" + varname, **kwarg)
         else:
             raise ValueError("Type '%s' not supported. (Used for setting '%s')" % (type(val), varname))
 
         # for bool: enable --no-varname as alternative for --varname false
         # Note: this has to be defined AFTER --varname
         if argtype == str2bool and nargs != '+':
-            self.settings_parser.add_argument('--no-'+varname, dest=varname, action='store_false')
+            self.settings_parser.add_argument('--no-' + varname, dest=varname, action='store_false')
 
         # remember the varname also for fuzzy searching
         self._varid_list.append(varname)
@@ -459,9 +459,9 @@ class miniflask():
             raise SystemError("The function `parse_args` has been called already. Did you maybe called `mf.parse_args()` and `mf.run()` in the same script? Solutions are:\n\t- Please use only one of those functions.\n\t- If you actually need both functions, please do not hesitate to write an issue on\n\t\thttps://github/da-h/miniflask/issues\n\t  to explain you used case.\n\t  (It's not hard to implement, but I need to know, if and when this functionality is needed. ;) )")
 
         if not argv:
-            argv = sys.argv#[1:]
+            argv = sys.argv  # [1:]
         else:
-            argv = [None]+argv
+            argv = [None] + argv
 
         # actually parse the input
         parser = ArgumentParser()
@@ -489,18 +489,18 @@ class miniflask():
             self.print_heading("Loading Automatically Requested Default Modules")
         for module, event, glob, overwrite_globals, caller_traceback in self.default_modules:
             if event:
-                if not isinstance(module,list):
+                if not isinstance(module, list):
                     module = [module]
                 modules_already_loaded = all(self.getModuleId(m) in self.modules_loaded for m in module)
                 if not modules_already_loaded and not event in self.event_objs:
-                    self.load(module, loading_text=lambda x: highlight_loading_default(event,x))
+                    self.load(module, loading_text=lambda x: highlight_loading_default(event, x))
                     self.register_defaults(overwrite_globals, scope="", overwrite=True, caller_traceback=caller_traceback)
                 else:
                     found = self.event_objs[event].modules
-                    if not isinstance(found,list):
+                    if not isinstance(found, list):
                         found = [found]
                     found = [f.module_id for f in found]
-                    print(highlight_loaded_default(found,event))
+                    print(highlight_loaded_default(found, event))
 
                 # overwrite defaults if loaded default module itself or did not load module yet
                 if modules_already_loaded:
@@ -509,19 +509,19 @@ class miniflask():
             elif glob:
                 found = [highlight_loading_module(x) for x in keys if re.search(glob, x)]
                 if len(found) == 0:
-                    self.load(module, loading_text=lambda x: highlight_loading_default(glob,x))
+                    self.load(module, loading_text=lambda x: highlight_loading_default(glob, x))
                     self.register_defaults(overwrite_globals, scope="", overwrite=True, caller_traceback=caller_traceback)
                 elif len(found) > 1:
-                    print(highlight_loaded_default(found,glob))
+                    print(highlight_loaded_default(found, glob))
                 else:
-                    print(highlight_loaded_default(found,glob))
+                    print(highlight_loaded_default(found, glob))
 
         # check fuzzy matching of overwrites
         for varname, val, cliargs, parsefn, caller_traceback, _mf in self._settings_parse_later_overwrites_list:
             if varname not in self._settings_parse_later:
-                found_varids = get_varid_from_fuzzy(varname,self._settings_parse_later.keys()) 
+                found_varids = get_varid_from_fuzzy(varname, self._settings_parse_later.keys())
                 if len(found_varids) == 0:
-                    raise RegisterError("Variable '%s' is not registered yet, however it seems like you wold like to overwrite it (see exception below)." % (fg('red')+varname+attr('reset')), traceback=caller_traceback)
+                    raise RegisterError("Variable '%s' is not registered yet, however it seems like you wold like to overwrite it (see exception below)." % (fg('red') + varname + attr('reset')), traceback=caller_traceback)
                 elif len(found_varids) > 1:
                     raise RegisterError("Variable-Identifier '%s' is not unique. Found %i variables:\n\t%s\n\n    Call:\n        %s" % (highlight_module(found_varids), len(found_varids), "\n\t".join(found_varids), " ".join(found_varids)), traceback=caller_traceback)
                 else:
@@ -531,8 +531,8 @@ class miniflask():
 
         # add variables to argparse and remember defaults
         settings_recheck = {}
-        for settings in [self._settings_parse_later,self._settings_parse_later_overwrites, settings_recheck]:
-            overwrite = settings == self._settings_parse_later_overwrites 
+        for settings in [self._settings_parse_later, self._settings_parse_later_overwrites, settings_recheck]:
+            overwrite = settings == self._settings_parse_later_overwrites
             recheck = settings == settings_recheck
             for varname, (val, cliargs, parsefn, caller_traceback, _mf) in settings.items():
                 is_fn = callable(val) and type(val) != type and type(val) != EnumMeta and parsefn
@@ -542,7 +542,7 @@ class miniflask():
                     try:
                         the_val = val
                         while callable(the_val) and type(the_val) != type:
-                            the_val = the_val(_mf.state,self.event)
+                            the_val = the_val(_mf.state, self.event)
                     except RecursionError as e:
                         raise RecursionError("In parsing of value '%s'." % varname)
                 else:
@@ -581,15 +581,15 @@ class miniflask():
             print_help = True
 
         # split --varname=value expressions
-        argv = [v  for val in argv for v in (val.split("=",1) if val.startswith("--") or val.startswith("-") and not val[1:].isnumeric() else [val])]
+        argv = [v for val in argv for v in (val.split("=", 1) if val.startswith("--") or val.startswith("-") and not val[1:].isnumeric() else [val])]
 
         # remember varids from user-args & fuzzy matching the settings
         user_varids = {}
         for i in range(len(argv)):
             varid = argv[i]
             if not varid.startswith("--"):
-                if varid.startswith("-") and not varid[1:].replace('.','',1).isdigit():
-                    varid = argv[i] = "-"+argv[i]
+                if varid.startswith("-") and not varid[1:].replace('.', '', 1).isdigit():
+                    varid = argv[i] = "-" + argv[i]
                 else:
                     continue
 
@@ -614,17 +614,17 @@ class miniflask():
                 # if no matching varid found, check for fuzzy identifier
                 if len(found_varids) > 1:
                     argv[i] = highlight_module(argv[i])
-                    raise ValueError(highlight_error()+"Variable-Identifier '--%s' is not unique. Found %i variables:\n\t%s\n\n    Call:\n        %s" % (highlight_module(varid), len(found_varids), "\n\t".join(found_varids), " ".join(argv)))
+                    raise ValueError(highlight_error() + "Variable-Identifier '--%s' is not unique. Found %i variables:\n\t%s\n\n    Call:\n        %s" % (highlight_module(varid), len(found_varids), "\n\t".join(found_varids), " ".join(argv)))
 
                 # no module found with both variants
                 elif len(found_varids) == 0:
                     argv[i] = highlight_module(argv[i])
-                    raise ValueError(highlight_error()+"Variable '--%s' not known.\n\n    Call:\n       %s" % (highlight_module(varid)," ".join(argv)))
+                    raise ValueError(highlight_error() + "Variable '--%s' not known.\n\n    Call:\n       %s" % (highlight_module(varid), " ".join(argv)))
 
                 varid = found_varids[0]
 
                 # replace with fuzzy-found varid
-                argv[i] = ("--no-" if was_false_bool else "--")+found_varids[0]
+                argv[i] = ("--no-" if was_false_bool else "--") + found_varids[0]
 
             # remember this varid has been overwritten by the user
             user_varids[varid] = True
@@ -640,7 +640,7 @@ class miniflask():
             if self.state[variables[0]] is None:
                 missing_arguments.append(variables)
         if len(missing_arguments) > 0:
-            self.settings_parser.error(linesep+linesep.join(["The following argument is required: "+" or ".join(["--"+arg for arg in reversed(args)]) for args in missing_arguments]))
+            self.settings_parser.error(linesep + linesep.join(["The following argument is required: " + " or ".join(["--" + arg for arg in reversed(args)]) for args in missing_arguments]))
 
         # finally parse lambda-dependencies
         for varname, (val, cliargs, parsefn, caller_traceback, _mf) in self._settings_parse_later.items():
@@ -650,11 +650,11 @@ class miniflask():
             # 1. was helper variable, thus no cli-argument can overwrite it anyway
             # 2. the value has not been overwritten by user
             while callable(val) and type(val) != type and type(val) != EnumMeta and parsefn and (not cliargs or varname not in user_varids):
-                val = val(_mf.state,_mf.event)
+                val = val(_mf.state, _mf.event)
                 self.state[varname] = val
 
         # print help message when everything is parsed
-        self.settings_parser.print_help = lambda: (print("usage: modulelist [optional arguments]"),print(),print("optional arguments (and their defaults):"),print(listsettings(state("",self.state,self.state_default),self.event)))
+        self.settings_parser.print_help = lambda: (print("usage: modulelist [optional arguments]"), print(), print("optional arguments (and their defaults):"), print(listsettings(state("", self.state, self.state_default), self.event)))
         if print_help:
             self.settings_parser.parse_args(['--help'])
 
@@ -676,7 +676,7 @@ class miniflask():
             if not self.halt_parse:
 
                 # optional init event
-                if hasattr(self.event,'init'):
+                if hasattr(self.event, 'init'):
                     self.print_heading("init Event")
                     self.event.optional.init()
 
@@ -694,14 +694,14 @@ class miniflask():
                     print("No event '{0}' registered. "
                           "Please make sure to register the event '{0}', "
                           "or provide a suitable event to call with mf.run(call=\"myevent\").".format(call))
-        except (RegisterError,StateKeyError) as e:
+        except (RegisterError, StateKeyError) as e:
             gettrace = getattr(sys, 'gettrace', None)
 
             # check if debugger will catch this
             if not gettrace or not gettrace():
                 tb = traceback.extract_tb(e.__traceback__)
                 print()
-                print(fg("red")+"Uncatched Exception occured. Traceback:"+attr("reset"))
+                print(fg("red") + "Uncatched Exception occured. Traceback:" + attr("reset"))
                 print(format_traceback_list(tb, exc=e, ignore_miniflask=False))
                 sys.exit(1)
             else:
@@ -713,7 +713,7 @@ class miniflask():
             if not gettrace or not gettrace():
                 tb = traceback.extract_tb(e.__traceback__)
                 print()
-                print(fg("red")+"Uncatched Exception occured. Traceback:"+attr("reset"))
+                print(fg("red") + "Uncatched Exception occured. Traceback:" + attr("reset"))
                 print(format_traceback_list(tb, exc=e, ignore_miniflask=not self.debug))
                 sys.exit(1)
             else:
@@ -743,11 +743,11 @@ class miniflask_wrapper(miniflask):
             if upmodule == offset:
                 module_name = self.module_id + ("." + relative_module if relative_module else "")
             else:
-                module_name = ".".join(self.module_id.split(".")[:-upmodule+offset]) + ("." + relative_module if relative_module else "")
+                module_name = ".".join(self.module_id.split(".")[:-upmodule + offset]) + ("." + relative_module if relative_module else "")
             was_relative = True
         return module_name, was_relative
 
-    def __getattr__(self,attr):
+    def __getattr__(self, attr):
         orig_attr = super().__getattribute__('wrapped_class').__getattribute__(attr)
         if callable(orig_attr):
             def hooked(*args, **kwargs):
@@ -760,7 +760,7 @@ class miniflask_wrapper(miniflask):
         else:
             return orig_attr
 
-    def redefine_scope(self,new_module_name):
+    def redefine_scope(self, new_module_name):
         old_module_name = self.module_id
         new_module_name = self.set_scope(new_module_name)
         if new_module_name in self.modules_avail:
@@ -770,7 +770,7 @@ class miniflask_wrapper(miniflask):
         m["id"] = new_module_name
         self.modules_avail[new_module_name] = m
 
-    def set_scope(self,new_module_name):
+    def set_scope(self, new_module_name):
         new_module_name, was_relative = self._get_relative_module_id(new_module_name)
         if not was_relative:
             new_module_name = self.module_base + "." + new_module_name
