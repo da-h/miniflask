@@ -3,6 +3,7 @@ def dummy_fn(*args, altfn=None, **kwargs):
         return altfn(*args, **kwargs)
     return []
 
+
 class miniflask_dummy():
     def __init__(self, *args, with_child=True, **kwargs):
         self.event_objs = {}
@@ -29,5 +30,3 @@ class miniflask_dummy():
     #     pass
     # def showModules(self,*args):
     #     pass
-
-
