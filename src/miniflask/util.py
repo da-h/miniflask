@@ -68,12 +68,12 @@ def str2bool(v):
 
 def get_varid_from_fuzzy(varid, varid_list):
     # check for direct match first
-    r = re.compile("^(.*\.)?%s$" % varid)
+    r = re.compile(r"^(.*\.)?%s$" % varid)
     found_varids = list(filter(r.match, varid_list))
 
     # if no matching varid found, check for fuzzy identifier
     if len(found_varids) == 0:
-        r = re.compile("^(.*\.)?%s$" % varid.replace(".", "\.(.*\.)*"))
+        r = re.compile(r"^(.*\.)?%s$" % varid.replace(".", r"\.(.*\.)*"))
         found_varids = list(filter(r.match, varid_list))
 
     # if more than one module found, use default module-variables
