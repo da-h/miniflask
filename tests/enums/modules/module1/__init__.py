@@ -1,5 +1,6 @@
 from enum import Enum
 
+
 class SIZE(Enum):
     # The integer values define their order in a tensor
     SMALL = 0
@@ -11,6 +12,7 @@ def main(state, event):
     print("size :", state["size"].name)
     print("sizerequired:", state["sizerequired"].name)
     print("sizelist:", str(" ".join(s.name for s in state["sizelist"])))
+
 
 def register(mf):
     mf.register_defaults({
