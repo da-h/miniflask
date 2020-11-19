@@ -24,8 +24,8 @@ def listsettings(state, asciicodes=True):
     if len(state.all) == 0:
         return "No Settings available."
     maxklen = max(len(k) for k in state.all.keys())
-    text = "Folder│"+color_name("module")+"│"+color_module("variable")+(" "*(maxklen-22))+" = "+color_val("value")+linesep
-    text += "—"*(maxklen+8)+linesep if asciicodes else ''
+    text = "Folder│" + color_name("module") + "│" + color_module("variable") + (" " * (maxklen - 22)) + " = " + color_val("value") + linesep
+    text += "—" * (maxklen + 8) + linesep if asciicodes else ''
     for k, v in sorted(state.all.items()):
 
         # ignore state variables that are not registered for argument parsing
@@ -34,10 +34,10 @@ def listsettings(state, asciicodes=True):
 
         klen = len(k)
         korig = k
-        overwritten = v != (state.default[k].default if hasattr(state.default[k],'default') else state.default[k])
+        overwritten = v != (state.default[k].default if hasattr(state.default[k], 'default') else state.default[k])
         k = k.split(".")
         if len(k) > 1:
-            k_hidden = [" "*len(ki) if ki==ki2 and asciicodes else ki for ki,ki2 in zip_longest(k,last_k) if ki is not None]
+            k_hidden = [" " * len(ki) if ki == ki2 and asciicodes else ki for ki, ki2 in zip_longest(k, last_k) if ki is not None]
             last_k = k
             if k_hidden[-2] == "default":
                 k_hidden[-3] = color_name(k_hidden[-3])
@@ -48,10 +48,10 @@ def listsettings(state, asciicodes=True):
             k_hidden = k
             k_hidden[-1] = color_module(k_hidden[-1])
 
-        is_lambda = callable(state.default[korig]) and type(state.default[korig]) != type and type(state.default[korig]) != EnumMeta and not isinstance(state.default[korig],like)
-        value_str = attr_fn('dim')+"λ ⟶   "+attr_fn('reset')+str(state.default[korig].default) if is_lambda else state.default[korig].str(asciicodes=False) if hasattr(state.default[korig],'str') else str(state.default[korig])
-        append = "" if not overwritten else " ⟶   "+color_val_overwrite(str(v))
-        text += "│".join(k_hidden)+(" "*(maxklen-klen))+" = "+color_val(value_str)+append+linesep
+        is_lambda = callable(state.default[korig]) and type(state.default[korig]) != type and type(state.default[korig]) != EnumMeta and not isinstance(state.default[korig], like)
+        value_str = attr_fn('dim') + "λ ⟶   " + attr_fn('reset') + str(state.default[korig].default) if is_lambda else state.default[korig].str(asciicodes=False) if hasattr(state.default[korig], 'str') else str(state.default[korig])
+        append = "" if not overwritten else " ⟶   " + color_val_overwrite(str(v))
+        text += "│".join(k_hidden) + (" " * (maxklen - klen)) + " = " + color_val(value_str) + append + linesep
 
     return text
 
@@ -63,10 +63,10 @@ def init(state):
 def settings_html(state):
     html = listsettings(state, asciicodes=False)
     html = html.split("\n")
-    html = "\n".join([h.replace('=','</td><td style="padding: 0 0.5em;">=</td><td><code>',1) for h in html])
-    html = html.replace('\n','</code></td></tr>\n<tr><td style="text-align:left;">')
+    html = "\n".join([h.replace('=', '</td><td style="padding: 0 0.5em;">=</td><td><code>', 1) for h in html])
+    html = html.replace('\n', '</code></td></tr>\n<tr><td style="text-align:left;">')
     html = html[:-8]
-    html = "<table><tr><td style='padding: 0 0.5em; font-weight: bold; text-align: left;'>"+html+"</table>"
+    html = "<table><tr><td style='padding: 0 0.5em; font-weight: bold; text-align: left;'>" + html + "</table>"
     return html
 
 
