@@ -151,12 +151,15 @@ class event(dict):
             else:
                 def multiple_fn_wrap_scope(orig_fns, modules=eobj.modules):
                     fns, have_signature, mf_args = zip(*[fn_wrap_scope(fn, state=module.state, event=module.event, module=module, skip_twice=True) for fn, module in zip(orig_fns, modules)])
+
                     def fn_wrap(*args, altfn=None, **kwargs):
                         results = []
                         for i, fn in enumerate(fns):
                             results.append(fn(*args, **kwargs))
                         return results
+
                     return fn_wrap, fns, have_signature, mf_args
+
                 fn_wrap, fns, have_signature, mf_args = multiple_fn_wrap_scope(eobj.fn)
                 setattr(fn_wrap, 'mf_modules', [m.module_id for m, has_sig in zip(eobj.modules, have_signature) if has_sig])
                 setattr(fn_wrap, 'subevents', [fn for fn, has_sig in zip(fns, have_signature) if has_sig])

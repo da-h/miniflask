@@ -110,7 +110,6 @@ def get_event_tree(state, event, eventname, event_tree={}, only_loaded=True):  #
             if s in event_tree:
                 subevents_tree.append(True)
             else:
-                # breakpoint()
                 # event_tree[s] = (subevents, subevents_tree)
                 (s1, s2, _) = event.get_event_tree(s, event_tree, only_loaded=only_loaded)
                 event_tree[s] = (s1, s2)
@@ -125,7 +124,7 @@ def print_event_tree(state, event, tree, full_tree, depth=0):
     for name, subtree in zip(*tree):
         unique_flag = ">"
         print("   " * depth + fg('yellow') + unique_flag + ' ' + attr('reset') + name + attr('reset'))
-        if subtree != True:
+        if isinstance(subtree, tuple):
             if len(subtree) > 0:
                 print_event_tree(state, event, subtree, full_tree, depth + 1)
         else:
