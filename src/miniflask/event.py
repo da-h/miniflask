@@ -35,11 +35,11 @@ class event(dict):
         def dummy_fn(*args, altfn=None, **kwargs):
             if callable(altfn):
                 if has_before:
-                    for fn_b in fn_before.fns:
+                    for fn_b in fn_before.subevents:
                         args, kwargs = fn_b(*args, **kwargs)
                 res = altfn(*args, **kwargs)
                 if has_after:
-                    for fn_a in fn_after.fns:
+                    for fn_a in fn_after.subevents:
                         res, args, kwargs = fn_a(res, *args, **kwargs)
                 return res
             return []
@@ -113,11 +113,11 @@ class event(dict):
                         if has_altfn:
                             kwargs["altfn"] = altfn
                         if has_before:
-                            for fn_b in fn_before.fns:
+                            for fn_b in fn_before.subevents:
                                 args, kwargs = fn_b(*args, **kwargs)
                         res = fn(*miniflask_args, *args, **outer_locals, **kwargs)
                         if has_after:
-                            for fn_a in fn_after.fns:
+                            for fn_a in fn_after.subevents:
                                 res, args, kwargs = fn_a(res, *args, **kwargs)
                         return res
                 elif len(miniflask_args) > 0:
@@ -125,11 +125,11 @@ class event(dict):
                         if has_altfn:
                             kwargs["altfn"] = altfn
                         if has_before:
-                            for fn_b in fn_before.fns:
+                            for fn_b in fn_before.subevents:
                                 args, kwargs = fn_b(*args, **kwargs)
                         res = fn(*miniflask_args, *args, **kwargs)
                         if has_after:
-                            for fn_a in fn_after.fns:
+                            for fn_a in fn_after.subevents:
                                 res, args, kwargs = fn_a(res, *args, **kwargs)
                         return res
                 else:
@@ -138,27 +138,30 @@ class event(dict):
                     # (up until we have a clean concept for this, we do not catch these definition errors)
                     # if not has_altfn and self.optional_value:
                     #     raise RegisterError(("The event %s was called using `event.optional(..., alftn=...)`, but the function does not catch this argument.\n\n"+fg('red')+"Possible Solutions:"+attr('reset')+"\n  - add `**kwargs` or `altfn=None` to your event-function definition.\n  - Alternatively, add either `event` or `state` or both to the event-function definition. In that case miniflask can catch altfn itself, however, this may adversely affect performance if this function is callled often.") % (fg('red')+name+attr('reset')))
-                    return fn, has_signature
-                return fn_wrap, has_signature
+                    return fn, has_signature, miniflask_args
+                return fn_wrap, has_signature, miniflask_args
 
             if eobj.unique:
-                fn_wrap, has_signature = fn_wrap_scope(eobj.fn, eobj.modules.state, eobj.modules.event, eobj.modules)
+                fn_wrap, has_signature, mf_args = fn_wrap_scope(eobj.fn, eobj.modules.state, eobj.modules.event, eobj.modules)
                 if has_signature:
-                    setattr(fn_wrap, 'modules', [eobj.modules.module_id])
-                    setattr(fn_wrap, 'fns', [fn_wrap])
+                    setattr(fn_wrap, 'mf_modules', [eobj.modules.module_id])
+                    setattr(fn_wrap, 'subevents', [fn_wrap])
+                    setattr(fn_wrap, 'fns', [eobj.fn])
+                    setattr(fn_wrap, 'fns_args', [mf_args])
             else:
                 def multiple_fn_wrap_scope(orig_fns, modules=eobj.modules):
-                    fns, have_signature = zip(*[fn_wrap_scope(fn, state=module.state, event=module.event, module=module, skip_twice=True) for fn, module in zip(orig_fns, modules)])
-
+                    fns, have_signature, mf_args = zip(*[fn_wrap_scope(fn, state=module.state, event=module.event, module=module, skip_twice=True) for fn, module in zip(orig_fns, modules)])
                     def fn_wrap(*args, altfn=None, **kwargs):
                         results = []
                         for i, fn in enumerate(fns):
                             results.append(fn(*args, **kwargs))
                         return results
-                    return fn_wrap, fns, have_signature
-                fn_wrap, fns, have_signature = multiple_fn_wrap_scope(eobj.fn)
-                setattr(fn_wrap, 'modules', [m.module_id for m, has_sig in zip(eobj.modules, have_signature) if has_sig])
-                setattr(fn_wrap, 'fns', [fn for fn, has_sig in zip(fns, have_signature) if has_sig])
+                    return fn_wrap, fns, have_signature, mf_args
+                fn_wrap, fns, have_signature, mf_args = multiple_fn_wrap_scope(eobj.fn)
+                setattr(fn_wrap, 'mf_modules', [m.module_id for m, has_sig in zip(eobj.modules, have_signature) if has_sig])
+                setattr(fn_wrap, 'subevents', [fn for fn, has_sig in zip(fns, have_signature) if has_sig])
+                setattr(fn_wrap, 'fns', eobj.fn)
+                setattr(fn_wrap, 'fns_args', [mf_args])
 
         setattr(self, name, fn_wrap)
         return fn_wrap

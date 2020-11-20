@@ -6,7 +6,7 @@ def test(state):
 
 def main(state, event):
     del state  # unused
-    print(event.test.modules)
+    print(event.test.mf_modules)
     print(event.test.fns)
     print(event["modules.a"])
     print(event.optional["modules.a"])
