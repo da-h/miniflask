@@ -1,7 +1,8 @@
 import os
 from enum import EnumMeta
 from itertools import zip_longest
-from miniflask.miniflask import highlight_module, highlight_val, highlight_name, highlight_val_overwrite, like
+from ...util import highlight_module, highlight_val, highlight_name, highlight_val_overwrite
+from ...state import like
 from colored import attr
 
 
