@@ -6,6 +6,7 @@ def dummy_fn(*args, altfn=None, **kwargs):
 
 class miniflask_dummy():
     def __init__(self, *args, with_child=True, **kwargs):
+        del args, kwargs  # unused
         self.event_objs = {}
         self.modules_avail = {}
         self.modules_loaded = {}
@@ -16,6 +17,7 @@ class miniflask_dummy():
         return list(zip(self.event_objs.keys(), self.event_objs.values()))
 
     def register_event(self, name, fn, unique=False, call_before_after=True):
+        del call_before_after  # unused
         self.event_objs[name] = (unique, fn)
 
     def register_defaults(self, *args, **kwargs):
