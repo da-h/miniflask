@@ -616,7 +616,7 @@ class miniflask():
                     raise ValueError(highlight_error() + "Variable-Identifier '--%s' is not unique. Found %i variables:\n\t%s\n\n    Call:\n        %s" % (highlight_module(varid), len(found_varids), "\n\t".join(found_varids), " ".join(argv)))
 
                 # no module found with both variants
-                elif len(found_varids) == 0:
+                if len(found_varids) == 0:
                     argv[i] = highlight_module(argv[i])
                     raise ValueError(highlight_error() + "Variable '--%s' not known.\n\n    Call:\n       %s" % (highlight_module(varid), " ".join(argv)))
 
