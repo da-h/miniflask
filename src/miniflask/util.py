@@ -7,11 +7,11 @@ import re
 
 # get modules in a directory
 def getModulesAvail(module_dirs, f={}):
-    for base_module_name, dir in module_dirs.items():
-        basename_dir = path.basename(dir)
-        for (dirpath, dirnames, filenames) in walk(dir):
-            module_name_id = base_module_name + "." + dirpath[len(dir) + 1:].replace(path.sep, ".")
-            import_path = ((basename_dir + ".") if not basename_dir.endswith('.') else "") + dirpath[len(dir) + 1:].replace(path.sep, ".")
+    for base_module_name, directory in module_dirs.items():
+        basename_dir = path.basename(directory)
+        for (dirpath, dirnames, filenames) in walk(directory):
+            module_name_id = base_module_name + "." + dirpath[len(directory) + 1:].replace(path.sep, ".")
+            import_path = ((basename_dir + ".") if not basename_dir.endswith('.') else "") + dirpath[len(directory) + 1:].replace(path.sep, ".")
 
             # empty module id is not allowed
             if len(module_name_id) == 0:
