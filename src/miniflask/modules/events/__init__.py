@@ -69,7 +69,9 @@ def list_func_calls(fn):
     return ["%s" % funcname for funcname in reversed(funcs)]
 
 
-def get_event_tree(state, event, eventname, event_tree={}, only_loaded=True):  # noqa: C901 too-complex
+def get_event_tree(state, event, eventname, event_tree=None, only_loaded=True):  # noqa: C901 too-complex
+    if event_tree is None:
+        event_tree = {}
     _fns = []
     if only_loaded:
         modules = []
