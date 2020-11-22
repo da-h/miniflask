@@ -96,9 +96,9 @@ def get_event_tree(state, event, eventname, event_tree=None, only_loaded=True): 
                 f = getattr(fn, fname)
                 if fname.startswith("__") and fname.endswith("__") and fname != "__init__":
                     continue
-                if not callable(f) or type(f) == type:
+                if not callable(f) or isinstance(f, type):
                     continue
-                if type(f) == typing.TypeVar:
+                if isinstance(f, typing.TypeVar):
                     continue
                 fns.append(f)
         else:
