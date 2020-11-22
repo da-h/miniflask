@@ -1,3 +1,15 @@
+# global modules
+import sys
+import re
+import inspect
+import traceback
+from os import path, listdir, linesep, get_terminal_size
+from importlib import import_module
+from enum import Enum, EnumMeta
+from argparse import ArgumentParser
+
+from colored import fg, attr
+
 # package modules
 from .exceptions import save_traceback, format_traceback_list, RegisterError, StateKeyError
 from .event import event, event_obj
@@ -6,20 +18,8 @@ from .dummy import miniflask_dummy
 from .util import getModulesAvail, EnumAction
 from .util import highlight_error, highlight_name, highlight_module, highlight_loading, highlight_loading_default, highlight_loaded_default, highlight_loading_module, highlight_loaded_none, highlight_loaded, highlight_event, str2bool, get_varid_from_fuzzy
 
-
 from .modules import registerPredefined
 from .modules.settings import listsettings
-
-# global modules
-import inspect
-import traceback
-import sys
-from os import path, listdir, linesep, get_terminal_size
-from colored import fg, attr
-from importlib import import_module
-from argparse import ArgumentParser
-import re
-from enum import Enum, EnumMeta
 
 
 def print_info(*args, color=fg('green'), msg="INFO"):
