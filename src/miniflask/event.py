@@ -61,6 +61,7 @@ class event(dict):
             # fn_wrap_scope creates a function wrap of fn that passes also state and event of eobj
             # additionally, if outervar is defined as a default, it queries that from the last outer scope
             def fn_wrap_scope(fn, state, event, module, needed_locals=None, miniflask_args=None, skip_twice=False, call_before_after=call_before_after):
+                del module  # unused
                 if needed_locals is None:
                     needed_locals = []
                 if miniflask_args is None:
@@ -153,8 +154,9 @@ class event(dict):
                     fns, have_signature, mf_args = zip(*[fn_wrap_scope(fn, state=module.state, event=module.event, module=module, skip_twice=True) for fn, module in zip(orig_fns, modules)])
 
                     def fn_wrap(*args, altfn=None, **kwargs):
+                        del altfn  # unused
                         results = []
-                        for i, fn in enumerate(fns):
+                        for fn in fns:
                             results.append(fn(*args, **kwargs))
                         return results
 
