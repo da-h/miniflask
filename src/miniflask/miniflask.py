@@ -402,7 +402,7 @@ class miniflask():
     def _settings_parser_add(self, varname, val, caller_traceback, nargs=None, default=None):  # noqa: C901 too-complex
 
         # lists are just multiple arguments
-        if isinstance(val, list) or isinstance(val, tuple):
+        if isinstance(val, (list, tuple)):
             if len(val) == 0:
                 raise RegisterError("Variable '%s' is registered as list (see exception below), however it is required to define the type of the list arguments for it to become accessible from cli.\n\nYour options are:\n\t- define a default list, e.g. [\"a\", \"b\", \"c\"]\n\t- define the list type, e.g. [str]\n\t- define the variable as a helper using register_helpers(...)" % (fg('red') + varname + attr('reset')), traceback=caller_traceback)
             self._settings_parser_add(varname, val[0], caller_traceback, nargs="+", default=val)
@@ -411,17 +411,17 @@ class miniflask():
         # get argument type from value (this can be int, but also 42 for instance)
         if isinstance(val, Enum):
             argtype = Enum
-        elif type(val) == EnumMeta:
+        elif isinstance(val, EnumMeta):
             argtype = Enum
-        elif type(val) == type or type(val) == EnumMeta:
+        elif isinstance(val, (type, EnumMeta)):
             argtype = val if val != bool else str2bool
         else:
-            argtype = type(val) if type(val) != bool else str2bool
+            argtype = type(val) if not isinstance(val, bool) else str2bool
         kwarg = {'dest': varname, 'type': argtype, 'nargs': nargs}
 
         # we know the default argument, if the value is given
         # otherwise the value is a required argument (to be tested later)
-        if type(val) != type and type(val) != EnumMeta:
+        if not isinstance(val, type) and not isinstance(val, EnumMeta):
             kwarg["default"] = default if default is not None else val
         else:
             self.settings_parser_required_arguments.append([varname])
@@ -429,7 +429,7 @@ class miniflask():
         # for bool: enable --varname as alternative for --varname true
         if argtype == Enum:
             kwarg["action"] = EnumAction
-            kwarg["type"] = val if type(val) == EnumMeta else type(val)
+            kwarg["type"] = val if isinstance(val, EnumMeta) else type(val)
         elif argtype == str2bool and nargs != '+':
             kwarg["nargs"] = '?'
             kwarg["const"] = True
