@@ -1,8 +1,9 @@
-from os import walk, path
-from colored import attr, fg
-from argparse import Action
-import argparse
 import re
+import argparse
+from argparse import Action
+from os import walk, path
+
+from colored import attr, fg
 
 
 # get modules in a directory
