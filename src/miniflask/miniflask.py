@@ -660,7 +660,7 @@ class miniflask():
         # mark this instance as run
         self.argparse_called = True
 
-    def run(self, modules=None, call="main", argv=None):
+    def run(self, modules=None, call="main", argv=None):  # noqa: C901 too-complex  pylint: disable=too-many-statements
         if modules is None or (isinstance(modules, list) and len(modules) == 0):
             modules = ["settings"]
         try:
