@@ -46,7 +46,7 @@ class event(dict):
 
         return dummy_fn
 
-    def __getattr__(self, name):  # noqa: C901 too-complex
+    def __getattr__(self, name):  # noqa: C901 too-complex  pylint: disable=too-many-statements
 
         if name not in self._mf.event_objs:
             if not self.optional_value:
@@ -60,7 +60,7 @@ class event(dict):
 
             # fn_wrap_scope creates a function wrap of fn that passes also state and event of eobj
             # additionally, if outervar is defined as a default, it queries that from the last outer scope
-            def fn_wrap_scope(fn, state, event, module, needed_locals=None, miniflask_args=None, skip_twice=False, call_before_after=call_before_after):
+            def fn_wrap_scope(fn, state, event, module, needed_locals=None, miniflask_args=None, skip_twice=False, call_before_after=call_before_after):  # pylint: disable=too-many-statements
                 del module  # unused
                 if needed_locals is None:
                     needed_locals = []
