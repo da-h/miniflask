@@ -1,9 +1,11 @@
 import os
 from enum import EnumMeta
 from itertools import zip_longest
+
+from colored import attr
+
 from ...util import highlight_module, highlight_val, highlight_name, highlight_val_overwrite
 from ...state import like
-from colored import attr
 
 
 html_module = lambda x: x  # noqa: E731 no-lambda
