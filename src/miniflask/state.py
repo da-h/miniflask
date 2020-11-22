@@ -73,7 +73,7 @@ class state(dict):
             raise StateKeyError("Variable-Identifier '%s' is not unique. Found %i variables:\n\t%s\n\n    Call:\n        %s" % (highlight_module(name), len(found_varids), "\n\t".join(found_varids), " ".join(name)))
 
         # no module found with both variants
-        elif len(found_varids) == 0:
+        if len(found_varids) == 0:
             return False
 
         # cache for next use
@@ -110,7 +110,7 @@ class state(dict):
             raise StateKeyError("Variable-Identifier '%s' is not unique. Found %i variables:\n\t%s\n\n    Call:\n        %s" % (highlight_module(name), len(found_varids), "\n\t".join(found_varids), " ".join(name)))
 
         # no module found with both variants
-        elif len(found_varids) == 0:
+        if len(found_varids) == 0:
             raise StateKeyError("Variable '%s' not known. (Module %s attempted to access this variable.)\n\nI tried the following interpretations:\n\t- as module variable: '%s'\n\t- as global Variable: '%s'\n\t- finally, I tried any ordered selection that contains the keys: [%s]." % (fg('green') + name + attr('reset'), highlight_module(self.module_id), fg('green') + module_name + attr('reset'), fg('green') + name + attr('reset'), ', '.join("'" + fg('green') + n + attr('reset') + "'" for n in name.split("."))))
 
         # cache for next use
@@ -144,7 +144,7 @@ class state(dict):
             raise StateKeyError("Variable-Identifier '%s' is not unique. Found %i variables:\n\t%s\n\n    Call:\n        %s" % (highlight_module(name), len(found_varids), "\n\t".join(found_varids), " ".join(name)))
 
         # no module found with both variants
-        elif len(found_varids) == 0:
+        if len(found_varids) == 0:
             raise StateKeyError("Variable '%s' not known. (Module %s attempted to access this variable.)\n\nI tried the following interpretations:\n\t- as module variable: '%s'\n\t- as global Variable: '%s'\n\t- finally, I tried any ordered selection that contains the keys: [%s]." % (fg('green') + name + attr('reset'), highlight_module(self.module_id), fg('green') + module_name + attr('reset'), fg('green') + name + attr('reset'), ', '.join("'" + fg('green') + n + attr('reset') + "'" for n in name.split("."))))
 
         # cache for next use
@@ -182,7 +182,7 @@ class state(dict):
             raise StateKeyError("Variable-Identifier '%s' is not unique. Found %i variables:\n\t%s\n\n    Call:\n        %s" % (highlight_module(name), len(found_varids), "\n\t".join(found_varids), " ".join(name)))
 
         # no module found with both variants, assume a internal module variable is meant to create
-        elif len(found_varids) == 0:
+        if len(found_varids) == 0:
             found_varids = [module_name]
 
         # cache for next use
