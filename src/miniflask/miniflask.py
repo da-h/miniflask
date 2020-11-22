@@ -782,7 +782,7 @@ class miniflask_wrapper(miniflask):
     def like(self, varname, alt, scope="."):
         scope_name = scope
         if scope is not None:
-            scope, was_relative = self._get_relative_module_id(scope)
+            scope, _ = self._get_relative_module_id(scope)
         return like(varname, alt, scope=scope, scope_name=scope_name)
 
     # loads module dependencies as child module
@@ -827,7 +827,7 @@ class miniflask_wrapper(miniflask):
         # default behaviour is to use current module-name
         if scope is None:
             scope = self.module_id
-        scope, was_relative = self._get_relative_module_id(scope, offset=1)
+        scope, _ = self._get_relative_module_id(scope, offset=1)
         super().register_defaults(defaults, scope=scope, **kwargs)
 
     # helper variables are not added to argument parser
