@@ -46,7 +46,7 @@ def highlight_loading_module(x):
 highlight_error = lambda: fg('red') + attr('bold') + "Error:" + attr('reset') + " "
 highlight_name = lambda x: fg('blue') + attr('bold') + x + attr('reset')
 highlight_module = lambda x: fg('green') + attr('bold') + x + attr('reset')
-highlight_loading = lambda x: highlight_loading_module(x)
+highlight_loading = highlight_loading_module
 highlight_loading_default = lambda y, x: attr('dim') + y + attr('reset') + " ⟶  " + highlight_loading_module(x)
 highlight_loaded_default = lambda y, x: attr('dim') + x + " found modules: " + ", ".join(highlight_loading_module(m) for m in y) + attr('reset')
 highlight_loaded_none = lambda x: fg('red') + x + attr('reset')
