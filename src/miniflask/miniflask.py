@@ -137,8 +137,8 @@ class miniflask():
     # pretty print of all available modules
     def showModules(self, directory=None, prepend="", id_pre=None, with_event=True):  # noqa: C901 too-complex
         if not directory:
-            for basename, directory in self.module_dirs.items():
-                self.showModules(directory, prepend=prepend, id_pre=basename if id_pre is None else id_pre + "." + basename, with_event=with_event)
+            for basename, loop_directory in self.module_dirs.items():
+                self.showModules(loop_directory, prepend=prepend, id_pre=basename if id_pre is None else id_pre + "." + basename, with_event=with_event)
             return
 
         if id_pre is None:
