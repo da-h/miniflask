@@ -534,13 +534,13 @@ class miniflask():
             overwrite = settings == self._settings_parse_later_overwrites
             recheck = settings == settings_recheck
             for varname, (val, cliargs, parsefn, caller_traceback, _mf) in settings.items():
-                is_fn = callable(val) and type(val) != type and type(val) != EnumMeta and parsefn
+                is_fn = callable(val) and not isinstance(val, type) and not isinstance(val, EnumMeta) and parsefn
 
                 # eval dependencies/like expressions
                 if is_fn:
                     try:
                         the_val = val
-                        while callable(the_val) and type(the_val) != type:
+                        while callable(the_val) and not isinstance(the_val, type):
                             the_val = the_val(_mf.state, self.event)
                     except RecursionError:
                         raise RecursionError("In parsing of value '%s'." % varname)
@@ -648,7 +648,7 @@ class miniflask():
             # The value is a function AND one of
             # 1. was helper variable, thus no cli-argument can overwrite it anyway
             # 2. the value has not been overwritten by user
-            while callable(val) and type(val) != type and type(val) != EnumMeta and parsefn and (not cliargs or varname not in user_varids):
+            while callable(val) and not isinstance(val, type) and not isinstance(val, EnumMeta) and parsefn and (not cliargs or varname not in user_varids):
                 val = val(_mf.state, _mf.event)
                 self.state[varname] = val
 
