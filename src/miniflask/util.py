@@ -95,7 +95,7 @@ class EnumAction(Action):
         kwargs.setdefault("choices", choices)
 
         # actually register argparse action
-        super(EnumAction, self).__init__(**kwargs)
+        super().__init__(**kwargs)
 
     def __call__(self, parser, namespace, values, option_string=None, return_enum=False):
         if isinstance(values, list):
