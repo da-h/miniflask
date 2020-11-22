@@ -242,8 +242,6 @@ class miniflask():
             try:
                 if module == self.getModuleId(shortid):
                     return shortid
-                else:
-                    pass
             except ValueError:
                 pass
         return module
