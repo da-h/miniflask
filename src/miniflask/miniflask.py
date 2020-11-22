@@ -522,10 +522,9 @@ class miniflask():
                 found_varids = get_varid_from_fuzzy(varname, self._settings_parse_later.keys())
                 if len(found_varids) == 0:
                     raise RegisterError("Variable '%s' is not registered yet, however it seems like you wold like to overwrite it (see exception below)." % (fg('red') + varname + attr('reset')), traceback=caller_traceback)
-                elif len(found_varids) > 1:
+                if len(found_varids) > 1:
                     raise RegisterError("Variable-Identifier '%s' is not unique. Found %i variables:\n\t%s\n\n    Call:\n        %s" % (highlight_module(found_varids), len(found_varids), "\n\t".join(found_varids), " ".join(found_varids)), traceback=caller_traceback)
-                else:
-                    self._settings_parse_later_overwrites[found_varids[0]] = (val, cliargs, parsefn, caller_traceback, _mf)
+                self._settings_parse_later_overwrites[found_varids[0]] = (val, cliargs, parsefn, caller_traceback, _mf)
             else:
                 self._settings_parse_later_overwrites[varname] = (val, cliargs, parsefn, caller_traceback, _mf)
 
