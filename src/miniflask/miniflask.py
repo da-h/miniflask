@@ -542,8 +542,8 @@ class miniflask():
                         the_val = val
                         while callable(the_val) and not isinstance(the_val, type):
                             the_val = the_val(_mf.state, self.event)
-                    except RecursionError:
-                        raise RecursionError("In parsing of value '%s'." % varname)
+                    except RecursionError as e:
+                        raise RecursionError("In parsing of value '%s'." % varname) from e
                 else:
                     the_val = val
 
