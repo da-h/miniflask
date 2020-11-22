@@ -20,7 +20,7 @@ class RegisterError(Exception):
         return base_exc + ("\n\n" + fg('red') + "The variable definition occured in" + attr('reset') + ":\n""" + format_traceback_list(self.traceback) if self.traceback is not None else "")
 
     def __init__(self, *args, msg='', traceback=None, **kwargs):
-
+        del args, kwargs  # unused
         # storing the traceback which provides useful information about where the exception occurred
         self.traceback = traceback
 
@@ -34,7 +34,7 @@ class StateKeyError(Exception):
         return base_exc + ("\n\n" + fg('red') + "The Key Error occured in" + attr('reset') + ":\n""" + format_traceback_list(self.traceback) if self.traceback is not None else "")
 
     def __init__(self, *args, msg='', traceback=None, **kwargs):
-
+        del args, kwargs  # unused
         # storing the traceback which provides useful information about where the exception occurred
         self.traceback = traceback
 
