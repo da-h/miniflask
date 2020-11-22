@@ -6,7 +6,9 @@ import re
 
 
 # get modules in a directory
-def getModulesAvail(module_dirs, f={}):
+def getModulesAvail(module_dirs, f=None):
+    if f is None:
+        f = {}
     for base_module_name, directory in module_dirs.items():
         basename_dir = path.basename(directory)
         for (dirpath, dirnames, filenames) in walk(directory):
