@@ -1,6 +1,8 @@
 import sys
-from colored import fg, attr
 import re
+
+from colored import fg, attr
+
 from .util import get_varid_from_fuzzy, highlight_module
 from .exceptions import StateKeyError
 
