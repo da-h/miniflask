@@ -1,8 +1,10 @@
-from colored import fg, attr
-from miniflask.miniflask import highlight_module
 import re
 import typing
 from dis import Bytecode
+
+from colored import fg, attr
+
+from miniflask.miniflask import highlight_module
 
 
 def color_module(moduleid, short=False):
