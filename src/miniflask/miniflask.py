@@ -758,8 +758,7 @@ class miniflask_wrapper(miniflask):
                     return self
                 return result
             return hooked
-        else:
-            return orig_attr
+        return orig_attr
 
     def redefine_scope(self, new_module_name):
         old_module_name = self.module_id
