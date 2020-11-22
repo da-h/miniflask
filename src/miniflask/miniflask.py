@@ -325,7 +325,9 @@ class miniflask():
             self._recently_loaded = []
 
     # register default module that is loaded if none of glob is matched
-    def register_default_module(self, module, required_event=None, required_id=None, overwrite_globals={}):
+    def register_default_module(self, module, required_event=None, required_id=None, overwrite_globals=None):
+        if overwrite_globals is None:
+            overwrite_globals = {}
         if required_event and required_id:
             raise RegisterError("Default Modules should depend either on a event interface OR a regular expression. However, both are given")
         if not required_event and not required_id:
