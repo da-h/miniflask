@@ -454,7 +454,7 @@ class miniflask():
     def stop_parse(self):
         self.halt_parse = True
 
-    def parse_args(self, argv=None, optional=True, fuzzy_args=True):  # noqa: C901 too-complex
+    def parse_args(self, argv=None, optional=True, fuzzy_args=True):  # noqa: C901 too-complex  pylint: disable=too-many-statements
         if self.argparse_called:
             raise SystemError("The function `parse_args` has been called already. Did you maybe called `mf.parse_args()` and `mf.run()` in the same script? Solutions are:\n\t- Please use only one of those functions.\n\t- If you actually need both functions, please do not hesitate to write an issue on\n\t\thttps://github/da-h/miniflask/issues\n\t  to explain you used case.\n\t  (It's not hard to implement, but I need to know, if and when this functionality is needed. ;) )")
 
