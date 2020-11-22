@@ -88,13 +88,13 @@ class miniflask():
     # ------- #
     # helpers #
     # ------- #
-    def print_heading(self, *args, color=fg('green'), margin=8):
+    def print_heading(self, *args, color=fg('blue'), margin=8):
         line = "—" * self._consolecolumns
         if len(args) > 0:
             s = " ".join(args)
             line = line[:margin] + " " + s + " " + line[margin + len(s) + 2:]
         print()
-        print(fg('blue') + attr('bold') + line + attr('reset'))
+        print(color + attr('bold') + line + attr('reset'))
 
     def print_recently_loaded(self, prepend="", loading_text=highlight_loading):
         for i, mod in enumerate(self._recently_loaded):
