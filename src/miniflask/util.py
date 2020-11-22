@@ -104,7 +104,7 @@ class EnumAction(Action):
         else:
             try:
                 enum = self._enum[values.upper()]
-            except:  # noqa: E722
+            except:  # noqa: E722 pylint: disable=bare-except
                 enum = self._enum(values)
             if return_enum:
                 return enum
