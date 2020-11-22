@@ -82,7 +82,7 @@ class miniflask():
         self._recently_loaded = []
         try:
             self._consolecolumns, self._consolerows = get_terminal_size(0)
-        except:  # noqa: E722
+        except:  # noqa: E722  pylint: disable=bare-except
             self._consolecolumns, self._consolerows = 80, 40
 
     # ------- #
