@@ -54,8 +54,8 @@ class miniflask():
             self.module_dirs = module_dirs
         else:
             raise ValueError("Only dict or list allowed for `module_dirs'. Found type '%s'." % type(module_dirs))
-        for dir in self.module_dirs.values():
-            sys.path.insert(0, dir + path.sep + path.pardir)
+        for directory in self.module_dirs.values():
+            sys.path.insert(0, directory + path.sep + path.pardir)
 
         # arguments from cli-stdin
         self.settings_parser = ArgumentParser(usage=sys.argv[0] + " modulelist [optional arguments]")
