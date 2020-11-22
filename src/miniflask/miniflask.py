@@ -219,7 +219,7 @@ class miniflask():
             raise ValueError(highlight_error() + "Module-Identifier '%s' is not unique. Found %i modules:\n\t%s" % (highlight_module(module_id), len(found_modules), "\n\t".join(found_modules)))
 
         # no module found with both variants
-        elif len(found_modules) == 0:
+        if len(found_modules) == 0:
             raise ValueError(highlight_error() + "Module '%s' not known." % highlight_module(module_id))
 
         # module_id is a unique identifier
