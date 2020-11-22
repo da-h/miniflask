@@ -97,7 +97,7 @@ class EnumAction(Action):
         # actually register argparse action
         super().__init__(**kwargs)
 
-    def __call__(self, parser, namespace, values, option_string=None, return_enum=False):
+    def __call__(self, parser, namespace, values, option_string=None, return_enum=False):  # pylint: disable=inconsistent-return-statements
         if isinstance(values, list):
             enum = [self(parser, namespace, v, option_string=option_string, return_enum=True) for v in values]
         else:
