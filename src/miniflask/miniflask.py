@@ -135,27 +135,27 @@ class miniflask():
         return dummy.getEvents()
 
     # pretty print of all available modules
-    def showModules(self, dir=None, prepend="", id_pre=None, with_event=True):  # noqa: C901 too-complex
-        if not dir:
-            for basename, dir in self.module_dirs.items():
-                self.showModules(dir, prepend=prepend, id_pre=basename if id_pre is None else id_pre + "." + basename, with_event=with_event)
+    def showModules(self, directory=None, prepend="", id_pre=None, with_event=True):  # noqa: C901 too-complex
+        if not directory:
+            for basename, directory in self.module_dirs.items():
+                self.showModules(directory, prepend=prepend, id_pre=basename if id_pre is None else id_pre + "." + basename, with_event=with_event)
             return
 
         if id_pre is None:
-            id_pre = path.basename(dir)
+            id_pre = path.basename(directory)
         if len(prepend) == 0:
             print()
             print(highlight_name(path.basename(id_pre)))
-        dirs = [d for d in listdir(dir) if path.isdir(path.join(dir, d)) and not d.startswith("_")]
+        dirs = [d for d in listdir(directory) if path.isdir(path.join(directory, d)) and not d.startswith("_")]
         for i, d in enumerate(dirs):
             if d.startswith("."):
                 continue
-            if path.exists(path.join(dir, d, ".ignoredir")):
+            if path.exists(path.join(directory, d, ".ignoredir")):
                 continue
             module_id = id_pre + "." + d if id_pre != "" else d
 
-            is_module = path.exists(path.join(dir, d, ".module"))
-            is_lowpriority_module = path.exists(path.join(dir, d, ".lowpriority"))
+            is_module = path.exists(path.join(directory, d, ".module"))
+            is_lowpriority_module = path.exists(path.join(directory, d, ".lowpriority"))
             if is_module:
                 shortestid = self.getModuleShortId(module_id)
             has_shortid = is_module and shortestid == d
@@ -179,7 +179,7 @@ class miniflask():
                             unique_flag = "!" if e[1] else ">"
                             print(prepend + tree_symb_next + unique_flag + " " + highlight_event(e[0]))
                 continue
-            self.showModules(path.join(dir, d), prepend=prepend + tree_symb_next, id_pre=module_id, with_event=with_event)
+            self.showModules(path.join(directory, d), prepend=prepend + tree_symb_next, id_pre=module_id, with_event=with_event)
 
     # pretty print loaded modules
     def __str__(self):
