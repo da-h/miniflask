@@ -75,6 +75,7 @@ class miniflask():
         self.state = {}
         self.state_default = {}
         self.modules_loaded = {}
+        self.modules_ignored = []
         self.modules_avail = getModulesAvail(self.module_dirs)
         self.miniflask_objs = {}  # local modified versions of miniflask
         registerPredefined(self.modules_avail)
@@ -290,6 +291,12 @@ class miniflask():
         if isinstance(module_name, list):
             for m in module_name:
                 self.load(m, verbose=verbose, auto_query=auto_query, loading_text=loading_text, as_id=as_id, bind_events=bind_events)
+            return
+
+        if module_name.startswith("-"):
+            self.modules_ignored.append(module_name[1:])
+            return
+        if module_name in self.modules_ignored:
             return
 
         # get id
