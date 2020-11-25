@@ -215,7 +215,7 @@ class like:
         self.alt = alt
         self.fn = lambda state, event: state[global_varname] if global_varname in state else alt  # noqa: E731 no-lambda
 
-    def __call__(self, state, event):
+    def __call__(self, state, event):  # pylint: disable=redefined-outer-name
         return self.fn(state, event)
 
     def str(self, asciicodes=True, color_attr=attr):
