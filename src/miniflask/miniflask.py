@@ -284,7 +284,7 @@ class miniflask():
         return None, ".".join(varid_list)
 
     # loads module (once)
-    def load(self, module_name, verbose=True, auto_query=True, loading_text=highlight_loading, as_id=None, bind_events=True):
+    def load(self, module_name, verbose=True, auto_query=True, loading_text=highlight_loading, as_id=None, bind_events=True):  # noqa: C901 too-complex  pylint: disable=too-many-statements
 
         # load list of modules
         if isinstance(module_name, str) and "," in module_name:
