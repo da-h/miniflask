@@ -36,7 +36,7 @@ relative_import_re = re.compile(r"(\.+)(.*)")
 
 
 class state(dict):
-    def __init__(self, module_name, internal_state_dict, state_default):
+    def __init__(self, module_name, internal_state_dict, state_default):  # pylint: disable=super-init-not-called
         self.all = internal_state_dict
         self.default = state_default
         self.module_id = module_name
