@@ -13,6 +13,7 @@ class temporary_state(dict):
         self.state = _state
         self.saved = {}
         self.did_not_exist = []
+        super().__init__()
 
     def __enter__(self):
         for key, val in self.variables.items():
