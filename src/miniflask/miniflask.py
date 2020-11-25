@@ -732,7 +732,7 @@ relative_import_re = re.compile(r"(\.+)(.*)")
 
 
 class miniflask_wrapper(miniflask):
-    def __init__(self, module_name, mf):
+    def __init__(self, module_name, mf):  # pylint: disable=super-init-not-called
         self.module_id = module_name
         self.module_id_initial = module_name
         self.module_name = module_name.split(".")[-1]
