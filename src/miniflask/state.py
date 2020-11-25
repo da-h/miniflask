@@ -24,8 +24,8 @@ class temporary_state(dict):
             self.state[key] = val
         return self.state
 
-    def __exit__(self, type, value, traceback):
-        del type, value, traceback
+    def __exit__(self, _type, _value, _traceback):
+        del _type, _value, _traceback
         for key, val in self.saved.items():
             self.state[key] = val
         for key in self.did_not_exist:
