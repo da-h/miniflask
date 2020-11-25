@@ -755,8 +755,8 @@ class miniflask_wrapper(miniflask):
             was_relative = True
         return module_name, was_relative
 
-    def __getattr__(self, attr):
-        orig_attr = super().__getattribute__('wrapped_class').__getattribute__(attr)
+    def __getattr__(self, name):
+        orig_attr = super().__getattribute__('wrapped_class').__getattribute__(name)
         if callable(orig_attr):
             def hooked(*args, **kwargs):
                 result = orig_attr(*args, **kwargs)
