@@ -218,10 +218,10 @@ class like:
     def __call__(self, state, event):
         return self.fn(state, event)
 
-    def str(self, asciicodes=True):
+    def str(self, asciicodes=True, color_attr=attr):
         if not asciicodes:
-            attr = lambda x: ''  # noqa: E731 no-lambda
-        return attr('dim') + "'" + str(self.varname) + "' or '" + str(self.alt) + "' ⟶   " + attr('reset') + str(self.default)
+            color_attr = lambda x: ''  # noqa: E731 no-lambda
+        return color_attr('dim') + "'" + str(self.varname) + "' or '" + str(self.alt) + "' ⟶   " + color_attr('reset') + str(self.default)
 
     def __str__(self):
         return self.str()
