@@ -192,9 +192,6 @@ class state(dict):
         self.fuzzy_names[found_varids[0]] = name
         self.all[found_varids[0]] = val
 
-    def __getattribute__(self, name):
-        return super().__getattribute__(name)
-
     def _get_relative_module_id(self, module_name, offset=0):
         was_relative = False
         m = relative_import_re.match(module_name)
