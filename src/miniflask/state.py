@@ -36,8 +36,8 @@ relative_import_re = re.compile(r"(\.+)(.*)")
 
 
 class state(dict):
-    def __init__(self, module_name, state, state_default):
-        self.all = state
+    def __init__(self, module_name, internal_state_dict, state_default):
+        self.all = internal_state_dict
         self.default = state_default
         self.module_id = module_name
         self.fuzzy_names = {}
