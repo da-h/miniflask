@@ -3,6 +3,7 @@ import sys
 import re
 import inspect
 import traceback
+from functools import partial
 from os import path, listdir, linesep, get_terminal_size
 from importlib import import_module
 from enum import Enum, EnumMeta
@@ -500,7 +501,7 @@ class miniflask():
                     module = [module]
                 modules_already_loaded = all(self.getModuleId(m) in self.modules_loaded for m in module)
                 if not modules_already_loaded and evt not in self.event_objs:
-                    self.load(module, loading_text=lambda x: highlight_loading_default(evt, x))
+                    self.load(module, loading_text=partial(highlight_loading_default, evt))
                     self.register_defaults(overwrite_globals, scope="", overwrite=True, caller_traceback=caller_traceback)
                 else:
                     found = self.event_objs[evt].modules
@@ -516,7 +517,7 @@ class miniflask():
             elif glob:
                 found = [highlight_loading_module(x) for x in keys if re.search(glob, x)]
                 if len(found) == 0:
-                    self.load(module, loading_text=lambda x: highlight_loading_default(glob, x))
+                    self.load(module, loading_text=partial(highlight_loading_default, glob))
                     self.register_defaults(overwrite_globals, scope="", overwrite=True, caller_traceback=caller_traceback)
                 elif len(found) > 1:
                     print(highlight_loaded_default(found, glob))
