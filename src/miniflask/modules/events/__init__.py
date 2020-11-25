@@ -54,7 +54,7 @@ def register(mf):
 def list_func_calls(fn):
     funcs = []
     bytecode = Bytecode(fn)
-    instrs = list(reversed([instr for instr in bytecode]))
+    instrs = list(reversed(list(bytecode)))
     for (ix, instr) in enumerate(instrs):
         if instr.argval == "event" and ix - 2 > 0 and instrs[ix - 1].opname == "LOAD_METHOD":
             funcs.append(instrs[ix - 1].argval)
