@@ -61,7 +61,7 @@ class event(dict):
 
             # fn_wrap_scope creates a function wrap of fn that passes also state and event of eobj
             # additionally, if outervar is defined as a default, it queries that from the last outer scope
-            def fn_wrap_scope(fn, state, event, module, needed_locals=None, miniflask_args=None, skip_twice=False, call_before_after=call_before_after):  # pylint: disable=too-many-statements
+            def fn_wrap_scope(fn, _state, _event, module, needed_locals=None, miniflask_args=None, skip_twice=False, call_before_after=call_before_after):  # pylint: disable=too-many-statements
                 del module  # unused
                 if needed_locals is None:
                     needed_locals = []
@@ -95,13 +95,13 @@ class event(dict):
                 # get index of "state" / "event"
                 if len(arg_names) > 0:
                     if arg_names[0] == "state":
-                        miniflask_args.append(state)
+                        miniflask_args.append(_state)
                         if len(arg_names) > 1 and arg_names[1] == "event":
-                            miniflask_args.append(event)
+                            miniflask_args.append(_event)
                     elif arg_names[0] == "event":
-                        miniflask_args.append(event)
+                        miniflask_args.append(_event)
                         if len(arg_names) > 1 and arg_names[1] == "state":
-                            miniflask_args.append(state)
+                            miniflask_args.append(_state)
 
                 # if no outervar found, just pass state and event
                 if len(needed_locals) > 0:
@@ -152,7 +152,7 @@ class event(dict):
                     setattr(fn_wrap, 'fns_args', [mf_args])
             else:
                 def multiple_fn_wrap_scope(orig_fns, modules=eobj.modules):
-                    fns, have_signature, mf_args = zip(*[fn_wrap_scope(fn, state=module.state, event=module.event, module=module, skip_twice=True) for fn, module in zip(orig_fns, modules)])
+                    fns, have_signature, mf_args = zip(*[fn_wrap_scope(fn, _state=module.state, _event=module.event, module=module, skip_twice=True) for fn, module in zip(orig_fns, modules)])
 
                     def fn_wrap(*args, altfn=None, **kwargs):
                         del altfn  # unused
