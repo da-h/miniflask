@@ -8,9 +8,9 @@ from .exceptions import StateKeyError
 
 
 class temporary_state(dict):
-    def __init__(self, state, variables):
+    def __init__(self, _state, variables):
         self.variables = variables
-        self.state = state
+        self.state = _state
         self.saved = {}
         self.did_not_exist = []
 
