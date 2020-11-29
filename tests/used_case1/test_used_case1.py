@@ -8,4 +8,4 @@ mf = miniflask.init(
 
 
 def test_used_case1():
-    mf.run()
+    mf.run(argv=[])
