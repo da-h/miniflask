@@ -10,6 +10,6 @@ mf = miniflask.init(
 def test_outervar():
     event = mf.event
     mf.load("module1")
-    varA = 42
+    var_a = 42
     mf.event.main()
-    del event, varA  # now unused
+    del event, var_a  # now unused

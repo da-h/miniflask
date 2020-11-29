@@ -1,9 +1,9 @@
 from miniflask import outervar
 
 
-def main(state, event, varA=outervar):
+def main(state, event, var_a=outervar):
     del state, event  # unused
-    print("outervar:", varA)
+    print("outervar:", var_a)
 
 
 def register(mf):
