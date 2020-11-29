@@ -633,12 +633,12 @@ class miniflask():
                 # if no matching varid found, check for fuzzy identifier
                 if len(found_varids) > 1:
                     argv[i] = highlight_module(argv[i])
-                    raise ValueError(highlight_error() + "Variable-Identifier '--%s' is not unique. Found %i variables:\n\t%s\n\n    Call:\n        %s" % (highlight_module(varid), len(found_varids), "\n\t".join(found_varids), " ".join(argv)))
+                    raise ValueError(highlight_error() + "Variable-Identifier '--%s' is not unique. Found %i variables:\n\t%s\n\n    Call:\n        %s" % (highlight_module(varid), len(found_varids), "\n\t".join(found_varids), " ".join([a if isinstance(a, str) else str(a) for a in argv])))
 
                 # no module found with both variants
                 if len(found_varids) == 0:
                     argv[i] = highlight_module(argv[i])
-                    raise ValueError(highlight_error() + "Variable '--%s' not known.\n\n    Call:\n       %s" % (highlight_module(varid), " ".join(argv)))
+                    raise ValueError(highlight_error() + "Variable '--%s' not known.\n\n    Call:\n       %s" % (highlight_module(varid), " ".join([a if isinstance(a, str) else str(a) for a in argv])))
 
                 varid = found_varids[0]
 
