@@ -8,4 +8,4 @@ mf = miniflask.init(
 
 
 def test_temporary():
-    mf.run(argv=[])
+    mf.run(modules=["dosomething"], argv=[])
