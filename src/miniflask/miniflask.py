@@ -601,6 +601,8 @@ class miniflask():
         # remember varids from user-args & fuzzy matching the settings
         user_varids = {}
         for i, varid in enumerate(argv):
+            if varid is None:
+                continue
             if not varid.startswith("--"):
                 if varid.startswith("-") and not varid[1:].replace('.', '', 1).isdigit():
                     varid = argv[i] = "-" + argv[i]
