@@ -1,10 +1,15 @@
-import sys
-import os
-sys.path.insert(0, os.path.join("..", "..", "src"))
+from pathlib import Path
 
 import miniflask  # noqa: E402
+
 mf = miniflask.init(
-    module_dirs="./modules",
+    module_dirs=str(Path(__file__).parent / "modules"),
 )
 
-mf.run()
+
+def test_module_a():
+    mf.run(modules=["a"], argv=[])
+
+
+def test_module_b():
+    mf.run(modules=["b"], argv=[])
