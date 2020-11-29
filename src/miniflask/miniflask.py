@@ -8,6 +8,7 @@ from os import path, listdir, linesep, get_terminal_size
 from importlib import import_module
 from enum import Enum, EnumMeta
 from argparse import ArgumentParser
+from typing import List
 
 from colored import fg, attr
 
@@ -462,14 +463,21 @@ class miniflask():
     def stop_parse(self):
         self.halt_parse = True
 
-    def parse_args(self, argv=None, optional=True, fuzzy_args=True):  # noqa: C901 too-complex  pylint: disable=too-many-statements
+    def parse_args(self,
+                   argv: str or List[str] = None,
+                   optional: bool = True,
+                   fuzzy_args: bool = True):  # noqa: C901 too-complex  pylint: disable=too-many-statements
         if self.argparse_called:
             raise SystemError("The function `parse_args` has been called already. Did you maybe called `mf.parse_args()` and `mf.run()` in the same script? Solutions are:\n\t- Please use only one of those functions.\n\t- If you actually need both functions, please do not hesitate to write an issue on\n\t\thttps://github/da-h/miniflask/issues\n\t  to explain you used case.\n\t  (It's not hard to implement, but I need to know, if and when this functionality is needed. ;) )")
 
-        if not argv:
+        if argv is None:  # check if 'argv' is passed
             argv = sys.argv  # [1:]
-        else:
+        elif isinstance(argv, list):  # check if passed 'argv' is a list
             argv = [None] + argv
+        elif isinstance(argv, str):  # check if passed 'argv' is a str (split by whitespace)
+            argv = [None] + argv.split(" ")
+        else:  # unknown passed variable (don't pass on any arguments)
+            argv = [None]
 
         # actually parse the input
         parser = ArgumentParser()
