@@ -12,13 +12,13 @@ class outervar(Enum):
 class event_obj:
     fn: Callable or List[Callable]
     unique: bool
-    module: str or List[str]
+    modules: str or List[str]
     call_before_after: bool = True
 
     def __post_init__(self):
         if not self.unique:
             self.fn = [self.fn]
-            self.modules = [self.module]
+            self.modules = [self.modules]
 
 
 class event(dict):
