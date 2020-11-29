@@ -1,20 +1,23 @@
 import inspect
+from typing import Callable, List
+from dataclasses import dataclass
 
 
-class outervar():
+class outervar:  # pylint: disable=too-few-public-methods
     pass
 
 
-class event_obj():
-    def __init__(self, fn, unique, module, call_before_after=True):
-        self.unique = unique
-        self.call_before_after = call_before_after
-        if unique:
-            self.fn = fn
-            self.modules = module
-        else:
-            self.fn = [fn]
-            self.modules = [module]
+@dataclass
+class event_obj:
+    fn: Callable or List[Callable]
+    unique: bool
+    modules: str or List[str]
+    call_before_after: bool = True
+
+    def __post_init__(self):
+        if not self.unique:
+            self.fn = [self.fn]
+            self.modules = [self.modules]
 
 
 class event(dict):
