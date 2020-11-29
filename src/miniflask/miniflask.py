@@ -714,7 +714,7 @@ class miniflask():
                 sys.exit(1)
             else:
                 raise
-        except Exception as e:  # pylint disable=broad-except
+        except Exception as e:  # pylint: disable=broad-except
             gettrace = getattr(sys, 'gettrace', None)
 
             # check if debugger will catch this
