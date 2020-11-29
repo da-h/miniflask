@@ -10,6 +10,6 @@ mf = miniflask.init(
 def test_enum():
     mf.run(
         modules=["module1"],
-        argv=["--module1.sizerequired=SMALL",
-              "--module1.sizelist=MEDIUM"]  # TODO: actually pass a list
+        argv=["--module1.sizerequired", "SMALL",
+              "--module1.sizelist", "MEDIUM", "SMALL"]
     )
