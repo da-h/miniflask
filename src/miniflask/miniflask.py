@@ -596,7 +596,7 @@ class miniflask():
             print_help = True
 
         # split --varname=value expressions
-        argv = [v for val in argv for v in (val.split("=", 1) if val.startswith("--") or val.startswith("-") and not val[1:].isnumeric() else [val])]
+        argv = [v for val in argv for v in (val.split("=", 1) if val is not None and (val.startswith("--") or val.startswith("-")) and not val[1:].isnumeric() else [val])]
 
         # remember varids from user-args & fuzzy matching the settings
         user_varids = {}
