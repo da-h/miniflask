@@ -1,13 +1,10 @@
-#!/bin/python
-import sys
-import os
-sys.path.insert(0, os.path.join("..", "..", "src"))
+from pathlib import Path
 
 import miniflask  # noqa: E402
+
 mf = miniflask.init(
-    module_dirs="./modules",
+    module_dirs=str(Path(__file__).parent / "modules"),
 )
-mf.load("moduleunique")
 
 
 class event():
@@ -17,6 +14,10 @@ class event():
         return x
 
 
-a = 0
-for i in range(10000000):
-    a += event.func(42)
+def test_mf_class():
+
+    mf.load("moduleunique")
+
+    a = 0
+    for i in range(10000000):
+        a += event.func(42)
