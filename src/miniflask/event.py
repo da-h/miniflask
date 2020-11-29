@@ -1,11 +1,10 @@
 import inspect
 from typing import Callable, List
 from dataclasses import dataclass
-from enum import Enum
 
 
-class outervar(Enum):
-    outervar = "outervar"
+class outervar:  # pylint: disable=too-few-public-methods
+    pass
 
 
 @dataclass
