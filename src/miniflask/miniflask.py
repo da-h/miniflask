@@ -710,6 +710,12 @@ class miniflask():
                     print("No event '{0}' registered. "
                           "Please make sure to register the event '{0}', "
                           "or provide a suitable event to call with mf.run(call=\"myevent\").".format(call))
+
+                # optional final event
+                if hasattr(self.event, 'final'):
+                    self.print_heading("final Event")
+                    self.event.optional.final()
+
         except (RegisterError, StateKeyError) as e:
             gettrace = getattr(sys, 'gettrace', None)
 
