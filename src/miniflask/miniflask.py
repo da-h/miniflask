@@ -9,7 +9,7 @@ from importlib import import_module
 from importlib.machinery import PathFinder as ImportPathFinder
 from importlib.util import module_from_spec, find_spec
 from enum import Enum, EnumMeta
-from argparse import ArgumentParser
+from argparse import ArgumentParser, REMAINDER as ARGPARSE_REMAINDER
 from typing import List
 
 from colored import fg, attr
@@ -505,34 +505,41 @@ class miniflask():
         if self.argparse_called:
             raise SystemError("The function `parse_args` has been called already. Did you maybe called `mf.parse_args()` and `mf.run()` in the same script? Solutions are:\n\t- Please use only one of those functions.\n\t- If you actually need both functions, please do not hesitate to write an issue on\n\t\thttps://github/da-h/miniflask/issues\n\t  to explain you used case.\n\t  (It's not hard to implement, but I need to know, if and when this functionality is needed. ;) )")
 
+        has_module_args = argv is None or argv == sys.argv
         if argv is None:  # check if 'argv' is passed
-            argv = sys.argv  # [1:]
+            argv = sys.argv[1:]
         elif isinstance(argv, list):  # check if passed 'argv' is a list
-            argv = [None] + argv
+            pass
         elif isinstance(argv, str):  # check if passed 'argv' is a str (split by whitespace)
-            argv = [None] + argv.split(" ")
+            argv = argv.split(" ")
         else:  # unknown passed variable (don't pass on any arguments)
-            argv = [None]
+            argv = []
 
         # actually parse the input
-        parser = ArgumentParser()
-        parser.add_argument('cmds', default='info', nargs=1 if not optional else "?")
-        args = parser.parse_args(argv[1:2])
+        if has_module_args:
+            parser = ArgumentParser()
+            parser.add_argument('cmds', type=str, default='info', nargs=1 if not optional else "?")
+            parser.add_argument('module_arguments', nargs=ARGPARSE_REMAINDER)
+            args = parser.parse_args(argv)
 
-        # load modules
-        if args.cmds:
-            if optional:
-                cmds = args.cmds.split(',')
-            else:
-                cmds = args.cmds[0].split(',')
-            for cmd in cmds:
-                if self.halt_parse:
-                    break
+            # save remainder for module setting parser
+            argv = args.module_arguments
 
-                # try:
-                self.load(cmd)
-                # except Exception as e:
-                #     print(e)
+            # load modules
+            if args.cmds:
+                if optional:
+                    cmds = args.cmds.split(',')
+                else:
+                    cmds = args.cmds[0].split(',')
+                for cmd in cmds:
+                    if self.halt_parse:
+                        break
+
+                    # try:
+                    self.load(cmd)
+                    # except Exception as e:
+                    #     print(e)
+
 
         # ensure default_modules are loaded
         keys = self.modules_loaded.keys()
@@ -679,7 +686,7 @@ class miniflask():
             user_varids[varid] = True
 
         # parse user overwrites (first time, s.t. lambdas change adaptively)
-        settings_args = self.settings_parser.parse_args(argv[2:])
+        settings_args = self.settings_parser.parse_args(argv)
         for varname, val in vars(settings_args).items():
             self.state[varname] = val
 
