@@ -6,6 +6,8 @@ import traceback
 from functools import partial
 from os import path, listdir, linesep, get_terminal_size
 from importlib import import_module
+from importlib.machinery import PathFinder as ImportPathFinder
+from importlib.util import module_from_spec, find_spec
 from enum import Enum, EnumMeta
 from argparse import ArgumentParser
 from typing import List
@@ -37,6 +39,7 @@ def get_default_args(func):
     }
 
 
+
 # ================ #
 # MiniFlask Kernel #
 # ================ #
@@ -56,8 +59,6 @@ class miniflask():
             self.module_dirs = module_dirs
         else:
             raise ValueError("Only dict or list allowed for `module_dirs'. Found type '%s'." % type(module_dirs))
-        for directory in self.module_dirs.values():
-            sys.path.insert(0, directory + path.sep + path.pardir)
 
         # arguments from cli-stdin
         self.settings_parser = ArgumentParser(usage=sys.argv[0] + " modulelist [optional arguments]")
@@ -124,13 +125,47 @@ class miniflask():
     # module introspection #
     # ==================== #
 
+    def import_module(self, module_name):
+        module_spec = self.modules_avail[module_name]
+        path = module_spec["importpath"]
+
+        # system import (e.g. miniflask internal modules or pip-module repositories)
+        if path == "system":
+            return import_module(module_spec["importname"])
+
+        # imports across filesystem
+        # (first we need to load the parent module, if available)
+        if "." in module_spec["importname"]:
+            parent_module_name, rest = module_spec["importname"].split(".", 1)
+        else:
+            parent_module_name, rest = module_spec["importname"], ""
+        spec = ImportPathFinder().find_spec(parent_module_name, [path])
+        if spec is None:
+            if rest:
+                raise ValueError("Could not import parent Module named '%s'. This is needed for module named '%s' (defined in '%s')." % (parent_module_name, module_spec["id"], module_spec["importpath"]))
+            else:
+                raise ValueError("Module named '%s' (defined in '%s') could not be imported." % (module_spec["id"], module_spec["importpath"]))
+        if spec.loader is None:
+            raise ValueError("Could not import parent Module named '%s'. This is needed for module named '%s' (defined in '%s'). Did you maybe miss to define a `__init__.py` file in any subfolder?" % (parent_module_name, module_spec["id"], module_spec["importpath"]))
+        parent_module = spec.loader.load_module()
+
+        # if importing top-level package in repository, we are done
+        if not rest:
+            return parent_module
+
+        spec = find_spec(module_spec["importname"], package=parent_module)
+        if spec is None:
+            raise ValueError("Module named '%s' (defined in '%s') could not be imported." % (module_spec["id"], module_spec["importpath"]))
+        return spec.loader.load_module()
+
+
     # module event
     def getModuleEvents(self, module, dummy=None):
         if not dummy:
             dummy = miniflask_dummy()
 
         # load module
-        mod = import_module(self.modules_avail[module]["importpath"])
+        mod = self.import_module(module)
         if not hasattr(mod, "register"):
             return []
 
@@ -312,7 +347,7 @@ class miniflask():
             return
 
         # load module
-        mod = import_module(self.modules_avail[module_name]["importpath"])
+        mod = self.import_module(module_name)
         if not hasattr(mod, "register"):
             raise ValueError(highlight_error() + "Module '%s' does not register itself." % module_name)
         module_name = module_name if as_id is None else as_id

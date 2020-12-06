@@ -12,10 +12,10 @@ def getModulesAvail(module_dirs, f=None):
         f = {}
     for base_module_name, directory in module_dirs.items():
         base_module_name = base_module_name.replace(".", "_")
-        basename_dir = path.basename(directory)
+        # basename_dir = path.basename(directory)
         for (dirpath, dirnames, filenames) in walk(directory):
-            module_name_id = base_module_name + "." + dirpath[len(directory) + 1:].replace(path.sep, ".")
-            import_path = ((basename_dir + ".") if not basename_dir.endswith('.') else "") + dirpath[len(directory) + 1:].replace(path.sep, ".")
+            local_import_name = dirpath[len(directory) + 1:].replace(path.sep, ".")
+            module_name_id = base_module_name + "." + local_import_name
 
             # empty module id is not allowed
             if len(module_name_id) == 0:
@@ -34,7 +34,8 @@ def getModulesAvail(module_dirs, f=None):
             f[module_name_id] = {
                 'id': module_name_id,
                 'lowpriority': path.exists(path.join(dirpath, ".lowpriority")),
-                'importpath': import_path
+                'importname': local_import_name,
+                'importpath': directory,
             }
     return f
 
