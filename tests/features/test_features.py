@@ -1,4 +1,5 @@
 from pathlib import Path
+import pytest
 
 import miniflask  # noqa: E402
 
@@ -13,4 +14,5 @@ def test_module_a():
 
 
 def test_module_b():
-    mf.run(modules=["b"], argv=[])
+    with pytest.raises(miniflask.exceptions.RegisterError) as excinfo:
+        mf.run(modules=["b"], argv=[])
