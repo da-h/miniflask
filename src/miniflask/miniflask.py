@@ -755,7 +755,7 @@ class miniflask():
             gettrace = getattr(sys, 'gettrace', None)
 
             # check if debugger will catch this
-            if not gettrace or not gettrace():
+            if not self.debug and (not gettrace or not gettrace()):
                 tb = traceback.extract_tb(e.__traceback__)
                 print()
                 print(fg("red") + "Uncatched Exception occured. Traceback:" + attr("reset"))
@@ -767,7 +767,7 @@ class miniflask():
             gettrace = getattr(sys, 'gettrace', None)
 
             # check if debugger will catch this
-            if not gettrace or not gettrace():
+            if not self.debug and (not gettrace or not gettrace()):
                 tb = traceback.extract_tb(e.__traceback__)
                 print()
                 print(fg("red") + "Uncatched Exception occured. Traceback:" + attr("reset"))
