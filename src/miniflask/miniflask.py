@@ -518,7 +518,7 @@ class miniflask():
         # actually parse the input
         if has_module_args:
             parser = ArgumentParser()
-            parser.add_argument('cmds', type=str, default='info', nargs=1 if not optional else "?")
+            parser.add_argument('cmds', type=str, nargs=1 if not optional else "?")
             parser.add_argument('module_arguments', nargs=ARGPARSE_REMAINDER)
             args = parser.parse_args(argv)
 
