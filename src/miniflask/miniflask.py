@@ -230,14 +230,9 @@ class miniflask():
         module_ids = self.modules_avail.keys()
         module = module_id.replace(".", r"\.(.*\.)*")
 
-        # first search for a default module
-        r = re.compile(r"^(.*\.)?%s(\..*)?\.(default|%s)$" % (module, module_id.split(".")[-1]))
+        # first, try direct identifier
+        r = re.compile(r"^(.*\.)?%s$" % module)
         found_modules = list(filter(r.match, module_ids))
-
-        # if no default module found, check for direct identifier
-        if len(found_modules) == 0:
-            r = re.compile(r"^(.*\.)?%s$" % module)
-            found_modules = list(filter(r.match, module_ids))
 
         # if no default module found, check for related identifier
         if len(found_modules) == 0:
@@ -266,10 +261,6 @@ class miniflask():
             raise ValueError(highlight_error() + "Module '%s' not known." % highlight_module(module))
         uniqueId = self.modules_avail[module]["id"].split(".")
 
-        # modA.default -> modA
-        if uniqueId[-1] == "default":
-            uniqueId = uniqueId[:-1]
-
         # find the shortest substring to match a module uniquely
         for i in range(len(uniqueId) - 1, 0, -1):
             shortid = ".".join(uniqueId[i:])
@@ -283,17 +274,8 @@ class miniflask():
     # maps 'folder.subfolder.module.list.of.vars' to 'folder.subfoldder.module'
     def _getModuleIdFromVarId(self, varid, varid_list=None, scope=None):  # noqa: C901 too-complex
 
-        # try to use scope.default as module id
+        # try to use scope as module id
         if scope is not None:
-            try:
-                module_id = self.getModuleId(scope + ".default")
-                if varid.startswith(scope):
-                    varid = varid[len(scope) + 1:]
-                return module_id, varid
-            except ValueError:
-                pass
-
-            # try to use scope as module id
             try:
                 module_id = self.getModuleId(scope)
                 if varid.startswith(scope):
@@ -339,7 +321,7 @@ class miniflask():
             raise ValueError(highlight_error() + "Module '%s' not known." % highlight_module(module_name))
 
         # check if already loaded
-        if module_name + ".default" in self.modules_loaded or module_name in self.modules_loaded and as_id is None:
+        if module_name in self.modules_loaded and as_id is None:
             return
 
         # load module
