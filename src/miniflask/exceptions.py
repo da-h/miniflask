@@ -16,7 +16,7 @@ def save_traceback():
 class RegisterError(Exception):
 
     def __str__(self):
-        base_exc = super().__str__().replace("\\x1b","\x1b")
+        base_exc = super().__str__().replace("\\x1b", "\x1b")
         return base_exc + ("\n\n" + fg('red') + "The variable definition occured in" + attr('reset') + ":\n""" + format_traceback_list(self.traceback) if self.traceback is not None else "")
 
     def __init__(self, *args, msg='', traceback=None, **kwargs):
@@ -30,7 +30,7 @@ class RegisterError(Exception):
 class StateKeyError(Exception):
 
     def __str__(self):
-        base_exc = super().__str__().replace("\\x1b","\x1b")
+        base_exc = super().__str__().replace("\\x1b", "\x1b")
         return base_exc + ("\n\n" + fg('red') + "The Key Error occured in" + attr('reset') + ":\n""" + format_traceback_list(self.traceback) if self.traceback is not None else "")
 
     def __init__(self, *args, msg='', traceback=None, **kwargs):
