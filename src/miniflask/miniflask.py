@@ -7,7 +7,7 @@ from functools import partial
 from os import path, listdir, linesep, get_terminal_size
 from importlib import import_module
 from importlib.machinery import PathFinder as ImportPathFinder
-from importlib.util import module_from_spec, find_spec
+from importlib.util import find_spec
 from enum import Enum, EnumMeta
 from argparse import ArgumentParser, REMAINDER as ARGPARSE_REMAINDER
 from typing import List
@@ -39,11 +39,9 @@ def get_default_args(func):
     }
 
 
-
 # ================ #
 # MiniFlask Kernel #
 # ================ #
-
 class miniflask():
     def __init__(self, module_dirs, debug=False):
         self.debug = debug
@@ -157,7 +155,6 @@ class miniflask():
         if spec is None:
             raise ValueError("Module named '%s' (defined in '%s') could not be imported." % (module_spec["id"], module_spec["importpath"]))
         return spec.loader.load_module()
-
 
     # module event
     def getModuleEvents(self, module, dummy=None):
@@ -539,7 +536,6 @@ class miniflask():
                     self.load(cmd)
                     # except Exception as e:
                     #     print(e)
-
 
         # ensure default_modules are loaded
         keys = self.modules_loaded.keys()
