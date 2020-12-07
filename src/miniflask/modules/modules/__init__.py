@@ -1,6 +1,5 @@
 def showModules(state, event):
-    event._mf.showModules(with_event=state.all["events"])
-    print()
+    print(event._mf.showModules(with_event=state.all["events"]))
 
 
 def register(mf):
