@@ -632,17 +632,17 @@ class miniflask():
             argv.remove("--help")
             print_help = True
 
-        # split --varname=value expressions
-        argv = [v for val in argv for v in (val.split("=", 1) if val.startswith("--") or val.startswith("-") and not val[1:].isnumeric() else [val])]
+        # split `--varname=value` expressions to `--varname value`
+        # (argparse does only allow the `key=value`-syntax for single-dash definitions)
+        argv = [v for val in argv for v in (val.split("=", 1) if val.startswith("--") else [val])]  # pylint: disable=superfluous-parens
 
         # remember varids from user-args & fuzzy matching the settings
         user_varids = {}
         for i, varid in enumerate(argv):
+
+            # no need to process actual values
             if not varid.startswith("--"):
-                if varid.startswith("-") and not varid[1:].replace('.', '', 1).isdigit():
-                    varid = argv[i] = "-" + argv[i]
-                else:
-                    continue
+                continue
 
             # extract varid from argument
             varid = varid[2:]
