@@ -16,21 +16,21 @@ def save_traceback():
 class RegisterError(Exception):
 
     def __str__(self):
-        base_exc = super().__str__()
+        base_exc = super().__str__().replace("\\x1b","\x1b")
         return base_exc + ("\n\n" + fg('red') + "The variable definition occured in" + attr('reset') + ":\n""" + format_traceback_list(self.traceback) if self.traceback is not None else "")
 
     def __init__(self, *args, msg='', traceback=None, **kwargs):
-        del args, kwargs  # unused
+        # del args, kwargs  # unused
         # storing the traceback which provides useful information about where the exception occurred
         self.traceback = traceback
 
-        super().__init__(msg)
+        super().__init__(" ".join(args) + " " + msg)
 
 
 class StateKeyError(Exception):
 
     def __str__(self):
-        base_exc = super().__str__()
+        base_exc = super().__str__().replace("\\x1b","\x1b")
         return base_exc + ("\n\n" + fg('red') + "The Key Error occured in" + attr('reset') + ":\n""" + format_traceback_list(self.traceback) if self.traceback is not None else "")
 
     def __init__(self, *args, msg='', traceback=None, **kwargs):
@@ -38,7 +38,7 @@ class StateKeyError(Exception):
         # storing the traceback which provides useful information about where the exception occurred
         self.traceback = traceback
 
-        super().__init__(msg)
+        super().__init__(" ".join(args) + " " + msg)
 
 
 class TracebackException(Exception):
