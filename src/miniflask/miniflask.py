@@ -784,7 +784,7 @@ class miniflask_wrapper(miniflask):
         self._recently_loaded = []
         self._defined_events = {}
 
-    def _get_relative_module_id(self, module_name, offset=0):
+    def _get_relative_module_id(self, module_name, offset=1):
         was_relative = False
         m = relative_import_re.match(module_name)
         if m is not None:
@@ -857,7 +857,7 @@ class miniflask_wrapper(miniflask):
         if as_id:
             if as_id.endswith("."):
                 as_id += module_name.split(".")[-1]
-            as_id, _ = self._get_relative_module_id(as_id, offset=1)
+            as_id, _ = self._get_relative_module_id(as_id)
 
         # parse relative imports first
         module_name, was_relative = self._get_relative_module_id(module_name)
