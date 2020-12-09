@@ -125,10 +125,10 @@ class miniflask():
 
     def import_module(self, module_name):
         module_spec = self.modules_avail[module_name]
-        path = module_spec["importpath"]
+        importpath = module_spec["importpath"]
 
         # system import (e.g. miniflask internal modules or pip-module repositories)
-        if path == "system":
+        if importpath == "system":
             return import_module(module_spec["importname"])
 
         # imports across filesystem
@@ -137,7 +137,7 @@ class miniflask():
             parent_module_name, rest = module_spec["importname"].split(".", 1)
         else:
             parent_module_name, rest = module_spec["importname"], ""
-        spec = ImportPathFinder().find_spec(parent_module_name, [path])
+        spec = ImportPathFinder().find_spec(parent_module_name, [importpath])
         if spec is None:
             if rest:
                 raise ValueError("Could not import parent Module named '%s'. This is needed for module named '%s' (defined in '%s')." % (parent_module_name, module_spec["id"], module_spec["importpath"]))
