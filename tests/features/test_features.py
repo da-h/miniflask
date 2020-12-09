@@ -14,5 +14,5 @@ def test_module_a():
 
 
 def test_module_b():
-    with pytest.raises(miniflask.exceptions.RegisterError) as excinfo:
+    with pytest.raises(miniflask.exceptions.RegisterError):
         mf.run(modules=["b"], argv=[])
