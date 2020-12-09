@@ -71,24 +71,37 @@ def str2bool(v):
 
 
 def get_varid_from_fuzzy(varid, varid_list):
-    # check for direct match first
-    r = re.compile(r"^(.*\.)?%s$" % varid)
+
+    # check for fuzzy identifier first (maybe user did not give all information)
+    r = re.compile(r"^(.*\.)?%s$" % varid.replace(".", r"\.(.*\.)*"))
     found_varids = list(filter(r.match, varid_list))
 
-    # if no matching varid found, check for fuzzy identifier
-    if len(found_varids) == 0:
-        r = re.compile(r"^(.*\.)?%s$" % varid.replace(".", r"\.(.*\.)*"))
+    if len(found_varids) == 1:
+        return found_varids
+
+    # first check for direct match of a possibly scoped variable
+    varid_scopes = varid.split(".")
+    varid_scopes, varname = varid_scopes[:-1], varid_scopes[-1]
+    for i in range(len(varid_scopes), -1, -1):
+        varid_test = ".".join(varid_scopes[:i] + [varname])
+
+        # check for direct match first
+        r = re.compile(r"^(.*\.)?%s$" % varid_test)
         found_varids = list(filter(r.match, varid_list))
 
+        if len(found_varids) == 1:
+            return found_varids
+
     # if more than one module found, use default module-variables
-    if len(found_varids) > 1:
-        found_varids = list(filter(lambda x: "default." in x, found_varids))
+    # if len(found_varids) > 1:
+    #     raise ValueError("TODO")
+        # found_varids = list(filter(lambda x: "default." in x, found_varids))
 
     return found_varids
 
 
 # Argparse action for handling Enums
-class EnumAction(Action):
+class EnumAction(Action):  # pylint: disable=too-few-public-methods
     def __init__(self, **kwargs):
         enum = kwargs.pop("type", None)
         self._enum = enum
