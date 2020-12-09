@@ -141,8 +141,7 @@ class miniflask():
         if spec is None:
             if rest:
                 raise ValueError("Could not import parent Module named '%s'. This is needed for module named '%s' (defined in '%s')." % (parent_module_name, module_spec["id"], module_spec["importpath"]))
-            else:
-                raise ValueError("Module named '%s' (defined in '%s') could not be imported." % (module_spec["id"], module_spec["importpath"]))
+            raise ValueError("Module named '%s' (defined in '%s') could not be imported." % (module_spec["id"], module_spec["importpath"]))
         if spec.loader is None:
             raise ValueError("Could not import parent Module named '%s'. This is needed for module named '%s' (defined in '%s'). Did you maybe miss to define a `__init__.py` file in any subfolder?" % (parent_module_name, module_spec["id"], module_spec["importpath"]))
         parent_module = spec.loader.load_module()
