@@ -10,7 +10,7 @@ mf = miniflask.init(
 
 
 def test_exception_register():
-    with pytest.raises(miniflask.exceptions.RegisterError) as excinfo:
+    with pytest.raises(miniflask.exceptions.RegisterError):
         mf.load("module1")
         mf.register_event("main", lambda: print("Main."))
         mf.run(argv=[])
