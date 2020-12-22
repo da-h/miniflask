@@ -39,3 +39,5 @@ jobs:
         flake8 tests --count --ignore E501 --statistics
         pylint -d W0511 -d C0114 -d C0116 -d C0115 -d C0301 -d C0103 -d R0913 -d R0914 -d R0902 -d R0912 -d R0801 -d W0212 -d W0223 -d E1101 -d W0221 -d E1102 `find tests -type f -name '.module' -printf '%h\0' | sort -zu | sed -z 's/$/\n/'`
         pylint --exit-zero `find tests -type f -name '.module' -printf '%h\0' | sort -zu | sed -z 's/$/\n/'`
+    - name: Pytest
+      run: pytest
