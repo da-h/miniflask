@@ -461,7 +461,7 @@ class miniflask():
         if argtype == Enum:
             kwarg["action"] = EnumAction
             kwarg["type"] = val if isinstance(val, EnumMeta) else type(val)
-        elif argtype == str2bool and nargs != '+':  # pylint: disable=comparison-with-callable
+        elif argtype == str2bool and nargs != '*':  # pylint: disable=comparison-with-callable
             kwarg["nargs"] = '?'
             kwarg["const"] = True
 
@@ -473,7 +473,7 @@ class miniflask():
 
         # for bool: enable --no-varname as alternative for --varname false
         # Note: this has to be defined AFTER --varname
-        if argtype == str2bool and nargs != '+':  # pylint: disable=comparison-with-callable
+        if argtype == str2bool and nargs != '*':  # pylint: disable=comparison-with-callable
             self.settings_parser.add_argument('--no-' + varname, dest=varname, action='store_false')
 
         # remember the varname also for fuzzy searching
