@@ -642,6 +642,13 @@ class miniflask():
 
             # no need to process actual values
             if not varid.startswith("--"):
+
+                # special case: negative scientific notation currently does not work for argparse
+                if varid.startswith("-") and "e" in varid and varid[1:].replace("e", "").isnumeric():
+                    try:
+                        argv[i] = str(float(varid))
+                    except ValueError:
+                        pass
                 continue
 
             # extract varid from argument
