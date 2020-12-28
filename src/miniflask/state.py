@@ -3,7 +3,7 @@ import re
 
 from colored import fg, attr
 
-from .util import get_varid_from_fuzzy, highlight_module
+from .util import get_varid_from_fuzzy, highlight_module, get_relative_id
 from .exceptions import StateKeyError
 
 
@@ -59,14 +59,14 @@ class state(dict):
         name = sys.intern(name)
 
         # search for fuzzy local variable
-        varid = self.module_id + "." + name if self.module_id else name
-        found_varids = get_varid_from_fuzzy(varid, self.all.keys())
+        varid, _ = get_relative_id(name, self.module_id, ensure_local=True)
+        found_varids = get_varid_from_fuzzy(varid, self.all.keys(), fuzzy_fill=False)
 
         # if no matching unique varid found, alert user
         if len(found_varids) != 1:
 
             # search for fuzzy global variable
-            found_varids = get_varid_from_fuzzy(name, self.all.keys())
+            found_varids = get_varid_from_fuzzy(name, self.all.keys(), fuzzy_fill=True)
             if len(found_varids) > 1:
                 raise StateKeyError("Variable-Identifier '%s' is not unique. Found %i variables:\n\t%s\n\n    Call:\n        %s" % (highlight_module(name), len(found_varids), "\n\t".join(found_varids), name))
 
@@ -90,14 +90,14 @@ class state(dict):
         name = sys.intern(name)
 
         # search for fuzzy local variable
-        varid = self.module_id + "." + name if self.module_id else name
-        found_varids = get_varid_from_fuzzy(varid, self.all.keys())
+        varid, _ = get_relative_id(name, self.module_id, ensure_local=True)
+        found_varids = get_varid_from_fuzzy(varid, self.all.keys(), fuzzy_fill=False)
 
         # if no matching varid found, alert user
         if len(found_varids) != 1:
 
             # search for fuzzy global variable
-            found_varids = get_varid_from_fuzzy(name, self.all.keys())
+            found_varids = get_varid_from_fuzzy(name, self.all.keys(), fuzzy_fill=True)
             if len(found_varids) > 1:
                 raise StateKeyError("Variable-Identifier '%s' is not unique. Found %i variables:\n\t%s\n\n    Call:\n        %s" % (highlight_module(name), len(found_varids), "\n\t".join(found_varids), name))
 
@@ -118,15 +118,15 @@ class state(dict):
         name = sys.intern(name)
 
         # search for fuzzy local variable
-        varid = self.module_id + "." + name if self.module_id else name
-        found_varids = get_varid_from_fuzzy(varid, self.all.keys())
+        varid, _ = get_relative_id(name, self.module_id, ensure_local=True)
+        found_varids = get_varid_from_fuzzy(varid, self.all.keys(), fuzzy_fill=False)
 
         # if no matching varid found, alert user
         if len(found_varids) != 1:
             # raise StateKeyError("Variable-Identifier '%s' is not unique. Found %i variables:\n\t%s\n\n    Call:\n        %s" % (highlight_module(name), len(found_varids), "\n\t".join(found_varids), name))
 
             # search for fuzzy local variable
-            found_varids = get_varid_from_fuzzy(name, self.all.keys())
+            found_varids = get_varid_from_fuzzy(name, self.all.keys(), fuzzy_fill=True)
             if len(found_varids) > 1:
                 raise StateKeyError("Variable-Identifier '%s' is not unique. Found %i variables:\n\t%s\n\n    Call:\n        %s" % (highlight_module(name), len(found_varids), "\n\t".join(found_varids), name))
 
@@ -149,15 +149,14 @@ class state(dict):
         name = sys.intern(name)
 
         # search for fuzzy local variable
-        varid = self.module_id + "." + name if self.module_id else name
-        found_varids = get_varid_from_fuzzy(varid, self.all.keys())
+        varid, _ = get_relative_id(name, self.module_id, ensure_local=True)
+        found_varids = get_varid_from_fuzzy(varid, self.all.keys(), fuzzy_fill=False)
 
         # if no matching varid found, alert user
         if len(found_varids) != 1:
-            # raise StateKeyError("Variable-Identifier '%s' is not unique. Found %i variables:\n\t%s\n\n    Call:\n        %s" % (highlight_module(name), len(found_varids), "\n\t".join(found_varids), name))
 
             # search for fuzzy global variable
-            found_varids = get_varid_from_fuzzy(name, self.all.keys())
+            found_varids = get_varid_from_fuzzy(name, self.all.keys(), fuzzy_fill=True)
             if len(found_varids) > 1:
                 raise StateKeyError("Variable-Identifier '%s' is not unique. Found %i variables:\n\t%s\n\n    Call:\n        %s" % (highlight_module(name), len(found_varids), "\n\t".join(found_varids), name))
 
@@ -168,19 +167,6 @@ class state(dict):
         # cache for next use
         self.fuzzy_names[name] = found_varids[0]
         self.all[found_varids[0]] = val
-
-    def _get_relative_module_id(self, module_name, offset=0):
-        was_relative = False
-        m = relative_import_re.match(module_name)
-        if m is not None:
-            upmodule = len(m[1])
-            relative_module = m[2]
-            if upmodule == offset:
-                module_name = self.module_id + ("." + relative_module if relative_module else "")
-            else:
-                module_name = ".".join(self.module_id.split(".")[:-upmodule + offset]) + ("." + relative_module if relative_module else "")
-            was_relative = True
-        return module_name, was_relative
 
 
 class like:
