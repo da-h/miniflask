@@ -20,7 +20,7 @@ from .exceptions import save_traceback, format_traceback_list, RegisterError, St
 from .event import event, event_obj
 from .state import state, like
 from .dummy import miniflask_dummy
-from .util import getModulesAvail, EnumAction
+from .util import getModulesAvail, EnumAction, get_relative_id
 from .util import highlight_error, highlight_name, highlight_module, highlight_loading, highlight_loading_default, highlight_loaded_default, highlight_loading_module, highlight_loaded_none, highlight_loaded, highlight_event, str2bool, get_varid_from_fuzzy
 
 from .modules import registerPredefined
@@ -785,9 +785,6 @@ class miniflask():
                 raise
 
 
-relative_import_re = re.compile(r"(\.+)(.*)")
-
-
 class miniflask_wrapper(miniflask):
     def __init__(self, module_name, mf):  # pylint: disable=super-init-not-called
         self.module_id = module_name
@@ -799,17 +796,8 @@ class miniflask_wrapper(miniflask):
         self._recently_loaded = []
         self._defined_events = {}
 
-    def _get_relative_module_id(self, module_name, offset=1):
-        was_relative = False
-        m = relative_import_re.match(module_name)
-        if m is not None:
-            upmodule = len(m[1])
-            relative_module = m[2]
-            if upmodule == offset:
-                module_name = self.module_id + ("." + relative_module if relative_module else "")
-            else:
-                module_name = ".".join(self.module_id.split(".")[:-upmodule + offset]) + ("." + relative_module if relative_module else "")
-            was_relative = True
+    def _get_relative_module_id(self, possibly_relative_path, offset=1):
+        module_name, was_relative = get_relative_id(possibly_relative_path, self.module_id, offset=offset)
         return module_name, was_relative
 
     def __getattr__(self, name):
