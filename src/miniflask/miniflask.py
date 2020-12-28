@@ -349,6 +349,16 @@ class miniflask():
         mod.miniflask_obj = miniflask_wrapper(module_name, self)
         mod.miniflask_obj.bind_events = bind_events
 
+        # first load all parents
+        # (starting with root parent, specializing with every step)
+        if not hasattr(mod, 'register_parents') or mod.register_parents:
+            module_path = module_name.split(".")
+            for depth in range(1, len(module_path)):
+                parent_module = ".".join(module_path[:depth])
+                if parent_module in self.modules_avail and parent_module not in self.modules_loaded:
+                    parent_as_id = None if as_id is None else ".".join(as_id.split(".")[:-1])
+                    self.load(parent_module, verbose=False, auto_query=False, loading_text=loading_text, as_id=parent_as_id, bind_events=bind_events)
+
         # remember loaded modules
         self.modules_loaded[module_name] = mod
         self._recently_loaded.append(mod)
@@ -867,7 +877,9 @@ class miniflask_wrapper(miniflask):
         auto_query = not was_relative
 
         # call load (but ensure no querying is made if relative imports were given)
-        super().load(module_name, auto_query=auto_query, verbose=False, as_id=as_id, **kwargs)
+        if "verbose" in kwargs:
+            del kwargs["verbose"]
+        super().load(module_name, verbose=False, auto_query=auto_query, as_id=as_id, **kwargs)
 
     # overwrite state defaults
     def register_event(self, name, fn, **kwargs):
