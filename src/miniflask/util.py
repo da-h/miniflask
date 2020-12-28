@@ -70,14 +70,17 @@ def str2bool(v):
     raise argparse.ArgumentTypeError('Boolean value expected.')
 
 
-def get_varid_from_fuzzy(varid, varid_list):
+def get_varid_from_fuzzy(varid, varid_list, fuzzy_fill=True):
 
     # check for fuzzy identifier first (maybe user did not give all information)
-    r = re.compile(r"^(.*\.)?%s$" % varid.replace(".", r"\.(.*\.)*"))
-    found_varids = list(filter(r.match, varid_list))
+    if fuzzy_fill:
+        r = re.compile(r"^(.*\.)?%s$" % varid.replace(".", r"\.(.*\.)*"))
+        found_varids = list(filter(r.match, varid_list))
 
-    if len(found_varids) == 1:
-        return found_varids
+        if len(found_varids) == 1:
+            return found_varids
+    else:
+        found_varids = []
 
     # first check for direct match of a possibly scoped variable
     varid_scopes = varid.split(".")
@@ -92,12 +95,28 @@ def get_varid_from_fuzzy(varid, varid_list):
         if len(found_varids) == 1:
             return found_varids
 
-    # if more than one module found, use default module-variables
-    # if len(found_varids) > 1:
-    #     raise ValueError("TODO")
-        # found_varids = list(filter(lambda x: "default." in x, found_varids))
-
     return found_varids
+
+
+relative_import_re = re.compile(r"(\.+)(.*)")
+
+
+def get_relative_id(possibly_relative_path, base_id, offset=1, ensure_local=False):
+    if not base_id:
+        return possibly_relative_path, False
+    if ensure_local and not possibly_relative_path.startswith("."):
+        possibly_relative_path = "." + possibly_relative_path
+    was_relative = False
+    m = relative_import_re.match(possibly_relative_path)
+    if m is not None:
+        upmodule = len(m[1])
+        relative_module = m[2]
+        if upmodule == offset:
+            possibly_relative_path = base_id + ("." + relative_module if relative_module else "")
+        else:
+            possibly_relative_path = ".".join(base_id.split(".")[:-upmodule + offset]) + ("." + relative_module if relative_module else "")
+        was_relative = True
+    return possibly_relative_path, was_relative
 
 
 # Argparse action for handling Enums
