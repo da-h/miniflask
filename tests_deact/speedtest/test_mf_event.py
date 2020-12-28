@@ -8,10 +8,10 @@ mf = miniflask.init(
 )
 
 
-def test_mf_event_nonunique():
+def test_mf_event():
     event = mf.event
-    mf.load("modulenonunique")
+    mf.load("moduleunique")
 
     a = 0
-    for i in range(10000000):
-        a += event.func(42)[0]
+    for _ in range(10000000):
+        a += event.func(42)
