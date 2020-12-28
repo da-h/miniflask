@@ -151,7 +151,7 @@ class miniflask():
             return parent_module
 
         spec = find_spec(module_spec["importname"], package=parent_module)
-        if spec is None:
+        if spec is None or spec.loader is None:
             raise ValueError("Module named '%s' (defined in '%s') could not be imported." % (module_spec["id"], module_spec["importpath"]))
         return spec.loader.load_module()
 
