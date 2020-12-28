@@ -101,10 +101,18 @@ class miniflask():
         print(color + attr('bold') + line + attr('reset'))
 
     def print_recently_loaded(self, prepend="", loading_text=highlight_loading):
+        last = ""
+        last_formatted = ""
         for i, mod in enumerate(self._recently_loaded):
-            module_id = mod.miniflask_obj.module_id_initial
+            module_id = module_id_formatted = module_id = mod.miniflask_obj.module_id_initial
+
+            # if previously printed parent, make the module_id shorter
+            if module_id.startswith(last):
+                module_id_formatted = last_formatted + module_id[len(last):]
+
             is_last = i == len(self._recently_loaded) - 1
             has_children = len(mod.miniflask_obj._recently_loaded) > 0
+            part_of_next = i < len(self._recently_loaded) - 1 and self._recently_loaded[i + 1].miniflask_obj.module_id_initial.startswith(module_id)
             if is_last:
                 tree_symb         = "    "  # noqa: E221
                 tree_symb_current = "╰── "  # "└── "
@@ -114,12 +122,15 @@ class miniflask():
             else:
                 tree_symb         = "│   "  # noqa: E221
                 tree_symb_current = "├── "  # "├── "
-            if prepend == "":
-                print(loading_text(module_id))
-            else:
-                print(prepend + tree_symb_current + loading_text(module_id))
+            if not part_of_next:
+                if prepend == "":
+                    print(loading_text(module_id_formatted))
+                else:
+                    print(prepend + tree_symb_current + loading_text(module_id_formatted))
             if len(mod.miniflask_obj._recently_loaded) > 0:
                 mod.miniflask_obj.print_recently_loaded(prepend + tree_symb, loading_text)
+            last = module_id
+            last_formatted = loading_text(module_id_formatted) if part_of_next else module_id
 
     # ==================== #
     # module introspection #
