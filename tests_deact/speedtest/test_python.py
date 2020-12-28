@@ -4,5 +4,5 @@ def func():
 
 def test_python():
     a = 0
-    for i in range(10000000):
+    for _ in range(10000000):
         a += func()

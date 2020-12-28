@@ -13,5 +13,5 @@ def test_mf_state_fuzzy():
     event = mf.event
 
     a = 0
-    for i in range(10000000):
+    for _ in range(10000000):
         a += event.get_state_var(".moduleunique.a")
