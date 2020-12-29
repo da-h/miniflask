@@ -19,8 +19,6 @@ jobs:
         python -m pip install flake8 pylint pytest
         # install deps for pylint
         python -m pip install colored
-        # build and install the package itself
-        python -m pip install .
     - name: Syntax Check of Tests
       run: |
         # stop the build if there are Python syntax errors or undefined names
