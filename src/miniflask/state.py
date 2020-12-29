@@ -68,7 +68,7 @@ class state(dict):
             # search for fuzzy global variable
             found_varids = get_varid_from_fuzzy(name, self.all.keys(), fuzzy_fill=True)
             if len(found_varids) > 1:
-                raise StateKeyError("Variable-Identifier '%s' is not unique. Found %i variables:\n\t%s\n\n    Call:\n        %s" % (highlight_module(name), len(found_varids), "\n\t".join(found_varids), name))
+                _raise_notunique(found_varids, name)
 
         # no module found with both variants
         if len(found_varids) == 0:
@@ -99,11 +99,11 @@ class state(dict):
             # search for fuzzy global variable
             found_varids = get_varid_from_fuzzy(name, self.all.keys(), fuzzy_fill=True)
             if len(found_varids) > 1:
-                raise StateKeyError("Variable-Identifier '%s' is not unique. Found %i variables:\n\t%s\n\n    Call:\n        %s" % (highlight_module(name), len(found_varids), "\n\t".join(found_varids), name))
+                _raise_notunique(found_varids, name)
 
         # no module found with both variants
         if len(found_varids) == 0:
-            raise StateKeyError("Variable '%s' not known. (Module %s attempted to access this variable.)\n\nI tried the following interpretations:\n\t- as module variable: '%s'\n\t- as global Variable: '%s'\n\t- finally, I tried any ordered selection that contains the keys: [%s]." % (fg('green') + name + attr('reset'), highlight_module(self.module_id), fg('green') + varid + attr('reset'), fg('green') + name + attr('reset'), ', '.join("'" + fg('green') + n + attr('reset') + "'" for n in name.split("."))))
+            _raise_notfound(self.module_id, varid, name)
 
         # cache for next use
         del self.all[found_varids[0]]
@@ -128,11 +128,11 @@ class state(dict):
             # search for fuzzy local variable
             found_varids = get_varid_from_fuzzy(name, self.all.keys(), fuzzy_fill=True)
             if len(found_varids) > 1:
-                raise StateKeyError("Variable-Identifier '%s' is not unique. Found %i variables:\n\t%s\n\n    Call:\n        %s" % (highlight_module(name), len(found_varids), "\n\t".join(found_varids), name))
+                _raise_notunique(found_varids, name)
 
         # no module found with both variants
         if len(found_varids) == 0:
-            raise StateKeyError("Variable '%s' not known. (Module %s attempted to access this variable.)\n\nI tried the following interpretations:\n\t- as module variable: '%s'\n\t- as global Variable: '%s'\n\t- finally, I tried any ordered selection that contains the keys: [%s]." % (fg('green') + name + attr('reset'), highlight_module(self.module_id), fg('green') + varid + attr('reset'), fg('green') + name + attr('reset'), ', '.join("'" + fg('green') + n + attr('reset') + "'" for n in name.split("."))))
+            _raise_notfound(self.module_id, varid, name)
 
         # cache for next use
         self.fuzzy_names[name] = found_varids[0]
@@ -158,7 +158,7 @@ class state(dict):
             # search for fuzzy global variable
             found_varids = get_varid_from_fuzzy(name, self.all.keys(), fuzzy_fill=True)
             if len(found_varids) > 1:
-                raise StateKeyError("Variable-Identifier '%s' is not unique. Found %i variables:\n\t%s\n\n    Call:\n        %s" % (highlight_module(name), len(found_varids), "\n\t".join(found_varids), name))
+                _raise_notunique(found_varids, name)
 
         # no module found with both variants, assume a internal module variable is meant to be created
         if len(found_varids) == 0:
@@ -167,6 +167,16 @@ class state(dict):
         # cache for next use
         self.fuzzy_names[name] = found_varids[0]
         self.all[found_varids[0]] = val
+
+
+def _raise_notfound(module_id, varid, name):
+    varid_split = varid.split(".")
+    tried_text = "\n\t".join(["- as module variable: '%s'" % (fg('green') + ".".join(varid_split[:-i]) + "." + varid_split[-1] + attr('reset')) for i in range(1, len(varid_split))])
+    raise StateKeyError("Variable '%s' not known.\n(Module %s attempted to access this variable.)\n\nI tried the following interpretations in that order:\n\t%s\n\t- as global Variable: '%s'\n\t- finally, I tried any ordered selection that contains the keys: [%s]." % (fg('green') + name + attr('reset'), highlight_module(module_id), tried_text, fg('green') + name + attr('reset'), ', '.join("'" + fg('green') + n + attr('reset') + "'" for n in name.split("."))))
+
+
+def _raise_notunique(found_varids, name):
+    raise StateKeyError("Variable-Identifier '%s' is not unique. Found %i variables:\n\t%s\n\n    Call:\n        %s" % (highlight_module(name), len(found_varids), "\n\t".join(found_varids), name))
 
 
 class like:
