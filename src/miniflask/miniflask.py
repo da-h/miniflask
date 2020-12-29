@@ -11,6 +11,7 @@ from importlib.util import find_spec
 from enum import Enum, EnumMeta
 from argparse import ArgumentParser, REMAINDER as ARGPARSE_REMAINDER
 from typing import List
+import random
 
 from colored import fg, attr
 
@@ -44,6 +45,7 @@ def get_default_args(func):
 # ================ #
 class miniflask():
     def __init__(self, module_dirs, debug=False):
+        self._instance_id = str(random.getrandbits(128))
         self.debug = debug
         if not module_dirs:
             return
@@ -144,13 +146,19 @@ class miniflask():
             raise ValueError("Module named '%s' (defined in '%s') could not be imported." % (module_spec["id"], module_spec["importpath"]))
         if spec.loader is None:
             raise ValueError("Could not import parent Module named '%s'. This is needed for module named '%s' (defined in '%s'). Did you maybe miss to define a `__init__.py` file in any subfolder?" % (parent_module_name, module_spec["id"], module_spec["importpath"]))
+
+        # ensure sys.modules does not cache different miniflask instances
+        package_prefix = "miniflask." + self._instance_id + "."
+        spec.loader.name = package_prefix + spec.loader.name
+
+        # import parent module (repository base)
         parent_module = spec.loader.load_module()
 
         # if importing top-level package in repository, we are done
         if not rest:
             return parent_module
 
-        spec = find_spec(module_spec["importname"], package=parent_module)
+        spec = find_spec(package_prefix + module_spec["importname"], package=parent_module)
         if spec is None or spec.loader is None:
             raise ValueError("Module named '%s' (defined in '%s') could not be imported." % (module_spec["id"], module_spec["importpath"]))
         return spec.loader.load_module()
