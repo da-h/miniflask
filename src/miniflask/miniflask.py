@@ -824,11 +824,11 @@ class miniflask_wrapper(miniflask):
             return hooked
         return orig_attr
 
-    def redefine_scope(self, new_module_name):
+    def register_as(self, new_module_name):
         old_module_name = self.module_id
         new_module_name = self.set_scope(new_module_name)
         if new_module_name in self.modules_avail:
-            raise ValueError("Scope `%s` already used. Cannot define multiple modules using `redefine_scope`. Did you maybe mean to use `set_scope`?" % new_module_name)
+            raise ValueError("Scope `%s` already used. Cannot define multiple modules using `register_as`. Did you maybe mean to use `set_scope`?" % new_module_name)
         m = self.modules_avail[old_module_name]
         del self.modules_avail[old_module_name]
         m["id"] = new_module_name
