@@ -26,7 +26,7 @@ The following argument is required: --modules.module1.str2
 The following argument is required: --modules.module1.str3
 """.strip()
     with pytest.raises(SystemExit) as excinfo:
-        mf.parse_args()
+        mf.parse_args(argv=[])
     captured = capsys.readouterr()
     assert excinfo.value.args[0] == 2
 
