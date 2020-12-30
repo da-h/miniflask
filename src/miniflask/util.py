@@ -12,7 +12,7 @@ def getModulesAvail(module_dirs, f=None):
         f = {}
     for base_module_name, directory in module_dirs.items():
         base_module_name = base_module_name.replace(".", "_")
-        # basename_dir = path.basename(directory)
+        directory = str(directory)  # in case directory is given as PosixPath etc.
         for (dirpath, dirnames, filenames) in walk(directory):
             local_import_name = dirpath[len(directory) + 1:].replace(path.sep, ".")
             module_name_id = base_module_name + "." + local_import_name
