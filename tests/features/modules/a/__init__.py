@@ -3,8 +3,7 @@ def test():
     print("test")
 
 
-def main(state, event):
-    del state  # unused
+def main(event):
     print(event.test.mf_modules)
     print(event.test.fns)
     print(event["modules.a"])

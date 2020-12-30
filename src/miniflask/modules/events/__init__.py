@@ -138,8 +138,7 @@ def print_event_tree(state, event, tree, full_tree, depth=0):
         print()
 
 
-def print_event_list(state, event):
-    del event  # unused
+def print_event_list(state):
     print()
     print(fg('yellow') + attr('underlined') + "Available events" + attr('reset'))
     event_list = state["events"].keys()
@@ -165,7 +164,7 @@ def init(state, event):
 
     # print it
     if state["list"]:
-        print_event_list(state, event)
+        print_event_list(state)
     else:
         event_names, event_subtrees, full_tree = event.get_event_tree('main', only_loaded=state["only_loaded"])
         print_event_tree(state, event, [['main'], [(event_names, event_subtrees)]], full_tree)

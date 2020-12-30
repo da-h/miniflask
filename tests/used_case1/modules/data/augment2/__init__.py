@@ -1,8 +1,7 @@
 from random import randrange
 
 
-def augment(state, event, ds):
-    del state, event  # unused
+def augment(ds):
     d = list(ds)
     i = randrange(0, len(d))
     d[i] = "·"

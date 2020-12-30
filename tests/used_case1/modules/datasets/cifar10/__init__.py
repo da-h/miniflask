@@ -1,6 +1,5 @@
 
-def dataset(state, event):
-    del state, event  # unused
+def dataset():
     return "the_fabulous_cifar10_dataset"
 
 
