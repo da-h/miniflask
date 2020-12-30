@@ -896,6 +896,12 @@ class miniflask_wrapper(miniflask):
         self._defined_events[name] = fn
         super().register_event(name, fn, **kwargs)
 
+    # overwrite event definition
+    def overwrite_event(self, name, fn, **kwargs):
+        self._delete_event(name, only_cache=False)
+        self._defined_events[name] = fn
+        super().register_event(name, fn, **kwargs)
+
     # overwrite state defaults
     def register_defaults(self, defaults, scope=None, **kwargs):
         # default behaviour is to use current module-name
