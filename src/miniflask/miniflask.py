@@ -355,8 +355,9 @@ class miniflask():
 
         # register events
         mod.register(mod.miniflask_obj)
-        self.event[module_name] = mod.miniflask_obj._defined_events
-        self.event.optional[module_name] = mod.miniflask_obj._defined_events
+        module_id = mod.miniflask_obj.module_id
+        self.event[module_id] = mod.miniflask_obj._defined_events
+        self.event.optional[module_id] = mod.miniflask_obj._defined_events
 
         # loading message
         if verbose:
