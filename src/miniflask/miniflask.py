@@ -355,8 +355,9 @@ class miniflask():
 
         # register events
         mod.register(mod.miniflask_obj)
-        self.event[module_name] = mod.miniflask_obj._defined_events
-        self.event.optional[module_name] = mod.miniflask_obj._defined_events
+        module_id = mod.miniflask_obj.module_id
+        self.event[module_id] = mod.miniflask_obj._defined_events
+        self.event.optional[module_id] = mod.miniflask_obj._defined_events
 
         # loading message
         if verbose:
@@ -793,23 +794,29 @@ class miniflask_wrapper(miniflask):
         self.module_id = module_name
         self.module_id_initial = module_name
         self.module_name = module_name.split(".")[-1]
-        self.module_base = module_name.split(".")[0]
+        self.module_repository, self.module_relative_id = module_name.split(".", 1)
         self.wrapped_class = mf.wrapped_class if hasattr(mf, 'wrapped_class') else mf
         self.state = state(module_name, self.wrapped_class.state, self.wrapped_class.state_default)
         self._recently_loaded = []
         self._defined_events = {}
 
-    def _get_relative_module_id(self, module_name, offset=1):
+    def _get_absolute_module_id(self, module_query, offset=1, repo="same"):
         was_relative = False
-        m = relative_import_re.match(module_name)
+        module_middle = [module_query]
+        module_name = []
+        repo = [self.module_repository] if repo == "same" else [] if not repo else [repo]
+
+        m = relative_import_re.match(module_query)
         if m is not None:
             upmodule = len(m[1])
-            relative_module = m[2]
-            if upmodule == offset:
-                module_name = self.module_id + ("." + relative_module if relative_module else "")
+            module_name = [m[2]] if m[2] else []
+            if upmodule != offset:
+                module_middle = self.module_relative_id.split(".")[:-upmodule + offset]
             else:
-                module_name = ".".join(self.module_id.split(".")[:-upmodule + offset]) + ("." + relative_module if relative_module else "")
+                module_middle = [self.module_relative_id]
             was_relative = True
+
+        module_name = ".".join(repo + module_middle + module_name)
         return module_name, was_relative
 
     def __getattr__(self, name):
@@ -824,21 +831,20 @@ class miniflask_wrapper(miniflask):
             return hooked
         return orig_attr
 
-    def redefine_scope(self, new_module_name):
-        old_module_name = self.module_id
-        new_module_name = self.set_scope(new_module_name)
-        if new_module_name in self.modules_avail:
-            raise ValueError("Scope `%s` already used. Cannot define multiple modules using `redefine_scope`. Did you maybe mean to use `set_scope`?" % new_module_name)
-        m = self.modules_avail[old_module_name]
-        del self.modules_avail[old_module_name]
-        m["id"] = new_module_name
-        self.modules_avail[new_module_name] = m
+    def register_as(self, new_module_id):
+        old_module_id = self.module_repository + "." + self.module_relative_id
+        new_module_repo, new_module_name = new_module_id.split(".", 1)
+        new_module_id = self.set_scope(new_module_name, repo=new_module_repo)
+        if new_module_id in self.modules_loaded:
+            raise ValueError("Scope `%s` already used. Cannot define multiple modules using `register_as`. Did you maybe mean to use `set_scope`?" % new_module_id)
+        m = self.modules_loaded[old_module_id]
+        del self.modules_loaded[old_module_id]
+        self.modules_loaded[new_module_id] = m
 
-    def set_scope(self, new_module_name):
-        new_module_name, was_relative = self._get_relative_module_id(new_module_name)
-        if not was_relative:
-            new_module_name = self.module_base + "." + new_module_name
+    def set_scope(self, new_module_name, repo="same"):
+        new_module_name, _ = self._get_absolute_module_id(new_module_name, repo=repo)
         self.module_id = new_module_name
+        self.module_repository, self.module_relative_id = new_module_name.split(".", 1)
         self.state.module_id = new_module_name
         return new_module_name
 
@@ -846,7 +852,7 @@ class miniflask_wrapper(miniflask):
     def like(self, varname, alt, scope="."):
         scope_name = scope
         if scope is not None:
-            scope, _ = self._get_relative_module_id(scope)
+            scope, _ = self._get_absolute_module_id(scope)
         return like(varname, alt, scope=scope, scope_name=scope_name)
 
     # loads module dependencies as child module
@@ -854,7 +860,7 @@ class miniflask_wrapper(miniflask):
         self.load(module_name, as_id='.', bind_events=False, **kwargs)
 
     # enables relative imports
-    def load(self, module_name, as_id=None, auto_query=True, **kwargs):
+    def load(self, module_name, as_id=None, auto_query=True, repo="same", **kwargs):
 
         # if nothing given, ignore
         if module_name is None:
@@ -865,17 +871,17 @@ class miniflask_wrapper(miniflask):
             module_name = module_name.split(",")
         if isinstance(module_name, list):
             for mname in module_name:
-                self.load(mname, as_id=as_id, auto_query=auto_query, **kwargs)
+                self.load(mname, as_id=as_id, auto_query=auto_query, repo=repo, **kwargs)
             return
 
         # if as_id given, determine new module_name
         if as_id:
             if as_id.endswith("."):
                 as_id += module_name.split(".")[-1]
-            as_id, _ = self._get_relative_module_id(as_id)
+            as_id, _ = self._get_absolute_module_id(as_id, repo=repo)
 
         # parse relative imports first
-        module_name, was_relative = self._get_relative_module_id(module_name)
+        module_name, was_relative = self._get_absolute_module_id(module_name, repo=repo)
         auto_query = not was_relative
 
         # call load (but ensure no querying is made if relative imports were given)
@@ -890,8 +896,8 @@ class miniflask_wrapper(miniflask):
     def register_defaults(self, defaults, scope=None, **kwargs):
         # default behaviour is to use current module-name
         if scope is None:
-            scope = self.module_id
-        scope, _ = self._get_relative_module_id(scope, offset=1)
+            scope = self.module_relative_id
+        scope, _ = self._get_absolute_module_id(scope)
         super().register_defaults(defaults, scope=scope, **kwargs)
 
     # helper variables are not added to argument parser
