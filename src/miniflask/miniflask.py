@@ -80,7 +80,6 @@ class miniflask():
         self.modules_loaded = {}
         self.modules_ignored = []
         self.modules_avail = getModulesAvail(self.module_dirs)
-        self.miniflask_objs = {}  # local modified versions of miniflask
         registerPredefined(self.modules_avail)
         self._varid_list = []
         self._recently_loaded = []
@@ -881,8 +880,19 @@ class miniflask_wrapper(miniflask):
         # call load (but ensure no querying is made if relative imports were given)
         super().load(module_name, auto_query=auto_query, verbose=False, as_id=as_id, **kwargs)
 
-    # overwrite state defaults
+    def _delete_event(self, name, only_cache):
+        if hasattr(self.event, name):
+            delattr(self.event, name)
+        if not only_cache and name in self.event_objs:
+            del self.event_objs[name]
+        if "before_" + name in self.event_objs:
+            self._delete_event("before_" + name, only_cache)
+        if "after_" + name in self.event_objs:
+            self._delete_event("after_" + name, only_cache)
+
+    # define event
     def register_event(self, name, fn, **kwargs):
+        self._delete_event(name, only_cache=True)
         self._defined_events[name] = fn
         super().register_event(name, fn, **kwargs)
 
