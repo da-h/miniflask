@@ -64,7 +64,7 @@ class event(dict):
 
             # fn_wrap_scope creates a function wrap of fn that passes also state and event of eobj
             # additionally, if outervar is defined as a default, it queries that from the last outer scope
-            def fn_wrap_scope(fn, _state, _event, module, needed_locals=None, miniflask_args=None, skip_twice=False, call_before_after=call_before_after):  # pylint: disable=too-many-statements
+            def fn_wrap_scope(fn, _mf, _state, _event, module, needed_locals=None, miniflask_args=None, skip_twice=False, call_before_after=call_before_after):  # pylint: disable=too-many-statements
                 del module  # unused
                 if needed_locals is None:
                     needed_locals = []
@@ -96,15 +96,11 @@ class event(dict):
                 fn_before = getattr(self._mf.event, name_before) if has_before else None
 
                 # get index of "state" / "event"
-                if len(arg_names) > 0:
-                    if arg_names[0] == "state":
-                        miniflask_args.append(_state)
-                        if len(arg_names) > 1 and arg_names[1] == "event":
-                            miniflask_args.append(_event)
-                    elif arg_names[0] == "event":
-                        miniflask_args.append(_event)
-                        if len(arg_names) > 1 and arg_names[1] == "state":
-                            miniflask_args.append(_state)
+                for i in range(min(len(arg_names), 3)):
+                    for var, varname in [(_mf, "mf"), (_state, "state"), (_event, "event")]:
+                        if arg_names[i] == varname:
+                            miniflask_args.append(var)
+                            break
 
                 # if no outervar found, just pass state and event
                 if len(needed_locals) > 0:
@@ -147,7 +143,7 @@ class event(dict):
                 return fn_wrap, has_signature, miniflask_args
 
             if eobj.unique:
-                fn_wrap, has_signature, mf_args = fn_wrap_scope(eobj.fn, eobj.modules.state, eobj.modules.event, eobj.modules)
+                fn_wrap, has_signature, mf_args = fn_wrap_scope(eobj.fn, eobj.modules, eobj.modules.state, eobj.modules.event, eobj.modules)
                 if has_signature:
                     setattr(fn_wrap, 'mf_modules', [eobj.modules.module_id])
                     setattr(fn_wrap, 'subevents', [fn_wrap])
@@ -155,7 +151,7 @@ class event(dict):
                     setattr(fn_wrap, 'fns_args', [mf_args])
             else:
                 def multiple_fn_wrap_scope(orig_fns, modules=eobj.modules):
-                    fns, have_signature, mf_args = zip(*[fn_wrap_scope(fn, _state=module.state, _event=module.event, module=module, skip_twice=True) for fn, module in zip(orig_fns, modules)])
+                    fns, have_signature, mf_args = zip(*[fn_wrap_scope(fn, _mf=module, _state=module.state, _event=module.event, module=module, skip_twice=True) for fn, module in zip(orig_fns, modules)])
 
                     def fn_wrap(*args, altfn=None, **kwargs):
                         del altfn  # unused
