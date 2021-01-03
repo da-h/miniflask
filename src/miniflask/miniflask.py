@@ -101,10 +101,18 @@ class miniflask():
         print(color + attr('bold') + line + attr('reset'))
 
     def print_recently_loaded(self, prepend="", loading_text=highlight_loading):
+        last = ""
+        last_formatted = ""
         for i, mod in enumerate(self._recently_loaded):
-            module_id = mod.miniflask_obj.module_id_initial
+            module_id = module_id_formatted = module_id = mod.miniflask_obj.module_id_initial
+
+            # if previously printed parent, make the module_id shorter
+            if module_id.startswith(last):
+                module_id_formatted = last_formatted + module_id[len(last):]
+
             is_last = i == len(self._recently_loaded) - 1
             has_children = len(mod.miniflask_obj._recently_loaded) > 0
+            part_of_next = i < len(self._recently_loaded) - 1 and self._recently_loaded[i + 1].miniflask_obj.module_id_initial.startswith(module_id)
             if is_last:
                 tree_symb         = "    "  # noqa: E221
                 tree_symb_current = "╰── "  # "└── "
@@ -114,12 +122,15 @@ class miniflask():
             else:
                 tree_symb         = "│   "  # noqa: E221
                 tree_symb_current = "├── "  # "├── "
-            if prepend == "":
-                print(loading_text(module_id))
-            else:
-                print(prepend + tree_symb_current + loading_text(module_id))
+            if not part_of_next:
+                if prepend == "":
+                    print(loading_text(module_id_formatted))
+                else:
+                    print(prepend + tree_symb_current + loading_text(module_id_formatted))
             if len(mod.miniflask_obj._recently_loaded) > 0:
                 mod.miniflask_obj.print_recently_loaded(prepend + tree_symb, loading_text)
+            last = module_id
+            last_formatted = loading_text(module_id_formatted) if part_of_next else module_id
 
     # ==================== #
     # module introspection #
@@ -348,6 +359,16 @@ class miniflask():
         module_name = module_name if as_id is None else as_id
         mod.miniflask_obj = miniflask_wrapper(module_name, self)
         mod.miniflask_obj.bind_events = bind_events
+
+        # first load all parents
+        # (starting with root parent, specializing with every step)
+        if not hasattr(mod, 'register_parents') or mod.register_parents:
+            module_path = module_name.split(".")
+            for depth in range(1, len(module_path)):
+                parent_module = ".".join(module_path[:depth])
+                if parent_module in self.modules_avail and parent_module not in self.modules_loaded:
+                    parent_as_id = None if as_id is None else ".".join(as_id.split(".")[:-1])
+                    self.load(parent_module, verbose=False, auto_query=False, loading_text=loading_text, as_id=parent_as_id, bind_events=bind_events)
 
         # remember loaded modules
         self.modules_loaded[module_name] = mod
@@ -867,7 +888,9 @@ class miniflask_wrapper(miniflask):
         auto_query = not was_relative
 
         # call load (but ensure no querying is made if relative imports were given)
-        super().load(module_name, auto_query=auto_query, verbose=False, as_id=as_id, **kwargs)
+        if "verbose" in kwargs:
+            del kwargs["verbose"]
+        super().load(module_name, verbose=False, auto_query=auto_query, as_id=as_id, **kwargs)
 
     # overwrite state defaults
     def register_event(self, name, fn, **kwargs):
