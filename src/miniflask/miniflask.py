@@ -891,25 +891,25 @@ class miniflask_wrapper(miniflask):
             del kwargs["verbose"]
         super().load(module_name, verbose=False, auto_query=auto_query, as_id=as_id, **kwargs)
 
-    def _delete_event(self, name, only_cache):
+    def unregister_event(self, name, only_cache):
         if hasattr(self.event, name):
             delattr(self.event, name)
         if not only_cache and name in self.event_objs:
             del self.event_objs[name]
         if "before_" + name in self.event_objs:
-            self._delete_event("before_" + name, only_cache)
+            self.unregister_event("before_" + name, only_cache)
         if "after_" + name in self.event_objs:
-            self._delete_event("after_" + name, only_cache)
+            self.unregister_event("after_" + name, only_cache)
 
     # define event
     def register_event(self, name, fn, **kwargs):
-        self._delete_event(name, only_cache=True)
+        self.unregister_event(name, only_cache=True)
         self._defined_events[name] = fn
         super().register_event(name, fn, **kwargs)
 
     # overwrite event definition
     def overwrite_event(self, name, fn, **kwargs):
-        self._delete_event(name, only_cache=False)
+        self.unregister_event(name, only_cache=False)
         self._defined_events[name] = fn
         super().register_event(name, fn, **kwargs)
 
