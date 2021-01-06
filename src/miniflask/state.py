@@ -68,7 +68,7 @@ class state(dict):
             # search for fuzzy global variable
             found_varids = get_varid_from_fuzzy(name, self.all.keys(), fuzzy_fill=True)
             if len(found_varids) > 1:
-                _raise_notunique(found_varids, name)
+                return False
 
         # no module found with both variants
         if len(found_varids) == 0:
