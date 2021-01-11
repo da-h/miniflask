@@ -358,6 +358,7 @@ class miniflask():
         module_name = module_name if as_id is None else as_id
         mod.miniflask_obj = miniflask_wrapper(module_name, self)
         mod.miniflask_obj.bind_events = bind_events
+        self.modules_loaded[module_name] = mod
 
         # first load all parents
         # (starting with root parent, specializing with every step)
@@ -370,7 +371,6 @@ class miniflask():
                     self.load(parent_module, verbose=False, auto_query=False, loading_text=loading_text, as_id=parent_as_id, bind_events=bind_events)
 
         # remember loaded modules
-        self.modules_loaded[module_name] = mod
         self._recently_loaded.append(mod)
 
         # register events
