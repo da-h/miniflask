@@ -891,6 +891,10 @@ class miniflask_wrapper(miniflask):
             del kwargs["verbose"]
         super().load(module_name, verbose=False, auto_query=auto_query, as_id=as_id, **kwargs)
 
+    # checks if child modules are already loaded
+    def any_child_loaded(self):
+        return any(x for x in self.modules_loaded if re.search(self.module_id + r"\..*", x))
+
     # register default module that is loaded if none of glob is matched
     # (enables relative imports)
     def register_default_module(self, module, **kwargs):
