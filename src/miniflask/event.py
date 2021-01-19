@@ -110,7 +110,7 @@ class event(dict):
                             all_outer_locals = inspect.currentframe().f_back.f_back.f_locals
                         else:
                             all_outer_locals = inspect.currentframe().f_back.f_locals
-                        outer_locals = {k: all_outer_locals[k] for k in needed_locals}
+                        outer_locals = {k: all_outer_locals[k] for k in needed_locals if k not in kwargs}
                         if has_altfn:
                             kwargs["altfn"] = altfn
                         if has_before:
