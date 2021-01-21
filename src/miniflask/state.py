@@ -168,6 +168,11 @@ class state(dict):
         self.fuzzy_names[name] = found_varids[0]
         self.all[found_varids[0]] = val
 
+    # disables deepcopy(state), as it is tightly bounded to other miniflask objects
+    def __deepcopy__(self, memo):
+        del memo
+        return self
+
 
 def _create_excpetion_notfound(module_id, varid, name):
     varid_split = varid.split(".")

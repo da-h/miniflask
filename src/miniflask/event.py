@@ -170,3 +170,8 @@ class event(dict):
 
         setattr(self, name, fn_wrap)
         return fn_wrap
+
+    # disables deepcopy(event), as it is tightly bounded to other miniflask objects
+    def __deepcopy__(self, memo):
+        del memo
+        return self
