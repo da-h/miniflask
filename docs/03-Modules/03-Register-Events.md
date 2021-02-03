@@ -1,11 +1,9 @@
 {theme=documentation}
 
-
+\include{"../include.md"}
 
 # Register Events
-
-
-\include{"../include.md"}
+Who doesn't love functional interfaces? ;)
 
 Module function can be attached to hooks so that they are called automatically upon reaching the specified hook. Events can be attached to a hook when registering an event.
 
@@ -16,7 +14,7 @@ def main(state, event):
     print("This is the main-event of module1")
 
 def register(mf):
-    mf.register_event('main', main)
+    mf.register_event('main', main, unique=False)
 ```
 
 **Example File:** `modules/module2/__init__.py`
@@ -74,6 +72,8 @@ def before_blub(state, event, *args, **kwargs):
 	...
 	return args
 ```
+
+
 
 ### Outervar
 In some scenarios it may be useful to define a module to depend completely on another module.

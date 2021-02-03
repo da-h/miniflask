@@ -1,1 +1,1 @@
-\redirect{"01-Quickstart/"}
+\redirect{"01-Getting-Started/"}
