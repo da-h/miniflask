@@ -460,6 +460,46 @@ class miniflask():
 
     # register default module that is loaded if none of glob is matched
     def register_default_module(self, module, required_event=None, required_id=None, overwrite_globals=None):
+        r"""
+        Specify modules to load if specific behaviour is not yet matched by already loaded modules.
+
+        In more detail, this allows modules to be loaded depending on the choice of loaded modules upon start of the whole script.  
+        Typically, the requirement will be tested after parsing the modules given using cli-arguments.
+
+        # Note {.alert}
+        It is only possibly to specify a requirement based on an event name *or* a module id regex.
+
+        Arguments:
+        - `module`: (required)  
+            Module name to be loaded if the specified requirement is not met.
+            - Can be fuzzy or complete
+            - Can be a python list of module names.
+        - `required_event`:  
+            Specifies the event name to be used as a condition to be met, otherwise the specified modules will be loaded.
+        - `required_id`:  
+            Specifies a regular expression that shall be used as a test condition. If there was no match against all loaded module ids, the specified modules will be loaded.
+        - `overwrite_globals`:  
+            This argument takes a `dict` and binds a `register_globals` call to be called after the specified have been called.  
+            (If no modules are loaded due to already fulfilled conditions, the dict will be discarded.)
+
+        Examples:
+        ```python
+        # loads mymodule if no module registered a myevent event
+        mf.register_default_module("mymodule", required_event="myevent")
+
+        # loads mymodule & mymodule2 if no module registered a myevent event
+        mf.register_default_module(["mymodule","mymodule2"], required_event="myevent")
+
+        # loads mymodule if no module matches against the regular expression
+        mf.register_default_module("mymodule", required_id="my\.folder\..*")
+
+        # loads mymodule if no module matches against the regular expression
+        # & overwrites some default values in case mymodule gets loaded
+        mf.register_default_module("mymodule", required_id="my\.folder\..*", overwrite_globals={
+            "othermodule.value": 42
+        })
+        ```
+        """  # noqa: W291
         if overwrite_globals is None:
             overwrite_globals = {}
         if required_event and required_id:
