@@ -45,6 +45,42 @@ def get_default_args(func):
 # ================ #
 class miniflask():
     def __init__(self, module_dirs, debug=False):
+        r"""miniflask.init
+        Initializes miniflask with a module repository.
+
+        Miniflask searches for folders of a specific format, named modules (see [Documentation/Modules](../../03-Modules) for more details).
+        By initializing miniflask, we have to define the folders miniflask will look in.
+
+        Arguments:
+        - `module_dirs`: a string, a list or a dict of paths to module repositories.
+            - **String**: specifies a single path to the module repository to use.  
+                (The directory name will also be repository name / module prefix for all modules inside that folder.)
+            - **List**: specifies multiple paths to the module repository to use.  
+                (The directory names will also be repository names / module prefixes for all modules inside that folders.)
+            - **Dict**: specifies repository names / module prefixes together with their respective repository paths.
+        - `debug`: Debug Mode  
+            Debug Mode disables catching/printing + beautifying Exceptions. Also, it disables truncating the traceback messages of internal miniflask functions.
+
+        Examples:
+        ```python
+        import miniflask
+
+        # Single Module Repository (named "allmodules")
+        # -> modules inside of allmodules will get the prefix "allmodules."
+        mf = miniflask.import("allmodules")
+
+        # Multiple Module Repositories (named "publicmodules" and "privatemodules")
+        mf = miniflask.import(["privatemodules", "publicmodules"])
+
+        # Multiple Module Repositories (with custom names "pub" and "priv")
+        # -> modules inside of privatemodules will get the prefix "priv."
+        mf = miniflask.import({
+            "priv": "privatemodules",
+            "pub":  "publicmodules"
+        })
+        ```
+
+        """  # noqa: W291
         self._instance_id = str(random.getrandbits(128))
         self.debug = debug
         if not module_dirs:
