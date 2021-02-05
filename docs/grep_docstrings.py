@@ -16,6 +16,7 @@ classes = [
 ]
 
 section_re = re.compile(r"\s*(\w+):")
+fns_done = []
 
 # update version.md
 with open("version.md", "w") as f:
@@ -24,14 +25,18 @@ with open("version.md", "w") as f:
 for i, (clsname, cls) in enumerate(classes):
     j = 0
     for name, fn in getmembers(cls, isfunction):
+        if fn in fns_done:
+            continue
 
         # skip private api
         # if name.startswith("_"):
         #     continue
+
         doc = fn.__doc__
 
         if not doc:
             continue
+        fns_done.append(fn)
         j += 1
 
         first_line, doc = doc.split("\n", 1)
@@ -87,11 +92,15 @@ for i, (clsname, cls) in enumerate(classes):
 ```python {verbatim=%{fnamewithsig}%}
 ```
 
+\\ifexists{args}[
 ## Arguments
-\\arguments
+\\args
+]
 
+\\ifexists{examples}[
 ## Examples
 \\examples
+]
 ]
         """)
 
@@ -99,6 +108,7 @@ for i, (clsname, cls) in enumerate(classes):
         # -----------
         cls_dir = pathlib.Path("08-API/%02d-%s" % (i + 2, clsname.replace(" ", "-")))
         cls_dir.mkdir(parents=True, exist_ok=True)
+        print(str(cls_dir / ("%02d-%s.md" % (j, name))))
         with open(cls_dir / ("%02d-%s.md" % (j, name)), "w") as f:
             f.write("\n".join(luke_doc))
 
@@ -106,4 +116,4 @@ for i, (clsname, cls) in enumerate(classes):
         # ------------
         if not (cls_dir / "index.md").exists():
             with open(cls_dir / "index.md", "w") as f:
-                f.write("\\redirect{\"%02d-%s.md\"}" % (i + 1, name))
+                f.write("\\redirect{\"%02d-%s.md\"}" % (j, name))
