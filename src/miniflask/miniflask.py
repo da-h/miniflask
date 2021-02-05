@@ -717,6 +717,9 @@ class miniflask():
     # runtime #
     # ======= #
     def stop_parse(self):
+        r"""
+        Stops loading of any new modules immediately and halts any further execuptions.
+        """
         self.halt_parse = True
 
     def parse_args(self,  # noqa: C901 too-complex  pylint: disable=too-many-statements
