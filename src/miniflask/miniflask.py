@@ -510,6 +510,97 @@ class miniflask():
 
     # saves function to a given (event-)name
     def register_event(self, name, fn, unique=False, call_before_after=True):
+        r"""
+        Specify a function to register using a given name.
+
+        Arguments:
+        - `name`: (required)  
+            Event name to bind the function with.
+        - `fn`: (required)  
+            The function to be bound to the name.  
+
+            **Function Signatures**:
+            - There are no requirements to the function signatures for plain events.
+                However, it is possible to prepend the argument list using the keywords: `state`, `event` and/or `mf` in any order.  
+                Miniflask will look for these keywords in any event signature and pass the module specific objects,
+                - `state`, (see also the API-Reference for [state](../04-state))
+                - `event` (see also the API-Reference for [event](../05-state)) and
+                - `mf` (the same that is passed during module registration process, see also the API-Reference for [Module mf Object](../03-Module-mf-Object).
+                objects.
+            - **Before events**:
+                These events get called in between the argument passing of any event and the function call.
+
+                To register such an event, prepend the event name with the keywords `before_`.
+                In that case the function signature needs to be as follows:
+
+                ```python
+                def before_fn(*args, **kwargs):
+                    return *args, **kwargs
+                ```
+
+                It is of course possible to modify the function arguments or give specific names for some arguments. The important part is that a before-event specifies the arguments that are passed to the actual event call, both positional and non-positional arguments.
+
+                In case the before event is non-unique, the arguments will be passed from one after event to the next until their result will be passed to the actual event call.
+            - **After events**:
+                These events get called in between the function call and the pass of its return statement.
+
+                To register such an event, prepend the event name with the keywords `after_`.
+                In that case the function signature needs to be as follows:
+
+                ```python
+                def before_fn(result, *args, **kwargs):
+                    return result, *args, **kwargs
+                ```
+
+                It is of course possible to modify the function arguments or the function result or to specify names for some arguments. The important part is, as above, that a before-event specifies the return value that is passed to callee of the event.
+
+                In case the after event is non-unique, the results and arguments will be passed from one after event to the next.
+        - `unique`: (Default: `False`)  
+            - Unique functions can only be registered by exactly one module.  
+              **Note**: Miniflask will throw an error if multiple modules register the same event.
+            - Non-Unique events will be called in sequence of registration. The result of such an event is a list of all return values.
+        - `call_before_after`: (Default: `True`)  
+            Turning this flag off will disable the possibility to hook to this function using before/after events.
+            This is especially useful, if the before/after event shall be directly defined.
+
+        Examples:
+        **Simple Example**:
+        ```python
+        def fn(var):
+            return var * (var + 1)
+
+        mf.register_event("myevent", fn)
+
+        # this line may be placed anywhere in the code basis
+        print(mf.event.myevent(6)) # you know already the result, don't ya?
+        ```
+
+        **Example using signatures & before/after events**:
+        ```python
+        def fn(event, var):
+            event.myotherevent(var)
+            return var * (var + 1)
+
+        def before_fn(var, *args, **kwargs):
+            args = [var + 10] + args
+            return args, kwargs
+
+        def after_fn(result, var):
+            return result // 2
+
+        def fn2(event, var):
+            print("Input: %i")
+
+        mf.register_event("myevent", fn)
+        mf.register_event("myotherevent", fn2)
+        mf.register_event("before_myevent", before_fn)
+        mf.register_event("after_myevent", after_fn)
+
+        # this line may be placed anywhere in the code basis
+        print(mf.event.myevent(6))
+        ```
+
+        """  # noqa: W291
         if not self.bind_events:
             return
 
@@ -948,6 +1039,9 @@ class miniflask_wrapper(miniflask):
         return orig_attr
 
     def redefine_scope(self, new_module_name):
+        """
+
+        """
         old_module_name = self.module_id
         new_module_name = self.set_scope(new_module_name)
         if new_module_name in self.modules_avail:
