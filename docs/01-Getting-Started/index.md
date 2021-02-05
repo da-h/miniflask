@@ -1,13 +1,12 @@
 {theme=documentation}
 
 \include{"../include.md"}
-MiniFlask {section-contentlist=False}
-=========
-
-# Geting Started {section-contentlist=False}
-# Miniflask is a **small** research-oriented **plugin**-engine for **python**.
 
 > A long time ago in a galaxy full of plugin-engines ...
+
+# Geting Started with Miniflask {section-contentlist=False}
+## Miniflask is a **small** research-oriented **plugin**-engine for **python**.
+
 
 
 Quick Start
