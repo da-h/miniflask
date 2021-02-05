@@ -362,6 +362,45 @@ class miniflask():
 
     # loads module (once)
     def load(self, module_name, verbose=True, auto_query=True, loading_text=highlight_loading, as_id=None, bind_events=True):  # noqa: C901 too-complex  pylint: disable=too-many-statements
+        r"""
+        Directly load a module by name
+
+        # Note {.alert}
+        - This loads all parent modules automatically *before* actual loading.
+        - To prevent this, add the global variable `register_parents = False` to the modules `__init__.py`.
+
+        Arguments:
+        - `module_name`: (required)  
+            Module name to be loaded directly.
+            - Prepending the module name with a `-` sign lets miniflask ignore the module.
+            - Can be a fuzzy or complete module identifier
+            - Can be a `str`, a python `list` or string containing a list of modules seperated by a comma.
+        - `verbose`: (default: `True`)  
+            Visualizes the module tree that has been loaded during this call.
+        - `auto_query`: (default: `True`)  
+            Enables/Disables fuzzy search.
+        - `as_id`: (default: `None`)  
+            The module id to be used to register the module upon loading.
+        - `bind_events`: (default: `None`)  
+            Registers all events of the module to be loaded.
+
+        Examples:
+        ```python
+        # using fuzzy module names
+        mf.load("mymodule")
+
+        # ignore future calls to load mymodule
+        mf.load("-mymodule")
+
+        # allows fuzzy module queries as long as the query returns a unique module
+        mf.load("the.full.module.id")
+        mf.load("the.module.id")
+        mf.load("the.full.id")
+        mf.load("the.id")
+        mf.load("full.id")
+        mf.load("module.id")
+        ```
+        """  # noqa: W291
 
         # load list of modules
         if isinstance(module_name, str) and "," in module_name:
