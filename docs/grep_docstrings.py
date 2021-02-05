@@ -97,7 +97,7 @@ for i, (clsname, cls) in enumerate(classes):
 
         # create file for that function
         # -----------
-        cls_dir = pathlib.Path("api/%02d-%s" % (i + 2, clsname.replace(" ", "-")))
+        cls_dir = pathlib.Path("08-API/%02d-%s" % (i + 2, clsname.replace(" ", "-")))
         cls_dir.mkdir(parents=True, exist_ok=True)
         with open(cls_dir / ("%02d-%s.md" % (j, name)), "w") as f:
             f.write("\n".join(luke_doc))

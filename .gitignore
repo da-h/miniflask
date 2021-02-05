@@ -1,4 +1,5 @@
-docs/api/*
+docs/08-API/*
+docs/version.md
 
 tests_deact
 .idea
