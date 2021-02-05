@@ -1,3 +1,5 @@
+docs/api/*
+
 tests_deact
 .idea
 # Byte-compiled / optimized / DLL files
