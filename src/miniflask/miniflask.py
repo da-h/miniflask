@@ -51,7 +51,7 @@ class miniflask():
         Miniflask searches for folders of a specific format, named modules (see [Documentation/Modules](../../03-Modules) for more details).
         By initializing miniflask, we have to define the folders miniflask will look in.
 
-        Arguments:
+        Args:
         - `module_dirs`: a string, a list or a dict of paths to module repositories.
             - **String**: specifies a single path to the module repository to use.  
                 (The directory name will also be repository name / module prefix for all modules inside that folder.)
@@ -369,7 +369,7 @@ class miniflask():
         - This loads all parent modules automatically *before* actual loading.
         - To prevent this, add the global variable `register_parents = False` to the modules `__init__.py`.
 
-        Arguments:
+        Args:
         - `module_name`: (required)  
             Module name to be loaded directly.
             - Prepending the module name with a `-` sign lets miniflask ignore the module.
@@ -469,7 +469,7 @@ class miniflask():
         # Note {.alert}
         It is only possibly to specify a requirement based on an event name *or* a module id regex.
 
-        Arguments:
+        Args:
         - `module`: (required)  
             Module name to be loaded if the specified requirement is not met.
             - Can be fuzzy or complete
@@ -513,7 +513,7 @@ class miniflask():
         r"""
         Specify a function to register using a given name.
 
-        Arguments:
+        Args:
         - `name`: (required)  
             Event name to bind the function with.
         - `fn`: (required)  
