@@ -108,6 +108,11 @@ for i, (clsname, cls) in enumerate(classes):  # noqa: C901
 ```
 ]
 
+\\ifexists{returns}[
+## Returns
+\\returns
+]
+
 \\ifexists{args}[
 ## Arguments
 \\args
