@@ -24,7 +24,6 @@ class event(dict):
     def __init__(self, mf, optional=False):
         self._mf = mf
         self.optional_value = optional
-        self.locals = {}
         super().__init__()
 
     def make_dummy_fn(self, name, call_before_after=True):
