@@ -117,6 +117,10 @@ for i, (clsname, cls) in enumerate(classes):  # noqa: C901
 ## Examples
 \\examples
 ]
+
+\\ifexists{appendix}[
+\\appendix
+]
 ]
         """)
 
