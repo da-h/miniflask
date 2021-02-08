@@ -656,7 +656,7 @@ class miniflask():
             (”if one variable is like this then the other variable should be like that“)
         - but also to allow *other modules* to be predefined sets of default parameters themselves.
 
-        In case of unexpected redefinition of a variable, miniflask will raise an Error.
+        In case of unexpected redefinition of a variable, miniflask will raise an error.
 
         # Note {.alert}
         This method is the base method for variable registrations.
@@ -674,7 +674,7 @@ class miniflask():
             Scope to define variables in.  
             (Defaults to global scope. This is the main difference to the local mf-object variants.)
         - `overwrite`:  
-            Setting to `True` enables redefinition of predefined variables. Raises Error if the variables to overwrite are not known.
+            Setting to `True` enables redefinition of predefined variables. Raises error if the variables to overwrite are not known.
         - `cliargs`:  
             Setting to `False` disables to change that variable using CLI.
         - `parsefn`:  
@@ -1292,7 +1292,9 @@ class miniflask_wrapper(miniflask):
     # (enables relative imports)
     def register_default_module(self, module, **kwargs):
         r"""
+        Specify modules to load if specific behaviour is not yet matched by already loaded modules. (Allows relative module ids).
 
+        Same as  [`miniflask.register_default_module`](../02-miniflask-Instance/11-register_default_module.md) but allows also relative module ids.
         """  # noqa: W291
 
         # parse relative imports first
@@ -1303,9 +1305,15 @@ class miniflask_wrapper(miniflask):
 
         super().register_default_module(module, **kwargs)
 
-    def unregister_event(self, name, only_cache):
+    def unregister_event(self, name: str, only_cache: bool):
         r"""
+        Clears an event by name.
 
+        Args:
+        - `name`: The event to clear from the event object.
+        - `only_cache`:  
+            - Setting to `True` means that the event cache will be cleared. Upon the next call of `event.name` the cache will be rebuild.
+            - Setting to `False` means that the event cache will be cleared *and* the internal event objects will be removed as well. Upon the next call of `event.name` miniflask will not recognize the event anymore.
         """  # noqa: W291
         if hasattr(self.event, name):
             delattr(self.event, name)
@@ -1317,18 +1325,22 @@ class miniflask_wrapper(miniflask):
             self.unregister_event("after_" + name, only_cache)
 
     # define event
-    def register_event(self, name, fn, **kwargs):
+    def register_event(self, name: str, fn, **kwargs):
         r"""
+        Registers a function as an event & clears event-method cache.
 
+        - The API is the same as [`miniflask.register_event`](../02-miniflask-Instance/11-register_defaults.md)
+        - If the event exists already the event will be attached to the event list.
+        - If the already existent event is defined as a unique event, miniflask will raise an error. You probably wanted to use [`overwrite_event`](./07-overwrite-event.md).
         """  # noqa: W291
         self.unregister_event(name, only_cache=True)
         self._defined_events[name] = fn
         super().register_event(name, fn, **kwargs)
 
     # overwrite event definition
-    def overwrite_event(self, name, fn, **kwargs):
+    def overwrite_event(self, name: str, fn, **kwargs):
         r"""
-
+        Unregister an existing event & redefine it using another function.
         """  # noqa: W291
         self.unregister_event(name, only_cache=False)
         self._defined_events[name] = fn
@@ -1337,7 +1349,9 @@ class miniflask_wrapper(miniflask):
     # overwrite state defaults
     def register_defaults(self, defaults, scope=None, **kwargs):
         r"""
+        Registers module variables.
 
+        Same as  [`miniflask.register_defaults`](../02-miniflask-Instance/11-register_defaults.md) but allows also relative scope & variable names.
         """  # noqa: W291
         # default behaviour is to use current module-name
         if scope is None:
@@ -1348,27 +1362,35 @@ class miniflask_wrapper(miniflask):
     # helper variables are not added to argument parser
     def register_helpers(self, defaults, **kwargs):
         r"""
+        Registers helper variables (not changeable by CLI).
 
+        Defaults to `cliargs=False` for [`mf.register_defaults`](./11-register_defaults.md)
         """  # noqa: W291
         self.register_defaults(defaults, cliargs=False, **kwargs)
 
     # does not add scope of module
     def register_globals(self, defaults, **kwargs):
         r"""
+        Registers global variables.
 
+        Defaults to `scope=""` for [`mf.register_defaults`](./11-register_defaults.md)
         """  # noqa: W291
         self.register_defaults(defaults, scope="", **kwargs)
 
     # overwrites previously registered variables
     def overwrite_globals(self, defaults, scope="", **kwargs):
         r"""
+        Overwrites previously defined global variables.
 
+        Defaults to `scope=""` and `overwrite=True` for [`mf.register_defaults`](./11-register_defaults.md)
         """  # noqa: W291
         self.register_defaults(defaults, scope=scope, overwrite=True, **kwargs)
 
     # overwrites previously registered variables
     def overwrite_defaults(self, defaults, scope=None, **kwargs):
         r"""
+        Overwrites previously defined variables.
 
+        Defaults to `overwrite=True` for [`mf.register_defaults`](./11-register_defaults.md)
         """  # noqa: W291
         self.register_defaults(defaults, scope=scope, overwrite=True, **kwargs)
