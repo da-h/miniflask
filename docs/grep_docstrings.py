@@ -24,7 +24,15 @@ with open("version.md", "w") as f:
 
 for i, (clsname, cls) in enumerate(classes):  # noqa: C901
     j = 0
-    for name, fn in getmembers(cls, isfunction):
+
+    members = getmembers(cls, isfunction)
+
+    # resort __init__ to front
+    init_index = [n for n, m in members].index('__init__')
+    if init_index >= 0:
+        members = [members[init_index]] + members[:init_index] + members[init_index + 1:]
+
+    for name, fn in members:
         if fn in fns_done:
             continue
 
