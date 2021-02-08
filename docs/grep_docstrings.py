@@ -9,8 +9,8 @@ from miniflask.event import event  # noqa: F401
 from miniflask.state import state  # noqa: F401
 
 classes = [
-    ("Global mf Object", miniflask),
-    ("Module mf Object", miniflask_wrapper),
+    ("miniflask Instance", miniflask),
+    ("register(mf) Object", miniflask_wrapper),
     ("event", event),
     ("state", state)
 ]
@@ -22,7 +22,7 @@ fns_done = []
 with open("version.md", "w") as f:
     f.write("{version=\"%s\"}" % __version__)
 
-for i, (clsname, cls) in enumerate(classes):
+for i, (clsname, cls) in enumerate(classes):  # noqa: C901
     j = 0
     for name, fn in getmembers(cls, isfunction):
         if fn in fns_done:
@@ -43,20 +43,26 @@ for i, (clsname, cls) in enumerate(classes):
         first_line = first_line.strip()
         if first_line:
             name = first_line
+        if name.startswith("!"):
+            name = name[1:]
+            skipsignature = True
+        else:
+            skipsignature = False
         doc = dedent(doc).split("\n")
 
         # convert doc-format to luke format
         # ---------------------------------
         luke_doc = ["{theme=documentation "]
 
-        # get signature
-        sig = signature(fn)
-        sig_str = ", ".join([str(param) for name, param in sig.parameters.items() if name != "self"])
-        luke_doc.append("signature='%s'" % sig_str)
-
-        # name of first name is display name of function
+        # name of first line is display name of function
         luke_doc.append("fname='%s'" % name)
-        luke_doc.append("fnamewithsig='%s(%s)'" % (name if not first_line else first_line, sig_str))
+
+        # get signature
+        if not skipsignature:
+            sig = signature(fn)
+            sig_str = ", ".join(['%s="%s"' % (name, param.default) if isinstance(param.default, str) else str(param) for name, param in sig.parameters.items() if name != "self"])
+            luke_doc.append("signature='%s'" % sig_str)
+            luke_doc.append("fnamewithsig='%s(%s)'" % (name if not first_line else first_line, sig_str))
 
         # second line is description
         luke_doc.append("shortdescr='%s'" % doc[0])
@@ -88,9 +94,11 @@ for i, (clsname, cls) in enumerate(classes):
 
 \\main
 
+\\ifexists{fnamewithsig}[
 ### Method Signature
 ```python {verbatim=%{fnamewithsig}%}
 ```
+]
 
 \\ifexists{args}[
 ## Arguments
