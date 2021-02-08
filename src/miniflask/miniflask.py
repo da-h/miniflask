@@ -210,17 +210,26 @@ class miniflask():
         return spec.loader.load_module()
 
     # module event
-    def getModuleEvents(self, module, dummy=None):
-        if not dummy:
-            dummy = miniflask_dummy()
+    def getModuleEvents(self, module_id, mf=None):
+        r"""
+        Retrieve List of Events defined by specified module.
+
+        Args:
+        - `module_id`: (required)  
+            unique module id
+        - `mf`:  
+            Internal variable to specify the miniflask object to register the events into. If set to `None` no events will be registered.
+        """  # noqa: W291
+        if not mf:
+            mf = miniflask_dummy()
 
         # load module
-        mod = self.import_module(module)
+        mod = self.import_module(module_id)
         if not hasattr(mod, "register"):
             return []
 
-        mod.register(dummy)
-        return dummy.getEvents()
+        mod.register(mf)
+        return mf.getEvents()
 
     # pretty print of all available modules
     def showModules(self, directory=None, prepend="", id_pre=None, with_event=True, direct_print=True):  # noqa: C901 too-complex pylint: disable=inconsistent-return-statements
@@ -290,6 +299,13 @@ class miniflask():
 
     # get unique id of a moodule
     def getModuleId(self, module_id):
+        r"""
+        Performs a fuzzy search on a module identifier.
+
+        # Note {.alert}
+        - Raises `ValueError` if either the module identifier is non-unique or not known.
+        - Otherwise returns the full module id.
+        """
         module_ids = self.modules_avail.keys()
         module = module_id.replace(".", r"\.(.*\.)*")
 
@@ -319,20 +335,23 @@ class miniflask():
         return self.modules_avail[module]["id"]
 
     # get short id of a moodule
-    def getModuleShortId(self, module):
-        if module not in self.modules_avail:
-            raise ValueError(highlight_error() + "Module '%s' not known." % highlight_module(module))
-        uniqueId = self.modules_avail[module]["id"].split(".")
+    def getModuleShortId(self, module_id):
+        r"""
+        Given the full unique module id this method returns the shortest module id that is still uniquely assignable by miniflask.
+        """
+        if module_id not in self.modules_avail:
+            raise ValueError(highlight_error() + "Module '%s' not known." % highlight_module(module_id))
+        uniqueId = self.modules_avail[module_id]["id"].split(".")
 
         # find the shortest substring to match a module uniquely
         for i in range(len(uniqueId) - 1, 0, -1):
             shortid = ".".join(uniqueId[i:])
             try:
-                if module == self.getModuleId(shortid):
+                if module_id == self.getModuleId(shortid):
                     return shortid
             except ValueError:
                 pass
-        return module
+        return module_id
 
     # maps 'folder.subfolder.module.list.of.vars' to 'folder.subfoldder.module'
     def _getModuleIdFromVarId(self, varid, varid_list=None, scope=None):  # noqa: C901 too-complex
@@ -628,6 +647,41 @@ class miniflask():
     #       however scope can be empty if key is meant as a reference in the global scope=="".
     #       Otherwise, this function would be a lot simpler.
     def register_defaults(self, defaults, scope="", overwrite=False, cliargs=True, parsefn=True, caller_traceback=None):
+        r"""
+        Register variables bound to a module.
+
+        The variable registration process is the miniflask feature to
+        - allow users to overwrite *default parameters* based on the value types defined during registration,
+        - allow variables to form *dependency chains* in between modules  
+            (”if one variable is like this then the other variable should be like that“)
+        - but also to allow *other modules* to be predefined sets of default parameters themselves.
+
+        In case of unexpected redefinition of a variable, miniflask will raise an Error.
+
+        # Note {.alert}
+        This method is the base method for variable registrations.
+        Consider also the specializations for local `mf` objects:
+        - [`register_defaults`]("../03-register(mf)-Object/11-register_defaults.md")
+        - [`register_globals`]("../03-register(mf)-Object/13-register_globals.md)
+        - [`register_helpers`]("../03-register(m\)-Object/14-register_helpers.md")
+        - [`overwrite_defaults`]("../03-register(mf)-Object/06-overwrite-defaults.md")
+        - [`overwrite_globals`]("../03-register(mf)-Object/08-overwrite_globals.md")
+
+        Args:
+        - `defaults`: (required)  
+            Dict of variables to define under the defined scope (variable name -> value).
+        - `scope`:  
+            Scope to define variables in.  
+            (Defaults to global scope. This is the main difference to the local mf-object variants.)
+        - `overwrite`:  
+            Setting to `True` enables redefinition of predefined variables. Raises Error if the variables to overwrite are not known.
+        - `cliargs`:  
+            Setting to `False` disables to change that variable using CLI.
+        - `parsefn`:  
+            Setting to `False` disables function parsing if the value is a method itself. Doing so may be required if the value to be saved is a function itself. By default miniflask will call function values to set the value dynamically as part of the variable dependency chain.
+        - `caller_traceback`:  
+            The traceback to use when an error occurs during registration of any of the listed variables. (Defaults to current traceback).
+        """  # noqa: W291
         if scope is None:
             scope = ""
 
@@ -718,14 +772,28 @@ class miniflask():
     # ======= #
     def stop_parse(self):
         r"""
-        Stops loading of any new modules immediately and halts any further execuptions.
-        """
+        Stops loading of any new modules immediately and halts any further executions.
+        """  # noqa: W291
         self.halt_parse = True
 
     def parse_args(self,  # noqa: C901 too-complex  pylint: disable=too-many-statements
-                   argv: str or List[str] = None,
+                   argv: List[str] or str = None,
                    optional: bool = True,
                    fuzzy_args: bool = True):
+        r"""
+        Parse CLI-Arguments.
+
+        # Note {.alert}
+        Typically you would call the run()-method instead. You will need this method only, if [run](./10-run.md) does not fit your needs.
+
+        Args:
+        - `argv`: (can also be `str`)  
+            Arguments to parse. If is `None` will use CLI arguments (`sys.argv[1:]`).
+        - `optional`:  
+            If set to `False` disables the requirement to any modules to load. This option is interesting if your launch script is intended to use a predefined set of modules only.
+        - `fuzzy_args`:  
+            If set to `False` disables fuzzy variable name search for the module arguments.
+        """  # noqa: W291
         if self.argparse_called:
             raise SystemError("The function `parse_args` has been called already. Did you maybe called `mf.parse_args()` and `mf.run()` in the same script? Solutions are:\n\t- Please use only one of those functions.\n\t- If you actually need both functions, please do not hesitate to write an issue on\n\t\thttps://github/da-h/miniflask/issues\n\t  to explain you used case.\n\t  (It's not hard to implement, but I need to know, if and when this functionality is needed. ;) )")
 
@@ -947,7 +1015,33 @@ class miniflask():
         # mark this instance as run
         self.argparse_called = True
 
-    def run(self, modules=None, call="main", argv=None):  # noqa: C901 too-complex  pylint: disable=too-many-statements
+    def run(self, modules: List[str] or str = None, call: str = "main", argv: List[str] or str = None):  # noqa: C901 too-complex  pylint: disable=too-many-statements
+        r"""
+        Entrypoint of most miniflask programs.
+
+        Procedure of this Method:
+        1. Loading of predefined modules.
+        2. Parsing CLI-args. This includes:
+            - first loading of modules called in CLI
+            - setting default values to those defined in CLI
+        3. If any module called `stop_parse`, the program halts.
+        4. Execution of `init` event (if it exists)
+        5. Execution of `main` event (if it exists)
+        6. Execution of `final` event (if it exists)
+
+        This method also pretty prints
+        - the distinct phases described above
+        - uncatched exceptions that occur during any event.  
+            (This method strips any miniflask-related exceptinos from the traceback. In case a debugger is used or the `debug` flag is set for the miniflask instance, the full exception traceback is shown.)
+
+        Args:
+        - `modules`:  
+            List or String of modules
+        - `call`:  
+            The name of the default “main” event.
+        - `argv`:  
+            Arguments to parse. If is `None` will use CLI arguments (`sys.argv[1:]`).
+        """  # noqa: W291
         if modules is None or (isinstance(modules, list) and len(modules) == 0):
             modules = ["settings"]
         try:
@@ -1016,6 +1110,20 @@ class miniflask():
 
 class miniflask_wrapper(miniflask):
     def __init__(self, module_name, mf):  # pylint: disable=super-init-not-called
+        """!...is a local miniflask instance
+
+        The local miniflask instance is the specialized object that is passed to any `register(mf)` call directly to a module.
+        The global [miniflask object](../02-miniflask-instance/) and the local `mf` object are quite similar with the exception that the local `mf` object allows to change only the behaviour of the currently registered module.
+
+        The object has the following public variables:
+        - `module_id`: The internal unique id used for this module.
+        - `module_name`: The actual name of the module (the part after the last dot).
+        - `module_base`: The repository name of the module
+        - `state`: The local state object.
+
+        Also as a `miniflask` object itself it inherits all methods described in [miniflask object](../02-miniflask-instance/) with the exceptions listed in this chapter.
+
+        """  # noqa: W291
         self.module_id = module_name
         self.module_id_initial = module_name
         self.module_name = module_name.split(".")[-1]
@@ -1042,9 +1150,15 @@ class miniflask_wrapper(miniflask):
         return orig_attr
 
     def redefine_scope(self, new_module_name):
-        """
+        r"""
+        Renames the module internally.
 
-        """
+        This method may come in handy if one module shall takes the place of another module if loaded.
+        **Note that this replacement is now dependend on the order of the module loading.**
+
+        Args:
+        - `new_module_name`: The module id to use internally.
+        """  # noqa: W291
         old_module_name = self.module_id
         new_module_name = self.set_scope(new_module_name)
         if new_module_name in self.modules_avail:
@@ -1055,6 +1169,12 @@ class miniflask_wrapper(miniflask):
         self.modules_avail[new_module_name] = m
 
     def set_scope(self, new_module_name):
+        r"""
+        Rename the state prefix / Share the state with another module.
+
+        Args:
+        - `new_module_name`: The prefix to use with any `state["var"]` call.
+        """  # noqa: W291
         new_module_name, was_relative = self._get_relative_module_id(new_module_name)
         if not was_relative:
             new_module_name = self.module_base + "." + new_module_name
@@ -1064,6 +1184,36 @@ class miniflask_wrapper(miniflask):
 
     # like with relative imports
     def like(self, varname, alt, scope="."):
+        r"""
+        Define state dependencies.
+
+        # Note {.alert}
+        Like variables are parsed *after* the CLI-arguments have been parsed:
+        - In case any CLI-argument changes a dependency the like-Dependency should change accordingly.
+        - If any CLI-argument changes the variable defined as a dependency, the dependency is canceled.
+
+        Args:
+        - `varname`: The variable identifier to use for the dependency.
+        - `alt`: The default value if no variable found.
+        - `scope`: The variable scope to search for the variable.
+
+        Examples:
+
+        **Global variables with Fallback**
+        ```python
+        mf.register_defaults({
+            "myvar": mf.like("globalvar", alt=42)
+        })
+        ```
+
+        **Local dependencies**
+        ```python
+        mf.register_defaults({
+            "othervar": mf.like(".var"),
+            "likeparent": mf.like("..parentvar")
+        })
+        ```
+        """  # noqa: W291
         scope_name = scope
         if scope is not None:
             scope, _ = self._get_relative_module_id(scope)
@@ -1071,10 +1221,29 @@ class miniflask_wrapper(miniflask):
 
     # loads module dependencies as child module
     def load_as_child(self, module_name, **kwargs):
+        r"""
+        Load another module as a child module.
+
+        # Note {alert=warning}
+        These kinds of child modules are a feature of miniflask `v2.2`. Thus, at the moment the function is rather limited:
+        No events will be registered to be accessible globally. However, it is possible to access the state variables of that module.
+        """  # noqa: W291
         self.load(module_name, as_id='.', bind_events=False, **kwargs)
 
     # enables relative imports
     def load(self, module_name, as_id=None, auto_query=True, **kwargs):
+        r"""
+        Directly load a module by name. (Allows relative loading.)
+
+        This method behaves just as [`miniflask.load`](../02-miniflask-Instance/05-load.md) with the exception that it also detectc local module names.
+
+        Examples:
+        ```python
+        mf.load(".childmodule")
+        mf.load("..siblingmodule")
+        mf.load("...siblingofparent")
+        ```
+        """  # noqa: W291
 
         # if nothing given, ignore
         if module_name is None:
@@ -1105,11 +1274,26 @@ class miniflask_wrapper(miniflask):
 
     # checks if child modules are already loaded
     def any_child_loaded(self):
+        r"""
+        Checks if any child modules of this module are loaded.
+
+        This method is useful if the intented behavior of loading this module shall load another specialized version by default (that is if it is not specialized by the user).
+
+
+        Examples:
+        ```python
+        if mf.any_child_loaded():
+            mf.load(".childmoduleA")
+        ```
+        """  # noqa: W291
         return any(x for x in self.modules_loaded if re.search(self.module_id + r"\..*", x))
 
     # register default module that is loaded if none of glob is matched
     # (enables relative imports)
     def register_default_module(self, module, **kwargs):
+        r"""
+
+        """  # noqa: W291
 
         # parse relative imports first
         if isinstance(module, list):
@@ -1120,6 +1304,9 @@ class miniflask_wrapper(miniflask):
         super().register_default_module(module, **kwargs)
 
     def unregister_event(self, name, only_cache):
+        r"""
+
+        """  # noqa: W291
         if hasattr(self.event, name):
             delattr(self.event, name)
         if not only_cache and name in self.event_objs:
@@ -1131,18 +1318,27 @@ class miniflask_wrapper(miniflask):
 
     # define event
     def register_event(self, name, fn, **kwargs):
+        r"""
+
+        """  # noqa: W291
         self.unregister_event(name, only_cache=True)
         self._defined_events[name] = fn
         super().register_event(name, fn, **kwargs)
 
     # overwrite event definition
     def overwrite_event(self, name, fn, **kwargs):
+        r"""
+
+        """  # noqa: W291
         self.unregister_event(name, only_cache=False)
         self._defined_events[name] = fn
         super().register_event(name, fn, **kwargs)
 
     # overwrite state defaults
     def register_defaults(self, defaults, scope=None, **kwargs):
+        r"""
+
+        """  # noqa: W291
         # default behaviour is to use current module-name
         if scope is None:
             scope = self.module_id
@@ -1151,16 +1347,28 @@ class miniflask_wrapper(miniflask):
 
     # helper variables are not added to argument parser
     def register_helpers(self, defaults, **kwargs):
+        r"""
+
+        """  # noqa: W291
         self.register_defaults(defaults, cliargs=False, **kwargs)
 
     # does not add scope of module
     def register_globals(self, defaults, **kwargs):
+        r"""
+
+        """  # noqa: W291
         self.register_defaults(defaults, scope="", **kwargs)
 
     # overwrites previously registered variables
     def overwrite_globals(self, defaults, scope="", **kwargs):
+        r"""
+
+        """  # noqa: W291
         self.register_defaults(defaults, scope=scope, overwrite=True, **kwargs)
 
     # overwrites previously registered variables
     def overwrite_defaults(self, defaults, scope=None, **kwargs):
+        r"""
+
+        """  # noqa: W291
         self.register_defaults(defaults, scope=scope, overwrite=True, **kwargs)
