@@ -544,7 +544,7 @@ class miniflask():
                 Miniflask will look for these keywords in any event signature and pass the module specific objects,
                 - `state`, (see also the API-Reference for [state](../04-state))
                 - `event` (see also the API-Reference for [event](../05-state)) and
-                - `mf` (the same that is passed during module registration process, see also the API-Reference for [Module mf Object](../03-Module-mf-Object).
+                - `mf` (the same that is passed during module registration process, see also the API-Reference for [`register(mf)` Object]("../03-register(mf)-Object").
                 objects.
             - **Before events**:
                 These events get called in between the argument passing of any event and the function call.
@@ -1236,6 +1236,14 @@ class miniflask_wrapper(miniflask):
         Directly load a module by name. (Allows relative loading.)
 
         This method behaves just as [`miniflask.load`](../02-miniflask-Instance/05-load.md) with the exception that it also detectc local module names.
+
+        Considering calling `mf.load` during registration (inside the `register(mf)` method) of the module with the unique module id `a.b.c.d`.
+        Loading the module:
+        - `.child` references `a.b.c.d.child`
+        - `..` references the parent `a.b.c`
+        - `..sibling` references `a.b.c.sibling`
+        - `...` references `a.b`
+        - `.` is a noop.
 
         Examples:
         ```python
