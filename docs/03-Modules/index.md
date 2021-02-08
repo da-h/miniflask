@@ -1,2 +1,2 @@
 
-\redirect{"01-Minimal-Requirements.md"}
+\redirect{"01-Module-Declaration.md"}

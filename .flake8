@@ -14,4 +14,5 @@ per-file-ignores =
     # E221 multiple spaces before operator
     # F401 imported but unused
     # F403 unable to detect undefined names
+    # C901 loop to complex
     src/miniflask/__init__.py: E221,F401,F403

@@ -1,3 +1,6 @@
+docs/08-API/*
+docs/version.md
+
 tests_deact
 .idea
 # Byte-compiled / optimized / DLL files

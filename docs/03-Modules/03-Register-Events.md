@@ -1,11 +1,9 @@
 {theme=documentation}
 
-
+\include{"../include.md"}
 
 # Register Events
-
-
-\include{"../include.md"}
+Who doesn't love functional interfaces? ;)
 
 Module function can be attached to hooks so that they are called automatically upon reaching the specified hook. Events can be attached to a hook when registering an event.
 
@@ -16,7 +14,7 @@ def main(state, event):
     print("This is the main-event of module1")
 
 def register(mf):
-    mf.register_event('main', main)
+    mf.register_event('main', main, unique=False)
 ```
 
 **Example File:** `modules/module2/__init__.py`
@@ -75,6 +73,8 @@ def before_blub(state, event, *args, **kwargs):
 	return args
 ```
 
+
+
 ### Outervar
 In some scenarios it may be useful to define a module to depend completely on another module.
 In this case we can inherit the scope of some variables from the callee, by setting their default to `miniflask.event.outervar`.
@@ -106,37 +106,7 @@ mf.event.main()
 
 
 ### Call Events
-Events can be called using the `event` object, i.e. in another event or after initialization of miniflask using the global `mf.event` object (see above).
+\include{"../08-API/04-event/01-event calling.md"}
+\shortdescr
+\main
 
-There are two types of calls:
-
-**Mandatory Calls**  
-You expect this event to exist and to be called using a self-specified interface.
-E.g.:
-
-```python
-event.main()
-result = event.notneeded("some argument")
-```
-
-*Note*: This code will raise an Exception, if one of the two events `main` or `notneeded` are not defined (or differ in their interface to the expectation of the call).
-
-**Optional Calls**  
-You want this event to be called if it is defined, but if it isn't you don't mind.
-E.g.:
-
-```python
-event.optional.main()
-result = event.optional.notneeded("some argument")
-result = event.optional.notneeded("some argument", altfn=lambda s: s+" (no optional event used)")
-```
-\n
-
-# Note {.alert}
-- `event.optional.eventname()` treats the event like a `nonunique` event, thus it returns an list of results.
-- `event.optional.eventname(..., altfn=...)` treats the event like a `unique` event, but in case no event was defined, it uses altfn to parse the arguments.
-# .{.end}
-
-
-### Performance Note
-Leaving the `event` and `state` argument out from an event function definition removes an extra function wrapper around every function. Thus, without them the time consumption should not differ at all from a normal function call.
