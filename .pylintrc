@@ -1,0 +1,8 @@
+[REPORTS]
+output-format=colorized
+
+[LOGGING]
+logging-format-style=new
+
+[FORMAT]
+max-line-length=127
