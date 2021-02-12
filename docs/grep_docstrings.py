@@ -15,7 +15,7 @@ classes = [
     ("state", state)
 ]
 
-section_re = re.compile(r"\s*(\w+):")
+section_re = re.compile(r"\s*([a-zA-Z \-]+):")
 fns_done = []
 
 # update version.md
@@ -101,6 +101,11 @@ for i, (clsname, cls) in enumerate(classes):  # noqa: C901
 ----
 
 \\main
+
+\\ifexists{note}[
+### Note {.alert}
+\\note
+]
 
 \\ifexists{fnamewithsig}[
 ### Method Signature

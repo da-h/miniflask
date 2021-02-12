@@ -48,7 +48,7 @@ class miniflask():
         r"""miniflask.init
         Initializes miniflask with a module repository.
 
-        Miniflask searches for folders of a specific format, named modules (see [Documentation/Modules](../../03-Modules) for more details).
+        Miniflask searches for folders of a specific format, named modules.
         By initializing miniflask, we have to define the folders miniflask will look in.
 
         Args:
@@ -63,18 +63,16 @@ class miniflask():
 
         Examples:
         ```python
-        import miniflask
-
         # Single Module Repository (named "allmodules")
         # -> modules inside of allmodules will get the prefix "allmodules."
-        mf = miniflask.import("allmodules")
+        mf = miniflask.init("allmodules")
 
         # Multiple Module Repositories (named "publicmodules" and "privatemodules")
-        mf = miniflask.import(["privatemodules", "publicmodules"])
+        mf = miniflask.init(["privatemodules", "publicmodules"])
 
         # Multiple Module Repositories (with custom names "pub" and "priv")
         # -> modules inside of privatemodules will get the prefix "priv."
-        mf = miniflask.import({
+        mf = miniflask.init({
             "priv": "privatemodules",
             "pub":  "publicmodules"
         })
@@ -658,14 +656,21 @@ class miniflask():
 
         In case of unexpected redefinition of a variable, miniflask will raise an error.
 
-        # Note {.alert}
+        ## Supported Variable Types
+        - Integer (`int`)
+        - Floats (`float`)
+        - Strings (`string`)
+        - Boolean (`bool`)
+        - One-dimensional lists of basic types (e.g. `[int]`)
+
+        Note:
         This method is the base method for variable registrations.
         Consider also the specializations for local `mf` objects:
-        - [`register_defaults`]("../03-register(mf)-Object/11-register_defaults.md")
-        - [`register_globals`]("../03-register(mf)-Object/13-register_globals.md)
-        - [`register_helpers`]("../03-register(m\)-Object/14-register_helpers.md")
-        - [`overwrite_defaults`]("../03-register(mf)-Object/06-overwrite-defaults.md")
-        - [`overwrite_globals`]("../03-register(mf)-Object/08-overwrite_globals.md")
+        - [`register_defaults`]("../../08-API/03-register(mf)-Object/11-register_defaults.md")
+        - [`register_globals`]("../../08-API/03-register(mf)-Object/13-register_globals.md)
+        - [`register_helpers`]("../../08-API/03-register(m\)-Object/14-register_helpers.md")
+        - [`overwrite_defaults`]("../../08-API/03-register(mf)-Object/06-overwrite-defaults.md")
+        - [`overwrite_globals`]("../../08-API/03-register(mf)-Object/08-overwrite_globals.md")
 
         Args:
         - `defaults`: (required)  
@@ -681,6 +686,17 @@ class miniflask():
             Setting to `False` disables function parsing if the value is a method itself. Doing so may be required if the value to be saved is a function itself. By default miniflask will call function values to set the value dynamically as part of the variable dependency chain.
         - `caller_traceback`:  
             The traceback to use when an error occurs during registration of any of the listed variables. (Defaults to current traceback).
+
+        Examples:
+        ```python
+        def register(mf):
+            mf.register_defaults({
+                "variableA": 42,
+                "variableB": "Hello",
+                "variableC": True,
+                "variableD": [1,2,3,5,8,13] # only lists of same type are supported
+            })
+        ```
         """  # noqa: W291
         if scope is None:
             scope = ""
