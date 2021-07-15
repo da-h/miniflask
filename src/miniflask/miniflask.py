@@ -1118,6 +1118,8 @@ class miniflask():
                 tb = traceback.extract_tb(e.__traceback__)
                 print()
                 print(fg("red") + "Uncatched Exception occured. Traceback:" + attr("reset"))
+
+                # nicer version of: print(traceback.format_exc())
                 print(format_traceback_list(tb, exc=e, ignore_miniflask=not self.debug))
                 sys.exit(1)
             else:
