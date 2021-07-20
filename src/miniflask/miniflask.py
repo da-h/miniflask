@@ -662,6 +662,7 @@ class miniflask():
         - Floats (`float`)
         - Strings (`string`)
         - Boolean (`bool`)
+        - Enums (`Enum`)  
         - One-dimensional lists of basic types (e.g. `[int]`)
         - [Like Expressions](../../08-API/03-register(mf\)-Object/03-like.md)
         - Lambda Expressions of the form `lambda state, event: ...`.  
@@ -694,11 +695,17 @@ class miniflask():
         Examples:
         ```python
         def register(mf):
+            class TESTENUM(Enum):
+                VALUEA = 0
+                VALUEB = 1
+
             mf.register_defaults({
                 "variableA": 42,
                 "variableB": "Hello",
                 "variableC": True,
                 "variableD": [1,2,3,5,8,13] # only lists of same type are supported
+                "variableEnum": TESTENUM.VALUEA
+                "variableEnum2": TESTENUM   # rquires the user to specify the value by name
             })
         ```
         """  # noqa: W291
