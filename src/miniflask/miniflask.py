@@ -666,11 +666,11 @@ class miniflask():
         Note:
         This method is the base method for variable registrations.
         Consider also the specializations for local `mf` objects:
-        - [`register_defaults`]("../../08-API/03-register(mf)-Object/11-register_defaults.md")
-        - [`register_globals`]("../../08-API/03-register(mf)-Object/13-register_globals.md)
-        - [`register_helpers`]("../../08-API/03-register(m\)-Object/14-register_helpers.md")
-        - [`overwrite_defaults`]("../../08-API/03-register(mf)-Object/06-overwrite-defaults.md")
-        - [`overwrite_globals`]("../../08-API/03-register(mf)-Object/08-overwrite_globals.md")
+        - [`register_defaults`](../../08-API/03-register(mf\)-Object/11-register_defaults.md)
+        - [`register_globals`](../../08-API/03-register(mf\)-Object/13-register_globals.md)
+        - [`register_helpers`](../../08-API/03-register(mf\)-Object/14-register_helpers.md)
+        - [`overwrite_defaults`](../../08-API/03-register(mf\)-Object/06-overwrite_defaults.md)
+        - [`overwrite_globals`](../../08-API/03-register(mf\)-Object/08-overwrite_globals.md)
 
         Args:
         - `defaults`: (required)  
@@ -1377,7 +1377,7 @@ class miniflask_wrapper(miniflask):
         r"""
         Registers module variables.
 
-        Same as  [`miniflask.register_defaults`](../02-miniflask-Instance/11-register_defaults.md) but allows also relative scope & variable names.
+        Same as  [`miniflask.register_defaults`](../02-miniflask-Instance/08-register_defaults.md) but allows also relative scope & variable names.
         """  # noqa: W291
         # default behaviour is to use current module-name
         if scope is None:
