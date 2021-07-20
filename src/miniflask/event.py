@@ -219,3 +219,17 @@ class event(dict):
     def __deepcopy__(self, memo):
         del memo
         return self
+
+    def outervar(self):
+        r"""
+        For debbuging mainly: Changing the variables an event is called with.
+
+        Event-Functions are called with a fixed number of variables.
+        This function permits the called event to specify which variables it shall be called with from the caller.
+
+        **Note**: This changes the way one typicalle constructs programs. This feature is intended to be a quick way to test architectural changes without changing the rest of the code. Thus, the typical used case is and should be only: **debugging**.
+
+        ### Performance Note {.alert}
+        To enable such a feature, we use python's inspection module. In every call that implys outervar variables we inspect the variable scope of the caller for the queried variables.
+        """
+        return outervar
