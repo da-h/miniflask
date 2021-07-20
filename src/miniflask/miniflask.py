@@ -649,7 +649,8 @@ class miniflask():
         Register variables bound to a module.
 
         The variable registration process is the miniflask feature to
-        - allow users to overwrite *default parameters* based on the value types defined during registration,
+        - allow users to overwrite *default parameters* based on the value types defined during registration using the cli,
+            (See the section [Modules/Register Settings](../../03-Modules/02-Register-Settings.md) in the documentation for details how to overwrite registered variables using the CLI.)
         - allow variables to form *dependency chains* in between modules  
             (”if one variable is like this then the other variable should be like that“)
         - but also to allow *other modules* to be predefined sets of default parameters themselves.
