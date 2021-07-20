@@ -662,6 +662,9 @@ class miniflask():
         - Strings (`string`)
         - Boolean (`bool`)
         - One-dimensional lists of basic types (e.g. `[int]`)
+        - [Like Expressions](../../08-API/03-register(mf\)-Object/03-like.md)
+        - Lambda Expressions of the form `lambda state, event: ...`.  
+            (Functionally, this is just like a `like`-Expression, but cannot take circular dependencies into account. The pro-side, however, is that any expression can be used inside the lambda-function.)
 
         Note:
         This method is the base method for variable registrations.
