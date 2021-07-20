@@ -1378,6 +1378,9 @@ class miniflask_wrapper(miniflask):
     def overwrite_event(self, name: str, fn, **kwargs):
         r"""
         Unregister an existing event & redefine it using another function.
+
+        **Note**:
+        The main difference between this function and `register_event` is that this method clears the cache *and* removes the event internally, while `register_event` only clears the cache. (This is especially important if one uses non-unique events).
         """  # noqa: W291
         self.unregister_event(name, only_cache=False)
         self._defined_events[name] = fn
