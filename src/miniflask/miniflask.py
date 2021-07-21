@@ -36,7 +36,7 @@ def get_default_args(func):
     return {
         k: v.default
         for k, v in signature.parameters.items()
-        if v.default is not inspect.Parameter.empty
+        if v.default is not inspect.Parameter.empty and v.default is not None
     }
 
 
