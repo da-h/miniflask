@@ -11,4 +11,4 @@ def register(mf):
         "epoch": 2
     }
     mf.register_defaults(defaults)
-    mf.register_event("main", loop)
+    mf.register_event("main", loop, unique=False)

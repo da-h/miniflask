@@ -14,5 +14,5 @@ def main(event):
 def register(mf):
     mf.load_as_child('b')
     mf.register_defaults({"test": 42})
-    mf.register_event('test', test, unique=True)
-    mf.register_event('main', main)
+    mf.register_event('test', test)
+    mf.register_event('main', main, unique=False)

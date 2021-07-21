@@ -6,7 +6,7 @@ def test(i):
 def add_test(mf):
     def add_test_print(i):
         print("added to test", i)
-    mf.register_event("test", add_test_print)
+    mf.register_event("test", add_test_print, unique=False)
 
 
 def main(event):
@@ -16,6 +16,6 @@ def main(event):
 
 
 def register(mf):
-    mf.register_event("test", test)
-    mf.register_event("add_test", add_test)
-    mf.register_event("main", main)
+    mf.register_event("test", test, unique=False)
+    mf.register_event("add_test", add_test, unique=False)
+    mf.register_event("main", main, unique=False)

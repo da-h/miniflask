@@ -28,7 +28,7 @@ def main(event):
 
 
 def register(mf):
-    mf.register_event('main', main)
-    mf.register_event('dataclassAll', TestdataclassAll, unique=True)
-    mf.register_event('dataclassStateOnly', TestdataclassStateOnly, unique=True)
-    mf.register_event('dataclassEventOnly', TestdataclassEventOnly, unique=True)
+    mf.register_event('main', main, unique=False)
+    mf.register_event('dataclassAll', TestdataclassAll)
+    mf.register_event('dataclassStateOnly', TestdataclassStateOnly)
+    mf.register_event('dataclassEventOnly', TestdataclassEventOnly)

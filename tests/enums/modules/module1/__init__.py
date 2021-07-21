@@ -21,4 +21,4 @@ def register(mf):
         "size": SIZE.SMALL,
         "sizelist": [SIZE],
     })
-    mf.register_event('main', main)
+    mf.register_event('main', main, unique=False)

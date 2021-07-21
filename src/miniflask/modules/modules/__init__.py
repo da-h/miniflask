@@ -6,4 +6,4 @@ def register(mf):
     mf.register_globals({
         "events": False
     })
-    mf.register_event('init', showModules)
+    mf.register_event('init', showModules, unique=False)

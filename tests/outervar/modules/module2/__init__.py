@@ -14,4 +14,4 @@ def main(event):
 
 def register(mf):
     mf.register_event('before_main', before_main, unique=False)
-    mf.register_event('main', main, unique=True)
+    mf.register_event('main', main)

@@ -4,4 +4,4 @@ def main(state, event):
 
 
 def register(mf):
-    mf.register_event('main', main)
+    mf.register_event('main', main, unique=False)

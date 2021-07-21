@@ -1,3 +1,3 @@
 
 def register(mf):
-    mf.register_event("main", lambda: print("tests"))
+    mf.register_event("main", lambda: print("tests"), unique=False)

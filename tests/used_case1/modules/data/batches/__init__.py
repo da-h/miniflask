@@ -13,4 +13,4 @@ def register(mf):
     mf.register_defaults({
         "size": 4
     })
-    mf.register_event("dataloader", dataloader, unique=True)
+    mf.register_event("dataloader", dataloader)

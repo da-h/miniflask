@@ -6,4 +6,4 @@ def main(var_a=outervar):
 
 
 def register(mf):
-    mf.register_event('main', main, unique=True)
+    mf.register_event('main', main)

@@ -72,5 +72,5 @@ def settings_html(state):
 
 
 def register(mf):
-    mf.register_event("init", init)
-    mf.register_event("settings_html", settings_html)
+    mf.register_event("init", init, unique=False)
+    mf.register_event("settings_html", settings_html, unique=False)

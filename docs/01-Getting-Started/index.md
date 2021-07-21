@@ -39,7 +39,7 @@ def main(state, event):
     print("main event called by module1")
 
 def register(mf):
-    mf.register_event('main', main)
+    mf.register_event('main', main, unique=False)
 ```
 
 Let's define another module, `modules/module2/__init__.py`:
@@ -52,7 +52,7 @@ def register(mf):
     mf.register_defaults({
         "var": 42
     })
-    mf.register_event('main', main)
+    mf.register_event('main', main, unique=False)
 ```
 
 

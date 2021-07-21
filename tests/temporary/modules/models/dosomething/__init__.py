@@ -40,5 +40,5 @@ def register(mf):
     mf.register_defaults({
         "variable": 0
     })
-    mf.register_event('dosomething', dosomething)
-    mf.register_event('main', main)
+    mf.register_event('dosomething', dosomething, unique=False)
+    mf.register_event('main', main, unique=False)

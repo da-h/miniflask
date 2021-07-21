@@ -51,7 +51,7 @@ There are two type of events:
 
 **Unique**:  
 Can be defined by exactly one module.\n Typically unique events are called and are expected to return exactly one result.  
-`mf.register_event('eventname', fn, unique=True)`
+`mf.register_event('eventname', fn)`
 
 **Nonunique**  
 Can be defined by arbitrary many module. The results of all such events of loaded modules are collected and returned in a list.  
@@ -61,7 +61,7 @@ Can be defined by arbitrary many module. The results of all such events of loade
 
 Sometimes, it is useful to call an event just before or after a given event *event0*. This is useful when observing what the effects of *event0* are or when applying a modifyier before *event0*. This can be done without defining a new event by simply registering the event in the following way:
 
-` mf.register_event('before_event0', fn)` or `mf.register_event('after_event0',fn)`.
+` mf.register_event('before_event0', fn, unique=False)` or `mf.register_event('after_event0',fn)`.
 
 In its definition, the transform function takes all arguments of the original function followed by any supplementary arguments for the transformation call. The transform function returns the arguments of the original function.
 

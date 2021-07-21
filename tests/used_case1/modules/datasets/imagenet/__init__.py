@@ -4,4 +4,4 @@ def dataset():
 
 
 def register(mf):
-    mf.register_event("dataset", dataset, unique=True)
+    mf.register_event("dataset", dataset)

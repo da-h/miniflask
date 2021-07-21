@@ -19,7 +19,7 @@ def main(event):
 
 
 def register(mf):
-    mf.register_event('dosomething', dosomething)
-    mf.register_event('before_dosomething', before_dosomething)
-    mf.register_event('after_dosomething', after_dosomething)
-    mf.register_event('main', main)
+    mf.register_event('dosomething', dosomething, unique=False)
+    mf.register_event('before_dosomething', before_dosomething, unique=False)
+    mf.register_event('after_dosomething', after_dosomething, unique=False)
+    mf.register_event('main', main, unique=False)

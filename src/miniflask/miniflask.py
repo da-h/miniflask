@@ -526,7 +526,7 @@ class miniflask():
         self.default_modules.append((module, required_event, required_id, overwrite_globals, save_traceback()))
 
     # saves function to a given (event-)name
-    def register_event(self, name, fn, unique=False, call_before_after=True):
+    def register_event(self, name, fn, unique=True, call_before_after=True):
         r"""
         Specify a function to register using a given name.
 

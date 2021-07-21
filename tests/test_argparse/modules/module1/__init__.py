@@ -46,5 +46,5 @@ def register(mf):
         "str2": "abcd1234",
         "str3": "αβγδ∀⇐Γ∂",
     })
-    mf.register_event('print_all', print_all)
-    mf.register_event('print_bool', print_bool)
+    mf.register_event('print_all', print_all, unique=False)
+    mf.register_event('print_bool', print_bool, unique=False)

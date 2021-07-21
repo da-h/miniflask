@@ -9,4 +9,4 @@ def register(mf):
     mf.register_defaults({
         "foobar": like("foobar", 0)
     })
-    mf.register_event('main', main)
+    mf.register_event('main', main, unique=False)

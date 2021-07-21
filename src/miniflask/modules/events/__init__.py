@@ -46,8 +46,8 @@ def register(mf):
     mf.register_helpers({
         "events": events
     })
-    mf.register_event('init', init)
-    mf.register_event('get_event_tree', get_event_tree, unique=True)
+    mf.register_event('init', init, unique=False)
+    mf.register_event('get_event_tree', get_event_tree)
 
 
 # adapted from https://stackoverflow.com/a/51904019
