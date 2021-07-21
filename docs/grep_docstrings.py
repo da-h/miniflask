@@ -15,7 +15,7 @@ classes = [
     ("state", state)
 ]
 
-section_re = re.compile(r"\s*([a-zA-Z \-]+):")
+section_re = re.compile(r"\s*([a-zA-Z\-]+):")
 fns_done = []
 
 # update version.md
@@ -82,6 +82,7 @@ for i, (clsname, cls) in enumerate(classes):  # noqa: C901
 
             match = section_re.match(line)
             if match:
+                # print("-> Topic="+match[1].lower())
                 current_topic = topics[match[1].lower()] = []
                 continue
 
@@ -129,6 +130,9 @@ for i, (clsname, cls) in enumerate(classes):  # noqa: C901
 ]
 
 \\ifexists{appendix}[
+
+---
+
 \\appendix
 ]
 ]

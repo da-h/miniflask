@@ -230,36 +230,43 @@ class state(dict):
         State dict & its fuzzy variable matching.
 
         The state dict implements all commonly used `dict` operations.
-        - `state["var"]` (`__getitem__`)
-        - `state["var"] = 42` (`__setitem__`)
-        - del `state["var"]` (`__delitem__`)
-        - `"var" in state` (`__contains__`)
+        - `state["var"]`  
+            (i.e.: `__getitem__`)
+        - `state["var"] = 42`  
+            (i.e.: `__setitem__`)
+        - del `state["var"]`  
+            (i.e.: `__delitem__`)
+        - `"var" in state`  
+            (i.e.: `__contains__`)
 
         Thus, working inside a module with local only variables is straightforward.
         Let us consider the following module structure:
-        - `parentdir.module1`
-        - `parentdir.module1.submodule`
-        - `parentdir.module1.submodule.subsubmodule`
-        - `parentdir.module2`
-        - `parentdir.module2.submodule`
+        ```
+        parentdir.module1
+        parentdir.module1.submodule
+        parentdir.module1.submodule.subsubmodule
+        parentdir.module2
+        parentdir.module2.submodule
+        ```
 
         Currently, we are programming inside of `subsubmodule`.
         Fuzzy matching denotes the order that is used by miniflask to find a variable in the surrounding modules, if we query a variable that, however, does not exist locally. For instance, consider the call `state["var"]` inside the module `subsubmodule`.
 
         With the features of parent modules (and their automatic loading), miniflask tests all parent modules before proceeding to find the module anywhere in the loaded moduules.
         Thus, the search order is:
-        - as module variable: `parentdir.otherdir.module1.submodule.subsubmodule.var`
-        - as module variable: `parentdir.otherdir.module1.submodule.var`
-        - as module variable: `parentdir.otherdir.module1.var`
-        - as module variable: `parentdir.otherdir.var`
-        - as module variable: `parentdir.var`
-        - as global Variable: `var`
-        - finally, it would search for any variable that contains: `['var']`
+        1. as module variable: `parentdir.otherdir.module1.submodule.subsubmodule.var`
+        1. as module variable: `parentdir.otherdir.module1.submodule.var`
+        1. as module variable: `parentdir.otherdir.module1.var`
+        1. as module variable: `parentdir.otherdir.var`
+        1. as module variable: `parentdir.var`
+        1. as global Variable: `var`
+        1. finally, it would search for any variable that contains: `var`  
+            (as glob pattern `*.var.*`, `var.*` or `*.var`)
 
         This scoping scheme allows parent modules to define more basic variables that can be used by their corresponding child modules.
 
         {.alert}
-        Also, this scheme makes most uses of `set_scope` and `redefine_scope` obsolete.
+        **Note**: This scheme makes most uses of [`set_scope`](../../08-API/03-register(mf\)-Object/15-set_scope.md) and [`redefine_scope`](../../08-API/03-register(mf\)-Object/09-redefine_scope.md) obsolete.
         """  # noqa: W291
 
         # check if key already known from this state-object

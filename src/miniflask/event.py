@@ -53,7 +53,7 @@ class event(dict):
         r"""!event calling
         Events can be called using the event object, i.e. in another event or after initialization of miniflask using the global mf.event object.
 
-        There are two types of calls:
+        There are two types of calls.
 
         **Mandatory Calls**  
         You expect this event to exist and to be called using a self-specified interface.
@@ -61,19 +61,19 @@ class event(dict):
 
         ```python
         event.main()
-        result = event.notneeded("some argument")
+        result = event.required_function("some argument")
         ```
 
-        *Note*: This code will raise an Exception, if one of the two events `main` or `notneeded` are not defined (or differ in their interface to the expectation of the call).
+        *Note*: This code will raise an Exception, if one of the two events `main` or `required_function` are not defined (or differ in their interface to the expectation of the call).
 
         **Optional Calls**  
-        You want this event to be called if it is defined, but if it isn't you don't mind.
+        You want an event to be called if it is defined, but if it isn't you don't mind? Then use the following call:
         E.g.:
 
         ```python
         event.optional.main()
-        result = event.optional.notneeded("some argument")
-        result = event.optional.notneeded("some argument", altfn=lambda s: s+" (no optional event used)")
+        result = event.optional.name_of_event("some argument")
+        result = event.optional.name_of_event("some argument", altfn=lambda s: s+" (no optional event used)")
         ```
         \n
 
@@ -181,8 +181,11 @@ class event(dict):
                     # it would be nice to let the user know, if the definition may be wrong at this point,
                     # however, we cannot know, if the call will contain the altfn-argument
                     # (up until we have a clean concept for this, we do not catch these definition errors)
+                    # catching this would look like this:
                     # if not has_altfn and self.optional_value:
                     #     raise RegisterError(("The event %s was called using `event.optional(..., alftn=...)`, but the function does not catch this argument.\n\n"+fg('red')+"Possible Solutions:"+attr('reset')+"\n  - add `**kwargs` or `altfn=None` to your event-function definition.\n  - Alternatively, add either `event` or `state` or both to the event-function definition. In that case miniflask can catch altfn itself, however, this may adversely affect performance if this function is callled often.") % (fg('red')+name+attr('reset')))
+
+                    # in case before_ or after_ events are registered, wrap the function as well
                     return fn, has_signature, miniflask_args
                 return fn_wrap, has_signature, miniflask_args
 
@@ -221,7 +224,7 @@ class event(dict):
         return self
 
     def outervar(self):
-        r"""
+        r"""!outervar
         For debbuging mainly: Changing the variables an event is called with.
 
         Event-Functions are called with a fixed number of variables.
