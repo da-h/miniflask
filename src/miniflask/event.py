@@ -177,6 +177,18 @@ class event(dict):
                             for fn_a in fn_after.subevents:
                                 res, args, kwargs = fn_a(res, *args, **kwargs)
                         return res
+                elif has_altfn or has_before or has_after:
+                    def fn_wrap(*args, altfn=None, **kwargs):
+                        if has_altfn:
+                            kwargs["altfn"] = altfn
+                        if has_before:
+                            for fn_b in fn_before.subevents:
+                                args, kwargs = fn_b(*args, **kwargs)
+                        res = fn(*miniflask_args, *args, **kwargs)
+                        if has_after:
+                            for fn_a in fn_after.subevents:
+                                res, args, kwargs = fn_a(res, *args, **kwargs)
+                        return res
                 else:
                     # it would be nice to let the user know, if the definition may be wrong at this point,
                     # however, we cannot know, if the call will contain the altfn-argument
