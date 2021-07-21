@@ -909,6 +909,8 @@ class miniflask():
         for settings in [self._settings_parse_later, self._settings_parse_later_overwrites, settings_recheck]:
             overwrite = settings == self._settings_parse_later_overwrites
             recheck = settings == settings_recheck
+            visited_callables = set()
+
             for varname, (val, cliargs, parsefn, caller_traceback, _mf) in settings.items():
                 is_fn = callable(val) and not isinstance(val, type) and not isinstance(val, EnumMeta) and parsefn
 
@@ -917,6 +919,9 @@ class miniflask():
                     try:
                         the_val = val
                         while callable(the_val) and not isinstance(the_val, type):
+                            if the_val in visited_callables:
+                                raise RecursionError("Circular dependency found in state variable definitions.")
+                            visited_callables.add(the_val)
                             the_val = the_val(_mf.state, self.event)
                     except RecursionError as e:
                         raise RecursionError("In parsing of value '%s'." % varname) from e
