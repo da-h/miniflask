@@ -15,4 +15,5 @@ per-file-ignores =
     # F401 imported but unused
     # F403 unable to detect undefined names
     # C901 loop to complex
+    # R1702 too many nested blocks
     src/miniflask/__init__.py: E221,F401,F403
