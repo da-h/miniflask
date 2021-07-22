@@ -4,14 +4,12 @@ def dosomething():
     print("event called")
 
 
-def before_dosomething(*args, **kwargs):
+def before_dosomething():
     print("before_-event called")
-    return args, kwargs
 
 
-def after_dosomething(res, *args, **kwargs):
+def after_dosomething():
     print("after_-event called")
-    return res, args, kwargs
 
 
 def main(event):

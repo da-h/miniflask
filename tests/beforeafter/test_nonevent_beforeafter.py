@@ -10,7 +10,6 @@ mf = miniflask.init(
 
 def test_directcall_beforeafter(capsys):
     mf.load("directcalls")
-    # mf.run(modules=["directcalls"], argv=[], call="")
     mf.parse_args([])
     captured = capsys.readouterr()
     mf.event.main()

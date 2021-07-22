@@ -24,6 +24,7 @@ class event(dict):
     def __init__(self, mf, optional=False):
         self._mf = mf
         self.optional_value = optional
+        self.hook = {}
         super().__init__()
 
     def make_dummy_fn(self, name, call_before_after=True):
@@ -35,16 +36,33 @@ class event(dict):
         fn_after = getattr(self._mf.event, name_after) if has_after else None
         fn_before = getattr(self._mf.event, name_before) if has_before else None
 
-        def dummy_fn(*args, altfn=None, **kwargs):
+        def dummy_fn(*args, altfn=None, _event_overwrite=None, **kwargs):
             if callable(altfn):
+
+                # call before_-event functions
                 if has_before:
                     for fn_b in fn_before.subevents:
-                        args, kwargs = fn_b(*args, **kwargs)
-                res = altfn(*args, **kwargs)
+                        if fn_b.needs_event_obj:
+                            event_call = eventCall(self, name, args, kwargs)
+                            fn_b(_event_overwrite=event_call)
+                            args, kwargs = event_call.hook["args"], event_call.hook["kwargs"]
+                        else:
+                            fn_b()
+
+                # actual function call
+                result = altfn(*args, **kwargs)
+
+                # call after_-event functions
                 if has_after:
                     for fn_a in fn_after.subevents:
-                        res, args, kwargs = fn_a(res, *args, **kwargs)
-                return res
+                        if fn_a.needs_event_obj:
+                            event_call = eventCall(self, name, args, kwargs, result=result)
+                            fn_a(_event_overwrite=event_call)
+                            result, args, kwargs = event_call.hook["result"], event_call.hook["args"], event_call.hook["kwargs"]
+                        else:
+                            fn_a()
+
+                return result
             return []
 
         return dummy_fn
@@ -138,17 +156,24 @@ class event(dict):
                 has_after = name_after in self._mf.event_objs and call_before_after
                 fn_after = getattr(self._mf.event, name_after) if has_after else None
                 fn_before = getattr(self._mf.event, name_before) if has_before else None
+                miniflask_args_event_i = -1
 
                 # get index of "state" / "event"
                 for i in range(min(len(arg_names), 3)):
                     for var, varname in [(_mf, "mf"), (_state, "state"), (_event, "event")]:
                         if arg_names[i] == varname:
+
+                            # remember event id (as this may need to get replaced later)
+                            if varname == "event":
+                                miniflask_args_event_i = len(miniflask_args)
+
+                            # save miniflask_args list so that these can be passed automatically to the function
                             miniflask_args.append(var)
                             break
 
                 # if no outervar found, just pass state and event
                 if len(needed_locals) > 0:
-                    def fn_wrap(*args, altfn=None, **kwargs):
+                    def fn_wrap(*args, altfn=None, _event_overwrite=None, **kwargs):
                         outer_locals = {}
                         if skip_twice:
                             all_outer_locals = inspect.currentframe().f_back.f_back.f_locals
@@ -157,38 +182,109 @@ class event(dict):
                         outer_locals = {k: all_outer_locals[k] for k in needed_locals if k not in kwargs}
                         if has_altfn:
                             kwargs["altfn"] = altfn
+
+                        # call before_-event functions
                         if has_before:
                             for fn_b in fn_before.subevents:
-                                args, kwargs = fn_b(*args, **kwargs)
-                        res = fn(*miniflask_args, *args, **outer_locals, **kwargs)
+                                if fn_b.needs_event_obj:
+                                    event_call = eventCall(self, name, args, kwargs)
+                                    fn_b(_event_overwrite=event_call)
+                                    args, kwargs = event_call.hook["args"], event_call.hook["kwargs"]
+                                else:
+                                    fn_b()
+
+                        # replace event-overwrite if required
+                        if _event_overwrite is not None:
+                            _miniflask_args = miniflask_args[:miniflask_args_event_i] + [_event_overwrite] + miniflask_args[miniflask_args_event_i + 1:]
+                        else:
+                            _miniflask_args = miniflask_args
+
+                        # actual function call
+                        result = fn(*_miniflask_args, *args, **outer_locals, **kwargs)
+
+                        # call after_-event functions
                         if has_after:
                             for fn_a in fn_after.subevents:
-                                res, args, kwargs = fn_a(res, *args, **kwargs)
-                        return res
+                                if fn_a.needs_event_obj:
+                                    event_call = eventCall(self, name, args, kwargs, result=result)
+                                    fn_a(_event_overwrite=event_call)
+                                    result, args, kwargs = event_call.hook["result"], event_call.hook["args"], event_call.hook["kwargs"]
+                                else:
+                                    fn_a()
+                        return result
+
+                # wrap so that event/state/mf objects can be passed automatically on every call
                 elif len(miniflask_args) > 0:
-                    def fn_wrap(*args, altfn=None, **kwargs):
+                    def fn_wrap(*args, altfn=None, _event_overwrite=None, **kwargs):
                         if has_altfn:
                             kwargs["altfn"] = altfn
+
+                        # call before_-event functions
                         if has_before:
                             for fn_b in fn_before.subevents:
-                                args, kwargs = fn_b(*args, **kwargs)
-                        res = fn(*miniflask_args, *args, **kwargs)
+                                if fn_b.needs_event_obj:
+                                    event_call = eventCall(self, name, args, kwargs)
+                                    fn_b(_event_overwrite=event_call)
+                                    args, kwargs = event_call.hook["args"], event_call.hook["kwargs"]
+                                else:
+                                    fn_b()
+
+                        # replace event-overwrite if required
+                        if _event_overwrite is not None:
+                            _miniflask_args = miniflask_args[:miniflask_args_event_i] + [_event_overwrite] + miniflask_args[miniflask_args_event_i + 1:]
+                        else:
+                            _miniflask_args = miniflask_args
+
+                        # actual function call
+                        result = fn(*_miniflask_args, *args, **kwargs)
+
+                        # call after_-event functions
                         if has_after:
                             for fn_a in fn_after.subevents:
-                                res, args, kwargs = fn_a(res, *args, **kwargs)
-                        return res
+                                if fn_a.needs_event_obj:
+                                    event_call = eventCall(self, name, args, kwargs, result=result)
+                                    fn_a(_event_overwrite=event_call)
+                                    result, args, kwargs = event_call.hook["result"], event_call.hook["args"], event_call.hook["kwargs"]
+                                else:
+                                    fn_a()
+                        return result
+
+                # in case before_ or after_ events are registered, wrap the function as well
                 elif has_altfn or has_before or has_after:
-                    def fn_wrap(*args, altfn=None, **kwargs):
+                    def fn_wrap(*args, altfn=None, _event_overwrite=None, **kwargs):
+
+                        # as no miniflask_args are queried, there cannot be any _event_overwrite-query
+                        del _event_overwrite
+
                         if has_altfn:
                             kwargs["altfn"] = altfn
+
+                        # call before_-event functions
                         if has_before:
                             for fn_b in fn_before.subevents:
-                                args, kwargs = fn_b(*args, **kwargs)
-                        res = fn(*miniflask_args, *args, **kwargs)
+                                if fn_b.needs_event_obj:
+                                    event_call = eventCall(self, name, args, kwargs)
+                                    fn_b(_event_overwrite=event_call)
+                                    args, kwargs = event_call.hook["args"], event_call.hook["kwargs"]
+                                else:
+                                    fn_b()
+
+                        # actual function call
+                        result = fn(*args, **kwargs)
+
+                        # call after_-event functions
                         if has_after:
                             for fn_a in fn_after.subevents:
-                                res, args, kwargs = fn_a(res, *args, **kwargs)
-                        return res
+                                if fn_a.needs_event_obj:
+                                    event_call = eventCall(self, name, args, kwargs, result=result)
+                                    fn_a(_event_overwrite=event_call)
+                                    result, args, kwargs = event_call.hook["result"], event_call.hook["args"], event_call.hook["kwargs"]
+                                else:
+                                    fn_a()
+
+                        return result
+
+                # no need to wrap if no miniflask features are used
                 else:
                     # it would be nice to let the user know, if the definition may be wrong at this point,
                     # however, we cannot know, if the call will contain the altfn-argument
@@ -197,8 +293,12 @@ class event(dict):
                     # if not has_altfn and self.optional_value:
                     #     raise RegisterError(("The event %s was called using `event.optional(..., alftn=...)`, but the function does not catch this argument.\n\n"+fg('red')+"Possible Solutions:"+attr('reset')+"\n  - add `**kwargs` or `altfn=None` to your event-function definition.\n  - Alternatively, add either `event` or `state` or both to the event-function definition. In that case miniflask can catch altfn itself, however, this may adversely affect performance if this function is callled often.") % (fg('red')+name+attr('reset')))
 
-                    # in case before_ or after_ events are registered, wrap the function as well
-                    return fn, has_signature, miniflask_args
+                    fn_wrap = fn
+
+                # save argument names
+                fn_wrap.arg_names = arg_names
+                fn_wrap.needs_event_obj = miniflask_args_event_i >= 0
+
                 return fn_wrap, has_signature, miniflask_args
 
             if eobj.unique:
@@ -248,3 +348,20 @@ class event(dict):
         To enable such a feature, we use python's inspection module. In every call that implys outervar variables we inspect the variable scope of the caller for the queried variables.
         """
         return outervar
+
+
+# this event object is used for every call of before_/after_ events to simplify their call api
+class eventCall:  # pylint: disable=R0903 (too-few-public-methods)
+
+    def __init__(self, ev, fn_name, args, kwargs, result=None):
+        self._ev = ev
+        self.hook = {
+            "name": fn_name,
+            "args": list(args),
+            "kwargs": kwargs
+        }
+        if result:
+            self.hook["result"] = result
+
+    def __getattr__(self, name):
+        return getattr(self._ev, name)
