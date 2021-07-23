@@ -1347,7 +1347,7 @@ class miniflask_wrapper(miniflask):
 
         super().register_default_module(module, **kwargs)
 
-    def unregister_event(self, name: str, only_cache: bool):
+    def unregister_event(self, name: str, only_cache: bool = False):
         r"""
         Clears an event by name.
 
