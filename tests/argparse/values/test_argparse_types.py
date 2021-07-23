@@ -14,18 +14,18 @@ def test_types(capsys):
     mf.event.print_all()
     captured = capsys.readouterr()
     assert captured.out == """
-int1: 42
-int2: -42
-float1: 2.345
-float2: -2.345
-float3: 0.0
-float4: -0.0
-float5: 10000000.0
-float6: -10000000.0
-bool1: True
-bool2: False
-enum1: SIZE.MEDIUM
-str1: """.lstrip() + """
-str2: abcd1234
-str3: αβγδ∀⇐Γ∂
+modules.module1.int1: 42
+modules.module1.int2: -42
+modules.module1.float1: 2.345
+modules.module1.float2: -2.345
+modules.module1.float3: 0.0
+modules.module1.float4: -0.0
+modules.module1.float5: 10000000.0
+modules.module1.float6: -10000000.0
+modules.module1.bool1: True
+modules.module1.bool2: False
+modules.module1.enum1: SIZE.MEDIUM
+modules.module1.str1: """.lstrip() + """
+modules.module1.str2: abcd1234
+modules.module1.str3: αβγδ∀⇐Γ∂
 """

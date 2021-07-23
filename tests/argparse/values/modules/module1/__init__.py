@@ -7,26 +7,31 @@ class SIZE(Enum):
     LARGE = 2
 
 
+def printVal(state, name):
+    val = state[name]
+    print("%s:" % state.fuzzy_names[name], val)
+
+
 def print_all(state):
-    print("int1:", state["int1"])
-    print("int2:", state["int2"])
-    print("float1:", state["float1"])
-    print("float2:", state["float2"])
-    print("float3:", state["float3"])
-    print("float4:", state["float4"])
-    print("float5:", state["float5"])
-    print("float6:", state["float6"])
-    print("bool1:", state["bool1"])
-    print("bool2:", state["bool2"])
-    print("enum1:", state["enum1"])
-    print("str1:", state["str1"])
-    print("str2:", state["str2"])
-    print("str3:", state["str3"])
+    printVal(state, "int1")
+    printVal(state, "int2")
+    printVal(state, "float1")
+    printVal(state, "float2")
+    printVal(state, "float3")
+    printVal(state, "float4")
+    printVal(state, "float5")
+    printVal(state, "float6")
+    printVal(state, "bool1")
+    printVal(state, "bool2")
+    printVal(state, "enum1")
+    printVal(state, "str1")
+    printVal(state, "str2")
+    printVal(state, "str3")
 
 
 def print_bool(state):
-    print("bool1:", state["bool1"])
-    print("bool2:", state["bool2"])
+    printVal(state, "bool1")
+    printVal(state, "bool2")
 
 
 def register(mf):
