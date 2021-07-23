@@ -909,13 +909,13 @@ class miniflask():
         for settings in [self._settings_parse_later, self._settings_parse_later_overwrites, settings_recheck]:
             overwrite = settings == self._settings_parse_later_overwrites
             recheck = settings == settings_recheck
-            visited_callables = set()
 
             for varname, (val, cliargs, parsefn, caller_traceback, _mf) in settings.items():
                 is_fn = callable(val) and not isinstance(val, type) and not isinstance(val, EnumMeta) and parsefn
 
                 # eval dependencies/like expressions
                 if is_fn:
+                    visited_callables = set()
                     try:
                         the_val = val
                         while callable(the_val) and not isinstance(the_val, type):
