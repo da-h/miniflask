@@ -1,12 +1,14 @@
+import sys
 import re
 import pathlib
 from textwrap import dedent
 from inspect import getmembers, isfunction, signature
 
-from miniflask import __version__
-from miniflask.miniflask import miniflask, miniflask_wrapper  # noqa: F401
-from miniflask.event import event  # noqa: F401
-from miniflask.state import state  # noqa: F401
+sys.path.insert(0, 'src/')
+from miniflask import __version__  # noqa: E402
+from miniflask.miniflask import miniflask, miniflask_wrapper  # noqa: E402, F401
+from miniflask.event import event  # noqa: E402, F401
+from miniflask.state import state  # noqa: E402, F401
 
 classes = [
     ("miniflask Instance", miniflask),
@@ -19,7 +21,8 @@ section_re = re.compile(r"\s*([a-zA-Z\-]+):")
 fns_done = []
 
 # update version.md
-with open("version.md", "w") as f:
+dest = "./docs"
+with open("%s/version.md" % dest, "w") as f:
     f.write("{version=\"%s\"}" % __version__)
 
 for i, (clsname, cls) in enumerate(classes):  # noqa: C901
@@ -140,7 +143,7 @@ for i, (clsname, cls) in enumerate(classes):  # noqa: C901
 
         # create file for that function
         # -----------
-        cls_dir = pathlib.Path("08-API/%02d-%s" % (i + 2, clsname.replace(" ", "-")))
+        cls_dir = pathlib.Path(dest) / "08-API" / ("%02d-%s" % (i + 2, clsname.replace(" ", "-")))
         cls_dir.mkdir(parents=True, exist_ok=True)
         print(str(cls_dir / ("%02d-%s.md" % (j, name))))
         with open(cls_dir / ("%02d-%s.md" % (j, name)), "w") as f:

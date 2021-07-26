@@ -13,7 +13,7 @@
 ]
 
 
-\component{brand}[*MiniFlask*]
+\component{brand}[[*MiniFlask*](http://da-h.github.io/miniflask)]
 \component{topright}[
 - [\icon{fork}Github](http://www.github.com/da-h/miniflask)
 ]

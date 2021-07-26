@@ -11,5 +11,5 @@
 ] \component{"brand"}[
     {versionstr={"Version: " %{version}%}}
 
-    *MiniFlask -- API Reference* ({verbatim=%{versionstr}%}` `)
+    [*MiniFlask -- API Reference* ({verbatim=%{versionstr}%}` `)](https://da-h.github.io/miniflask)
 ]
