@@ -20,7 +20,7 @@ jobs:
             DOCS_SRC: ./docs
             DEST: ./out
       - name: GitHub Pages Deploy
-        uses: JamesIves/github-pages-deploy-action@master
+        uses: JamesIves/github-pages-deploy-action@releases/v2
         env:
             BUILD_DIR: ./docs
             GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
