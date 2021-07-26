@@ -578,7 +578,7 @@ class miniflask():
                    (**Note**: Any modification will only change the arguments for future `after_`-events but not for the function call itself.)
                 - `after_`-events can additionally alternate the return value of the event by modifying `event.hook["result"]`.
                 - both event types can access the name of the actual event-name using `event.hook["name"]`
-        - `unique`: (Default: `False`)  
+        - `unique`: (Default: `True`)  
             - Unique functions can only be registered by exactly one module.  
               **Note**: Miniflask will throw an error if multiple modules register the same event.
             - Non-Unique events will be called in sequence of registration. The result of such an event is a list of all return values.
