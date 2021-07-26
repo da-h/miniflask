@@ -548,30 +548,36 @@ class miniflask():
                 These events get called in between the argument passing of any event and the function call.
 
                 To register such an event, prepend the event name with the keywords `before_`.
-                In that case the function signature needs to be as follows:
 
                 ```python
-                def before_fn(*args, **kwargs):
-                    return *args, **kwargs
+                def before_fn():
+                    ...
                 ```
 
-                It is of course possible to modify the function arguments or give specific names for some arguments. The important part is that a before-event specifies the arguments that are passed to the actual event call, both positional and non-positional arguments.
+                It is of course possible to modify the function arguments (see below). The important part is that a before-event specifies the arguments that are passed to the actual event call, both positional and non-positional arguments.
 
                 In case the before event is non-unique, the arguments will be passed from one after event to the next until their result will be passed to the actual event call.
             - **After events**:
                 These events get called in between the function call and the pass of its return statement.
 
                 To register such an event, prepend the event name with the keywords `after_`.
-                In that case the function signature needs to be as follows:
 
                 ```python
-                def before_fn(result, *args, **kwargs):
-                    return result, *args, **kwargs
+                def after_fn():
+                    ...
                 ```
 
-                It is of course possible to modify the function arguments or the function result or to specify names for some arguments. The important part is, as above, that a before-event specifies the return value that is passed to callee of the event.
+                It is of course possible to modify the function arguments or the function result (see below). The important part is, as above, that a after-event specifies the return value that is passed to callee of the event.
 
                 In case the after event is non-unique, the results and arguments will be passed from one after event to the next.
+            - **Manipulating arguments & results of events**:
+                - Any `before_`/`after_` event gets called with a unique event object, that behaves just like the *normal* event object.
+                - This new event-object has a dict-attribute `.hook`
+                - **`before_`-events can read and manipulate** the function call arguments *before* the actual event will be called using `event.hook["args"]` and `event.hook["kwargs"]`
+                - **`after_`-events can read** the function call arguments *after* the actual event has been called with (including the changes of potential `before_`-hooks using `event.hook["args"]` and `event.hook["kwargs"]`  
+                   (**Note**: Any modification will only change the arguments for future `after_`-events but not for the function call itself.)
+                - `after_`-events can additionally alternate the return value of the event by modifying `event.hook["result"]`.
+                - both event types can access the name of the actual event-name using `event.hook["name"]`
         - `unique`: (Default: `False`)  
             - Unique functions can only be registered by exactly one module.  
               **Note**: Miniflask will throw an error if multiple modules register the same event.
@@ -594,27 +600,26 @@ class miniflask():
 
         **Example using signatures & before/after events**:
         ```python
-        def fn(event, var):
-            event.myotherevent(var)
-            return var * (var + 1)
+        def dosomething(val):
+            print("event called with value: %i" % val)
+            return val
 
-        def before_fn(var, *args, **kwargs):
-            args = [var + 10] + args
-            return args, kwargs
+        def main(event):
+            print("event returned value: %i" % event.dosomething(42))
 
-        def after_fn(result, var):
-            return result // 2
+        def before_dosomething(event):
+            print("before_-event called")
+            event.hook["args"][0] *= 2
 
-        def fn2(event, var):
-            print("Input: %i")
+        def after_dosomethingl(event):
+            print("after_-event called")
+            event.hook["result"] += 1
 
-        mf.register_event("myevent", fn)
-        mf.register_event("myotherevent", fn2)
-        mf.register_event("before_myevent", before_fn)
-        mf.register_event("after_myevent", after_fn)
-
-        # this line may be placed anywhere in the code basis
-        print(mf.event.myevent(6))
+        def register(mf):
+            mf.register_event('dosomething', dosomething)
+            mf.register_event('main', main)
+            mf.register_event('before_dosomething', before_dosomething, unique=False)
+            mf.register_event('after_dosomething', after_dosomething, unique=False)
         ```
 
         """  # noqa: W291
