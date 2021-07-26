@@ -3,8 +3,7 @@ def test():
     print("test")
 
 
-def main(state, event):
-    del state  # unused
+def main(event):
     print(event.test.mf_modules)
     print(event.test.fns)
     print(event["modules.a"])
@@ -15,5 +14,5 @@ def main(state, event):
 def register(mf):
     mf.load_as_child('b')
     mf.register_defaults({"test": 42})
-    mf.register_event('test', test, unique=True)
-    mf.register_event('main', main)
+    mf.register_event('test', test)
+    mf.register_event('main', main, unique=False)

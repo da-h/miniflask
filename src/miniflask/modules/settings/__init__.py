@@ -43,10 +43,7 @@ def listsettings(state, asciicodes=True):
         if len(k) > 1:
             k_hidden = [" " * len(ki) if ki == ki2 and asciicodes else ki for ki, ki2 in zip_longest(k, last_k) if ki is not None]
             last_k = k
-            if k_hidden[-2] == "default":
-                k_hidden[-3] = color_name(k_hidden[-3])
-            else:
-                k_hidden[-2] = color_name(k_hidden[-2])
+            k_hidden[-2] = color_name(k_hidden[-2])
             k_hidden[-1] = color_module(k_hidden[-1])
         else:
             k_hidden = k
@@ -75,5 +72,5 @@ def settings_html(state):
 
 
 def register(mf):
-    mf.register_event("init", init)
-    mf.register_event("settings_html", settings_html)
+    mf.register_event("init", init, unique=False)
+    mf.register_event("settings_html", settings_html, unique=False)

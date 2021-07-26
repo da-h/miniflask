@@ -1,13 +1,12 @@
 {theme=documentation}
 
 \include{"../include.md"}
-MiniFlask {section-contentlist=False}
-=========
-
-# Geting Started {section-contentlist=False}
-# Miniflask is a **small** research-oriented **plugin**-engine for **python**.
 
 > A long time ago in a galaxy full of plugin-engines ...
+
+# Geting Started with Miniflask {section-contentlist=False}
+## Miniflask is a **small** research-oriented **plugin**-engine for **python**.
+
 
 
 Quick Start
@@ -40,7 +39,7 @@ def main(state, event):
     print("main event called by module1")
 
 def register(mf):
-    mf.register_event('main', main)
+    mf.register_event('main', main, unique=False)
 ```
 
 Let's define another module, `modules/module2/__init__.py`:
@@ -53,7 +52,7 @@ def register(mf):
     mf.register_defaults({
         "var": 42
     })
-    mf.register_event('main', main)
+    mf.register_event('main', main, unique=False)
 ```
 
 

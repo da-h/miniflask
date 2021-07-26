@@ -16,7 +16,7 @@ class miniflask_dummy():
     def getEvents(self):
         return list(zip(self.event_objs.keys(), self.event_objs.values()))
 
-    def register_event(self, name, fn, unique=False, call_before_after=True):
+    def register_event(self, name, fn, unique=True, call_before_after=True):
         del call_before_after  # unused
         self.event_objs[name] = (unique, fn)
 

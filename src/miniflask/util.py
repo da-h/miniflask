@@ -12,7 +12,7 @@ def getModulesAvail(module_dirs, f=None):
         f = {}
     for base_module_name, directory in module_dirs.items():
         base_module_name = base_module_name.replace(".", "_")
-        # basename_dir = path.basename(directory)
+        directory = str(directory)  # in case directory is given as PosixPath etc.
         for (dirpath, dirnames, filenames) in walk(directory):
             local_import_name = dirpath[len(directory) + 1:].replace(path.sep, ".")
             module_name_id = base_module_name + "." + local_import_name
@@ -48,7 +48,7 @@ def highlight_loading_module(x):
 
 highlight_error = lambda: fg('red') + attr('bold') + "Error:" + attr('reset') + " "
 highlight_name = lambda x: fg('blue') + attr('bold') + x + attr('reset')
-highlight_module = lambda x: fg('green') + attr('bold') + x + attr('reset')
+highlight_module = lambda x: fg('green') + attr('bold') + str(x) + attr('reset')
 highlight_loading = highlight_loading_module
 highlight_loading_default = lambda y, x: attr('dim') + y + attr('reset') + " ⟶  " + highlight_loading_module(x)
 highlight_loaded_default = lambda y, x: attr('dim') + x + " found modules: " + ", ".join(highlight_loading_module(m) for m in y) + attr('reset')
@@ -70,25 +70,57 @@ def str2bool(v):
     raise argparse.ArgumentTypeError('Boolean value expected.')
 
 
-def get_varid_from_fuzzy(varid, varid_list):
-    # check for direct match first
-    r = re.compile(r"^(.*\.)?%s$" % varid)
-    found_varids = list(filter(r.match, varid_list))
+def get_varid_from_fuzzy(varid, varid_list, fuzzy_fill=True):
 
-    # if no matching varid found, check for fuzzy identifier
-    if len(found_varids) == 0:
+    # check for fuzzy identifier first (maybe user did not give all information)
+    if fuzzy_fill:
         r = re.compile(r"^(.*\.)?%s$" % varid.replace(".", r"\.(.*\.)*"))
         found_varids = list(filter(r.match, varid_list))
 
-    # if more than one module found, use default module-variables
-    if len(found_varids) > 1:
-        found_varids = list(filter(lambda x: "default." in x, found_varids))
+        if len(found_varids) == 1:
+            return found_varids
+    else:
+        found_varids = []
+
+    # first check for direct match of a possibly scoped variable
+    varid_scopes = varid.split(".")
+    varid_scopes, varname = varid_scopes[:-1], varid_scopes[-1]
+    for i in range(len(varid_scopes), -1, -1):
+        varid_test = ".".join(varid_scopes[:i] + [varname])
+
+        # check for direct match first
+        r = re.compile(r"^(.*\.)?%s$" % varid_test)
+        found_varids = list(filter(r.match, varid_list))
+
+        if len(found_varids) == 1:
+            return found_varids
 
     return found_varids
 
 
+relative_import_re = re.compile(r"(\.+)(.*)")
+
+
+def get_relative_id(possibly_relative_path, base_id, offset=1, ensure_local=False):
+    if not base_id:
+        return possibly_relative_path, False
+    if ensure_local and not possibly_relative_path.startswith("."):
+        possibly_relative_path = "." + possibly_relative_path
+    was_relative = False
+    m = relative_import_re.match(possibly_relative_path)
+    if m is not None:
+        upmodule = len(m[1])
+        relative_module = m[2]
+        if upmodule == offset:
+            possibly_relative_path = base_id + ("." + relative_module if relative_module else "")
+        else:
+            possibly_relative_path = ".".join(base_id.split(".")[:-upmodule + offset]) + ("." + relative_module if relative_module else "")
+        was_relative = True
+    return possibly_relative_path, was_relative
+
+
 # Argparse action for handling Enums
-class EnumAction(Action):
+class EnumAction(Action):  # pylint: disable=too-few-public-methods
     def __init__(self, **kwargs):
         enum = kwargs.pop("type", None)
         self._enum = enum

@@ -1,11 +1,9 @@
 
-def test(state):
-    del state  # unused
+def test():
     print("test")
 
 
-def main(state, event):
-    del state  # unused
+def main(event):
     print(event.test.mf_modules)
     print(event.test.fns)
     print(event["modules.a"])
@@ -15,4 +13,4 @@ def main(state, event):
 def register(mf):
     mf.register_defaults({"test_b": 42})
     mf.register_event('test', test, unique=False)
-    mf.register_event('main', main)
+    mf.register_event('main', main, unique=False)
