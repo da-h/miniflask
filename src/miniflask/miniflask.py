@@ -1371,9 +1371,9 @@ class miniflask_wrapper(miniflask):
         r"""
         Registers a function as an event & clears event-method cache.
 
-        - The API is the same as [`miniflask.register_event`](../02-miniflask-Instance/11-register_defaults.md)
+        - The API is the same as [`miniflask.register_event`](../02-miniflask-Instance/09-register_event.md)
         - If the event exists already the event will be attached to the event list.
-        - If the already existent event is defined as a unique event, miniflask will raise an error. You probably wanted to use [`overwrite_event`](./07-overwrite-event.md).
+        - If the already existent event is defined as a unique event, miniflask will raise an error. You probably wanted to use [`overwrite_event`](./07-overwrite_event.md).
         """  # noqa: W291
         self.unregister_event(name, only_cache=True)
         self._defined_events[name] = fn
