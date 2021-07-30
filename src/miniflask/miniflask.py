@@ -530,6 +530,9 @@ class miniflask():
         r"""
         Specify a function to register using a given name.
 
+        {.alert}
+        Note, that `init`, `main` and `final` are predefined event names that are called automatically on every [`mf.run()`](../../08-API/02-miniflask-Instance/10-run.md) call.
+
         Args:
         - `name`: (required)  
             Event name to bind the function with.
@@ -582,6 +585,7 @@ class miniflask():
             - Unique functions can only be registered by exactly one module.  
               **Note**: Miniflask will throw an error if multiple modules register the same event.
             - Non-Unique events will be called in sequence of registration. The result of such an event is a list of all return values.
+            - **Note**: Before/After events will be called only **once for non-unique event calls**.
         - `call_before_after`: (Default: `True`)  
             Turning this flag off will disable the possibility to hook to this function using before/after events.
             This is especially useful, if the before/after event shall be directly defined.
