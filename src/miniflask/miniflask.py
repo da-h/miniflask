@@ -530,6 +530,9 @@ class miniflask():
         r"""
         Specify a function to register using a given name.
 
+        {.alert}
+        Note, that `init`, `main` and `final` are predefined event names that are called automatically on every [`mf.run()`](../../08-API/02-miniflask-Instance/10-run.md) call.
+
         Args:
         - `name`: (required)  
             Event name to bind the function with.
