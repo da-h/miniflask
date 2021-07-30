@@ -582,6 +582,7 @@ class miniflask():
             - Unique functions can only be registered by exactly one module.  
               **Note**: Miniflask will throw an error if multiple modules register the same event.
             - Non-Unique events will be called in sequence of registration. The result of such an event is a list of all return values.
+            - **Note**: Before/After events will be called only **once for non-unique event calls**.
         - `call_before_after`: (Default: `True`)  
             Turning this flag off will disable the possibility to hook to this function using before/after events.
             This is especially useful, if the before/after event shall be directly defined.
