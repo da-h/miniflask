@@ -111,7 +111,7 @@ class state(dict):
         ```python
         otherstate = state.scope("other.module.id")
         state["varInThisModule"]
-        otherstatestate["varInOtherModule"]
+        otherstate["varInOtherModule"]
         ```
 
         Sharing scopes with another module locally:
