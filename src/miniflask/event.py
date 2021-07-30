@@ -310,13 +310,44 @@ class event(dict):
                     setattr(fn_wrap, 'fns_args', [mf_args])
             else:
                 def multiple_fn_wrap_scope(orig_fns, modules=eobj.modules):
-                    fns, have_signature, mf_args = zip(*[fn_wrap_scope(fn, _mf=module, _state=module.state, _event=module.event, module=module, skip_twice=True) for fn, module in zip(orig_fns, modules)])
+                    fns, have_signature, mf_args = zip(*[fn_wrap_scope(fn, _mf=module, _state=module.state, _event=module.event, module=module, skip_twice=True, call_before_after=False) for fn, module in zip(orig_fns, modules)])
+
+                    # automatic before/after events
+                    name_before = 'before_' + name
+                    name_after = 'after_' + name
+                    has_before = name_before in self._mf.event_objs and call_before_after
+                    has_after = name_after in self._mf.event_objs and call_before_after
+                    fn_after = getattr(self._mf.event, name_after) if has_after else None
+                    fn_before = getattr(self._mf.event, name_before) if has_before else None
 
                     def fn_wrap(*args, altfn=None, **kwargs):
                         del altfn  # unused
+
+                        # call before_-event functions
+                        if has_before:
+                            for fn_b in fn_before.subevents:
+                                if fn_b.needs_event_obj:
+                                    event_call = eventCall(self, name, args, kwargs)
+                                    fn_b(_event_overwrite=event_call)
+                                    args, kwargs = event_call.hook["args"], event_call.hook["kwargs"]
+                                else:
+                                    fn_b()
+
+                        # actual function call
                         results = []
                         for fn in fns:
                             results.append(fn(*args, **kwargs))
+
+                        # call after_-event functions
+                        if has_after:
+                            for fn_a in fn_after.subevents:
+                                if fn_a.needs_event_obj:
+                                    event_call = eventCall(self, name, args, kwargs, result=results)
+                                    fn_a(_event_overwrite=event_call)
+                                    results, args, kwargs = event_call.hook["result"], event_call.hook["args"], event_call.hook["kwargs"]
+                                else:
+                                    fn_a()
+
                         return results
 
                     return fn_wrap, fns, have_signature, mf_args
