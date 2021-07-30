@@ -543,8 +543,8 @@ class miniflask():
             - There are no requirements to the function signatures for plain events.
                 However, it is possible to prepend the argument list using the keywords: `state`, `event` and/or `mf` in any order.  
                 Miniflask will look for these keywords in any event signature and pass the module specific objects,
-                - `state`, (see also the API-Reference for [state](../04-state))
-                - `event` (see also the API-Reference for [event](../05-state)) and
+                - `state`, (see also the API-Reference for [state](../05-state))
+                - `event` (see also the API-Reference for [event](../04-event)) and
                 - `mf` (the same that is passed during module registration process, see also the API-Reference for [`register(mf)` Object]("../03-register(mf)-Object").
                 objects.
             - **Before events**:
