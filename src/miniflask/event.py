@@ -391,7 +391,7 @@ class eventCall:  # pylint: disable=R0903 (too-few-public-methods)
             "args": list(args),
             "kwargs": kwargs
         }
-        if result:
+        if result is not None:
             self.hook["result"] = result
 
     def __getattr__(self, name):
