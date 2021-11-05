@@ -23,6 +23,10 @@ This MR changes ...
 - ...
 - ...
 
+**Check all before creating this PR**:
+- [ ] Documentation adapted
+- [ ] unit tests adapted / created
+
 
 ## Example Usage
 
