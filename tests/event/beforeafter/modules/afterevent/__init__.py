@@ -1,6 +1,8 @@
 
 def after_dosomething(event):
     print("after_-event called")
+    if event.hook["result"] is None:
+        return
     event.hook["result"] *= 2
 
 
