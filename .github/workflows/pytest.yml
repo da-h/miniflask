@@ -28,7 +28,7 @@ jobs:
     - name: Static Analysis of Tests (Modules)
       run: |
         flake8 tests --count --ignore E501 --statistics
-        PYTHONPATH=$(pwd)/src find tests -type d -exec test -e '{}'/.module \; -exec pylint -d W0511 -d C0114 -d C0116 -d C0115 -d C0301 -d C0103 -d R0913 -d R0914 -d R0902 -d R0912 -d R0801 -d W0212 -d W0223 -d E1101 -d W0221 -d E1102 '{}' +
+        PYTHONPATH=$(pwd)/src find tests -type d -exec test -e '{}'/.module \; -exec pylint -d W0511 -d C0114 -d C0116 -d C0115 -d C0301 -d C0103 -d C0209 -d R0913 -d R0914 -d R0902 -d R0912 -d R0801 -d W0212 -d W0223 -d E1101 -d W0221 -d E1102 '{}' +
         PYTHONPATH=$(pwd)/src find tests -type d -exec test -e '{}'/.module \; -exec pylint --exit-zero '{}' +
     - name: Pytest
       run: pytest
