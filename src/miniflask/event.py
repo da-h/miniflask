@@ -7,6 +7,10 @@ class outervar:  # pylint: disable=too-few-public-methods
     pass
 
 
+class no_result_given:  # pylint: disable=too-few-public-methods
+    pass
+
+
 @dataclass
 class event_obj:
     fn: Callable or List[Callable]
@@ -384,14 +388,14 @@ class event(dict):
 # this event object is used for every call of before_/after_ events to simplify their call api
 class eventCall:  # pylint: disable=R0903 (too-few-public-methods)
 
-    def __init__(self, ev, fn_name, args, kwargs, result=None):
+    def __init__(self, ev, fn_name, args, kwargs, result=no_result_given):
         self._ev = ev
         self.hook = {
             "name": fn_name,
             "args": list(args),
             "kwargs": kwargs
         }
-        if result is not None:
+        if result is not no_result_given:
             self.hook["result"] = result
 
     def __getattr__(self, name):
