@@ -32,6 +32,7 @@ def getModulesAvail(module_dirs, f=None):
 
             # module found
             f[module_name_id] = {
+                'base_id': base_module_name,
                 'id': module_name_id,
                 'lowpriority': path.exists(path.join(dirpath, ".lowpriority")),
                 'importname': local_import_name,

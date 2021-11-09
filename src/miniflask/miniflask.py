@@ -7,7 +7,6 @@ from functools import partial
 from os import path, listdir, linesep, get_terminal_size
 from importlib import import_module
 from importlib.machinery import PathFinder as ImportPathFinder
-from importlib.util import find_spec
 from enum import Enum, EnumMeta
 from argparse import ArgumentParser, REMAINDER as ARGPARSE_REMAINDER
 from typing import List
@@ -179,33 +178,19 @@ class miniflask():
 
         # imports across filesystem
         # (first we need to load the parent module, if available)
-        if "." in module_spec["importname"]:
-            parent_module_name, rest = module_spec["importname"].split(".", 1)
-        else:
-            parent_module_name, rest = module_spec["importname"], ""
-        spec = ImportPathFinder().find_spec(parent_module_name, [importpath])
+        parent_module_name, rest = "miniflask." + self._instance_id + "." + module_spec["base_id"], ""
+        spec = ImportPathFinder().find_spec(parent_module_name, [path.dirname(importpath)])
         if spec is None:
             if rest:
                 raise ValueError("Could not import parent Module named '%s'. This is needed for module named '%s' (defined in '%s')." % (parent_module_name, module_spec["id"], module_spec["importpath"]))
             raise ValueError("Module named '%s' (defined in '%s') could not be imported." % (module_spec["id"], module_spec["importpath"]))
         if spec.loader is None:
             raise ValueError("Could not import parent Module named '%s'. This is needed for module named '%s' (defined in '%s'). Did you maybe miss to define a `__init__.py` file in any subfolder?" % (parent_module_name, module_spec["id"], module_spec["importpath"]))
+        spec.loader.load_module()
 
         # ensure sys.modules does not cache different miniflask instances
-        package_prefix = "miniflask." + self._instance_id + "."
-        spec.loader.name = package_prefix + spec.loader.name
-
-        # import parent module (repository base)
-        parent_module = spec.loader.load_module()
-
-        # if importing top-level package in repository, we are done
-        if not rest:
-            return parent_module
-
-        spec = find_spec(package_prefix + module_spec["importname"], package=parent_module)
-        if spec is None or spec.loader is None:
-            raise ValueError("Module named '%s' (defined in '%s') could not be imported." % (module_spec["id"], module_spec["importpath"]))
-        return spec.loader.load_module()
+        package_prefix = parent_module_name + "."
+        return import_module(package_prefix + module_spec["importname"])
 
     # module event
     def getModuleEvents(self, module_id, mf=None):
