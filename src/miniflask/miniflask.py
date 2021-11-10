@@ -1026,7 +1026,14 @@ class miniflask():
             if self.state[variables[0]] is None:
                 missing_arguments.append(variables)
         if len(missing_arguments) > 0:
-            self.settings_parser.error(linesep + linesep.join(["The following argument is required: " + " or ".join(["--" + arg for arg in reversed(args)]) for args in missing_arguments]))
+            args_err_strs = []
+            for args in missing_arguments:
+                arg_err_str = "\t" + " or ".join([highlight_module("--" + arg) for arg in reversed(args)])
+                if args[0] in self._settings_parse_later:
+                    summary = self._settings_parse_later[args[0]][3][-3]
+                    arg_err_str += linesep + "\t  Defined in line %s in file '%s'." % (highlight_event(str(summary.lineno)), attr('dim') + summary.filename + attr('reset'))
+                args_err_strs.append(arg_err_str)
+            raise ValueError(("Missing CLI-arguments or unspecified variables during miniflask call." + linesep + linesep.join(args_err_strs)))
 
         # finally parse lambda-dependencies
         for varname, (val, cliargs, parsefn, caller_traceback, _mf) in self._settings_parse_later.items():
