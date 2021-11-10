@@ -1,4 +1,4 @@
-FROM python:slim
+FROM python:3.9-slim
 
 # install luke
 RUN pip install lukeparser
