@@ -1347,7 +1347,7 @@ class miniflask_wrapper(miniflask):
 
         super().register_default_module(module, **kwargs)
 
-    def unregister_event(self, name: str, only_cache: bool = False):
+    def unregister_event(self, name: str, only_cache: bool = False, keep_attached_events: bool = True):
         r"""
         Clears an event by name.
 
@@ -1356,14 +1356,15 @@ class miniflask_wrapper(miniflask):
         - `only_cache`:  
             - Setting to `True` means that the event cache will be cleared. Upon the next call of `event.name` the cache will be rebuild.
             - Setting to `False` means that the event cache will be cleared *and* the internal event objects will be removed as well. Upon the next call of `event.name` miniflask will not recognize the event anymore.
+        - `keep_attached_events`:  By default (`True`), all events that are called together with this event (`before_`/`after_`-events) are kept. Setting to `False` clears those as well.
         """  # noqa: W291
         if hasattr(self.event, name):
             delattr(self.event, name)
         if not only_cache and name in self.event_objs:
             del self.event_objs[name]
-        if "before_" + name in self.event_objs:
+        if not keep_attached_events and "before_" + name in self.event_objs:
             self.unregister_event("before_" + name, only_cache)
-        if "after_" + name in self.event_objs:
+        if not keep_attached_events and "after_" + name in self.event_objs:
             self.unregister_event("after_" + name, only_cache)
 
     # define event
@@ -1380,14 +1381,21 @@ class miniflask_wrapper(miniflask):
         super().register_event(name, fn, **kwargs)
 
     # overwrite event definition
-    def overwrite_event(self, name: str, fn, **kwargs):
+    def overwrite_event(self, name: str, fn, keep_attached_events: bool = True, **kwargs):
         r"""
         Unregister an existing event & redefine it using another function.
 
         **Note**:
         The main difference between this function and `register_event` is that this method clears the cache *and* removes the event internally, while `register_event` only clears the cache. (This is especially important if one uses non-unique events).
+
+        Args:
+        - `name`: The event to clear from the event object.
+        - `only_cache`:  
+            - Setting to `True` means that the event cache will be cleared. Upon the next call of `event.name` the cache will be rebuild.
+            - Setting to `False` means that the event cache will be cleared *and* the internal event objects will be removed as well. Upon the next call of `event.name` miniflask will not recognize the event anymore.
+        - `keep_attached_events`:  By default (`True`), all events that are called together with this event (`before_`/`after_`-events) are kept. Setting to `False` clears those as well.
         """  # noqa: W291
-        self.unregister_event(name, only_cache=False)
+        self.unregister_event(name, only_cache=False, keep_attached_events=keep_attached_events)
         self._defined_events[name] = fn
         super().register_event(name, fn, **kwargs)
 
