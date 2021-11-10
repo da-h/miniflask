@@ -177,8 +177,9 @@ class miniflask():
             return import_module(module_spec["importname"])
 
         # imports across filesystem
+        # the random id (_instance_id) ensures sys.modules does not cache different miniflask instances
         # (first we need to load the parent module, if available)
-        parent_module_name, rest = "miniflask." + self._instance_id + "." + module_spec["base_id"], ""
+        parent_module_name, rest = "miniflask." + self._instance_id + "." + path.basename(path.abspath(module_spec["importpath"])), ""
         spec = ImportPathFinder().find_spec(parent_module_name, [path.dirname(importpath)])
         if spec is None:
             if rest:
@@ -186,11 +187,16 @@ class miniflask():
             raise ValueError("Module named '%s' (defined in '%s') could not be imported." % (module_spec["id"], module_spec["importpath"]))
         if spec.loader is None:
             raise ValueError("Could not import parent Module named '%s'. This is needed for module named '%s' (defined in '%s'). Did you maybe miss to define a `__init__.py` file in any subfolder?" % (parent_module_name, module_spec["id"], module_spec["importpath"]))
+
+        # set parent module name to identifier given by dict (base_id)
+        parent_module_name = "miniflask." + self._instance_id + "." + module_spec["base_id"]
+        spec.loader.name = parent_module_name
+
+        # actually load the parent module
         spec.loader.load_module()
 
-        # ensure sys.modules does not cache different miniflask instances
-        package_prefix = parent_module_name + "."
-        return import_module(package_prefix + module_spec["importname"])
+        # now load the requested module
+        return import_module(parent_module_name + "." + module_spec["importname"])
 
     # module event
     def getModuleEvents(self, module_id, mf=None):
