@@ -5,6 +5,7 @@ from argparse import Action
 from os import walk, path
 from pathlib import Path
 from pkgutil import resolve_name
+from dataclasses import dataclass
 from colored import attr, fg
 
 
@@ -168,3 +169,92 @@ class EnumAction(Action):  # pylint: disable=too-few-public-methods
             if return_enum:
                 return enum
         setattr(namespace, self.dest, enum)
+
+
+# ===== #
+# Units #
+# ===== #
+
+# base unit class
+# (used to save the unit endings and the converter functions)
+class Unit:  # pylint: disable=too-few-public-methods
+
+    def __init__(self, name, get_converter, set_converter, units):
+        self.name = name
+        self.get_converter = get_converter
+        self.set_converter = set_converter
+
+        # units is a list of lists
+        # - the first element of each list the canonical ending for each unit-form
+        # - using the unit-endings, we define a dict that always translates to the first/canonical unit-ending
+        # - in case a unit-ending has been used twice, throw an error
+        self.units = {}
+        for keys in units:
+            k_uid = keys[0]
+            for k in keys:
+                if k in self.units:
+                    raise ValueError(f"All Unit-Synonymes must be unique, but {k} has been used already.")
+                self.units[k] = k_uid
+
+    def __call__(self, value, unit, data=None):
+        if data is None:
+            data = {}
+        return UnitValue(self, {self.units[unit]: value, **data})
+
+
+# unit value class
+# (used to actually save the value)
+@dataclass
+class UnitValue:
+    _unitclass: Unit
+    data: dict
+
+    def __getattr__(self, name):
+        if name in self.data:
+            return self.data[name]
+        name = self._unitclass.units[name]
+        if name in self.data:
+            return self.data[name]
+        return self._unitclass.get_converter(self, self._unitclass.units[name])
+
+    def __setattr__(self, name, val):
+        if name in ["_unitclass", "data"]:
+            object.__setattr__(self, name, val)
+        elif name in self.data:
+            self.data[name] = val
+        else:
+            name = self._unitclass.units[name]
+            self._unitclass.set_converter(self, name, val)
+
+    def __str__(self):
+        return f"{', '.join(str(v)+str(k) for k,v in self.data.items())}"
+
+    def __repr__(self):
+        return "UnitValue(" + f"{', '.join(str(v)+str(k) for k,v in self.data.items())}" + ")"
+
+
+# factory for objects
+# (used by argparse to convert strings to unit values)
+def make_unitvalue_argparse(unitvalue):
+    class UnitValueArgparse:  # pylint: disable=too-few-public-methods
+        def __new__(cls, string):
+
+            # iterate over units, to check which format has been used for the given string
+            units = sorted(unitvalue._unitclass.units.keys(), key=len, reverse=True)
+            for u in units:
+                if string.endswith(u):
+
+                    # convert string to number
+                    number_str = string[:-len(u)]
+                    try:
+                        number = int(number_str)
+                    except ValueError:
+                        number = float(number_str)
+
+                    # construct unit from argument
+                    return UnitValue(unitvalue._unitclass, {unitvalue._unitclass.units[u]: number})
+
+            units_str = ",".join(units)
+            raise ValueError(f"I do not know how to convert {string} to a Unit. Possible endings are {units_str}.")
+
+    return UnitValueArgparse
