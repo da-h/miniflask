@@ -7,7 +7,7 @@ from .util import get_varid_from_fuzzy, highlight_module, get_relative_id
 from .exceptions import StateKeyError
 
 
-class temporary_state(dict):
+class temporary_state:
     def __init__(self, _state, variables):
         self.variables = variables
         self.state = _state
