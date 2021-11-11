@@ -2,9 +2,9 @@ import os
 from enum import EnumMeta
 from itertools import zip_longest
 
-from colored import attr
+from colored import attr, fg
 
-from ...util import highlight_module, highlight_val, highlight_name, highlight_val_overwrite
+from ...util import highlight_module, highlight_val, highlight_name, highlight_val_overwrite, highlight_event
 from ...state import like
 
 
@@ -14,7 +14,7 @@ html_val = lambda x: x  # noqa: E731 no-lambda
 html_val_overwrite = lambda x: x  # noqa: E731 no-lambda
 
 
-def listsettings(state, asciicodes=True):
+def listsettings(mf, state, asciicodes=True):
 
     # colors
     color_module = highlight_module if asciicodes else html_module
@@ -54,15 +54,23 @@ def listsettings(state, asciicodes=True):
         append = "" if not overwritten else " ⟶   " + color_val_overwrite(str(v))
         text += "│".join(k_hidden) + (" " * (maxklen - klen)) + " = " + color_val(value_str) + append + linesep
 
+        # add definition paths
+        if state["show_registration_definitions"]:
+            prefix = "│".join([" " * len(k) for k in korig.split(".")]) + (" " * (maxklen - klen)) + "   "
+            for definition_type, caller_traceback in mf._settings_parser_tracebacks[korig]:
+                summary = next(filter(lambda t: not t.filename.endswith("miniflask/miniflask.py"), reversed(caller_traceback)))
+                arg_err_str = (fg('blue') + "definition" if definition_type == "definition" else fg('yellow') + "overwritten") + attr('reset') + " in line %s in file '%s'." % (highlight_event(str(summary.lineno)), attr('dim') + os.path.relpath(summary.filename) + attr('reset'))
+                text += prefix + arg_err_str + linesep
+
     return text
 
 
-def init(state):
-    print(listsettings(state))
+def init(mf, state):
+    print(listsettings(mf, state))
 
 
-def settings_html(state):
-    html = listsettings(state, asciicodes=False)
+def settings_html(mf, state):
+    html = listsettings(mf, state, asciicodes=False)
     html = html.split("\n")
     html = "\n".join([h.replace('=', '</td><td style="padding: 0 0.5em;">=</td><td><code>', 1) for h in html])
     html = html.replace('\n', '</code></td></tr>\n<tr><td style="text-align:left;">')
@@ -72,5 +80,8 @@ def settings_html(state):
 
 
 def register(mf):
+    mf.register_helpers({
+        "show_registration_definitions": False
+    })
     mf.register_event("init", init, unique=False)
     mf.register_event("settings_html", settings_html, unique=False)
