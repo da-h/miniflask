@@ -1408,6 +1408,7 @@ class miniflask_wrapper(miniflask):
         """  # noqa: W291
         if hasattr(self.event, name):
             delattr(self.event, name)
+            del self.event._data[name]
         if not only_cache and name in self.event_objs:
             del self.event_objs[name]
         if not keep_attached_events and "before_" + name in self.event_objs:
