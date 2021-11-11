@@ -44,6 +44,9 @@ class state(MutableMapping):
         Every event gets called with a state-Object as its first argument.
         This is the modules **local** and **persistent** variable scope.
 
+        **Local dict**:
+        You can use this object like a persistent dict for all events defined in the same module.
+
         **Fuzzy matching**:  
         The module dict will use local variables first. If however, a variable does not exist locally, miniflask will look in the parent modules as well.
         See [fuzzy matching](./02-dict operations.md).
@@ -63,6 +66,9 @@ class state(MutableMapping):
             print()
             state["var"] *= 500
             print(state["var"])
+            print("This module uses", len(state), "variables.")
+            for key in state:
+                print("This module is using the variable", key)
 
         def register(mf):
             mf.register_defaults({
