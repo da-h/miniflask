@@ -74,6 +74,26 @@ $$
 
 ---
 
+
+### Module `definitions`
+This module extends `settings` by showing also the code-locations of the setting-definitions.
+
+**Example Output:**
+{.customsyntax}$$
+Folder│\title{module}│\literal{variable} = value
+—————————————————————————————
+data│\title{augment}│\literal{fn}       = transform
+    │               │                     definition in line 10 in file 'data/augment/__init__.py'
+    │\title{batches}│\literal{size}     = 4
+    │               │                     definition in line 10 in file 'data/augment/__init__.py'
+loops│\title{main_loop}│\literal{epoch} = 2
+     │                 │                  definition in line 42 in file 'loops/main_loop/__init__.py'
+--------------------------------------------------
+$$
+
+---
+
+
 ### Module `info`
 Calls `modules` and then `events`.  
 (Finishes the program afterwards.)
