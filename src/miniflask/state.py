@@ -362,3 +362,19 @@ class like:
 
     def __str__(self):
         return self.str()
+
+
+class optional:
+    def __init__(self, variable_type):
+        self.type = variable_type
+
+    def __call__(self, state, event):  # pylint: disable=redefined-outer-name
+        return self.type
+
+    def str(self, asciicodes=True, color_attr=attr):
+        if not asciicodes:
+            color_attr = lambda x: ''  # noqa: E731 no-lambda
+        return color_attr('dim') + "'" + str(self.type) + "' or '" + "None" + "' ⟶   " + color_attr('reset') + str(self.default)
+
+    def __str__(self):
+        return self.str()

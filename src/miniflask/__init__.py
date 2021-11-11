@@ -1,7 +1,7 @@
 from .miniflask import miniflask as init, print_info, get_default_args
 from .event import outervar
 from .modules import *
-from .state import like
+from .state import like, optional
 
 # meta
 __version__       = "2.2.0"

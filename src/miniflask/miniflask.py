@@ -17,7 +17,7 @@ from colored import fg, attr
 # package modules
 from .exceptions import save_traceback, format_traceback_list, RegisterError, StateKeyError
 from .event import event, event_obj
-from .state import state, like
+from .state import state, like, optional as optional_default
 from .dummy import miniflask_dummy
 from .util import getModulesAvail, EnumAction, get_relative_id
 from .util import highlight_error, highlight_name, highlight_module, highlight_loading, highlight_loading_default, highlight_loaded_default, highlight_loading_module, highlight_loaded_none, highlight_loaded, highlight_event, str2bool, get_varid_from_fuzzy
@@ -751,7 +751,7 @@ class miniflask():
                 self._settings_parser_tracebacks[varname] = []
             self._settings_parser_tracebacks[varname].append(("overwrite" if overwrite else "definition", caller_traceback))
 
-    def _settings_parser_add(self, varname, val, caller_traceback, nargs=None, default=None):  # noqa: C901 too-complex
+    def _settings_parser_add(self, varname, val, caller_traceback, nargs=None, default=None, is_optional=False):  # noqa: C901 too-complex
 
         # lists are just multiple arguments
         if isinstance(val, (list, tuple)):
@@ -773,7 +773,9 @@ class miniflask():
 
         # we know the default argument, if the value is given
         # otherwise the value is a required argument (to be tested later)
-        if not isinstance(val, type) and not isinstance(val, EnumMeta):
+        if is_optional:
+            kwarg["default"] = None
+        elif not isinstance(val, type) and not isinstance(val, EnumMeta):
             kwarg["default"] = default if default is not None else val
         else:
             self.settings_parser_required_arguments.append([varname])
@@ -919,6 +921,9 @@ class miniflask():
             for varname, (val, cliargs, parsefn, caller_traceback, _mf) in settings.items():
                 is_fn = callable(val) and not isinstance(val, type) and not isinstance(val, EnumMeta) and parsefn
 
+                # if isinstance(val, optional_default):
+                #     breakpoint()
+
                 # eval dependencies/like expressions
                 if is_fn:
                     visited_callables = set()
@@ -955,7 +960,7 @@ class miniflask():
                     # add to argument parser
                     # Note: the condition ensures that the last value (an overwrite-variable) should be the one that generates the argparser)
                     if recheck or overwrite and varname not in settings_recheck or varname not in self._settings_parse_later_overwrites and varname not in settings_recheck:
-                        self._settings_parser_add(varname, the_val, caller_traceback)
+                        self._settings_parser_add(varname, the_val, caller_traceback, is_optional=isinstance(val, optional_default))
 
         # add help message
         print_help = False
@@ -1045,6 +1050,11 @@ class miniflask():
 
         # finally parse lambda-dependencies
         for varname, (val, cliargs, parsefn, caller_traceback, _mf) in self._settings_parse_later.items():
+
+            # optional_default assumes that argparse has set the variable
+            if isinstance(val, optional_default):
+                continue
+
             # Note: if has not been overwritten by user lambda can be evaluated again
             # Three cases exist in wich lambda expression shall be recalculated:
             # The value is a function AND one of
@@ -1230,6 +1240,26 @@ class miniflask_wrapper(miniflask):
         self.module_id = new_module_name
         self.state.module_id = new_module_name
         return new_module_name
+
+    # wrapper for the optional class
+    def optional(self, variable_type):  # pylint: disable=no-self-use
+        r"""
+        Define optional variables.
+
+        # Note {.alert}
+        Optional variables are `None` if unspecified by the user.
+
+        Args:
+        - `variable_type`: The type to ask the user for in cli.
+
+        Examples:
+        ```python
+        mf.register_defaults({
+            "myvar": mf.optional(int)
+        })
+        ```
+        """  # noqa: W291
+        return optional_default(variable_type)
 
     # like with relative imports
     def like(self, varname, alt, scope="."):
