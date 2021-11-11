@@ -665,6 +665,7 @@ class miniflask():
         - Boolean (`bool`)
         - Enums (`Enum`)  
         - One-dimensional lists of basic types (e.g. `[int]`)
+        - One-dimensional tuples of basic types (e.g. `(int,int)`)
         - [Like Expressions](../../08-API/03-register(mf\)-Object/03-like.md)
         - Lambda Expressions of the form `lambda state, event: ...`.  
             (Functionally, this is just like a `like`-Expression, but cannot take circular dependencies into account. The pro-side, however, is that any expression can be used inside the lambda-function.)
@@ -756,8 +757,12 @@ class miniflask():
         # lists are just multiple arguments
         if isinstance(val, (list, tuple)):
             if len(val) == 0:
-                raise RegisterError("Variable '%s' is registered as list (see exception below), however it is required to define the type of the list arguments for it to become accessible from cli.\n\nYour options are:\n\t- define a default list, e.g. [\"a\", \"b\", \"c\"]\n\t- define the list type, e.g. [str]\n\t- define the variable as a helper using register_helpers(...)" % (fg('red') + varname + attr('reset')), traceback=caller_traceback)
-            self._settings_parser_add(varname, val[0], caller_traceback, nargs="*", default=val)
+                if isinstance(val, list):
+                    val_type, start_del, end_del = "list", "[", "]"
+                else:
+                    val_type, start_del, end_del = "tuple", "(", ",)"
+                raise RegisterError(f"Variable '%s' is registered as {val_type} of length 0 (see exception below), however it is required to define the type of the {val_type} arguments for it to become accessible from cli.\n\nYour options are:\n\t- define a default {val_type}, e.g. {start_del}\"a\", \"b\", \"c\"{end_del}\n\t- define the {val_type} type, e.g. {start_del}str{end_del}\n\t- define the variable as a helper using register_helpers(...)" % (fg('red') + varname + attr('reset')), traceback=caller_traceback)
+            self._settings_parser_add(varname, val[0], caller_traceback, nargs="*" if isinstance(val, list) else len(val), default=val)
             return
 
         # get argument type from value (this can be int, but also 42 for instance)
