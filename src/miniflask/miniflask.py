@@ -1224,9 +1224,7 @@ class miniflask_wrapper(miniflask):
         Args:
         - `new_module_name`: The prefix to use with any `state["var"]` call.
         """  # noqa: W291
-        new_module_name, was_relative = self._get_relative_module_id(new_module_name)
-        if not was_relative:
-            new_module_name = self.module_base + "." + new_module_name
+        new_module_name, _ = self._get_relative_module_id(new_module_name)
         self.module_id = new_module_name
         self.state.module_id = new_module_name
         return new_module_name
