@@ -1035,9 +1035,11 @@ class miniflask():
             args_err_strs = []
             for args in missing_arguments:
                 arg_err_str = "\t" + " or ".join([highlight_module("--" + arg) for arg in reversed(args)])
-                if args[0] in self._settings_parse_later:
-                    summary = self._settings_parse_later[args[0]][3][-3]
-                    arg_err_str += linesep + "\t  Defined in line %s in file '%s'." % (highlight_event(str(summary.lineno)), attr('dim') + summary.filename + attr('reset'))
+                if args[0] in self._settings_parser_tracebacks:
+                    for definition_type, caller_traceback in self._settings_parser_tracebacks[args[0]]:
+                        summary = next(filter(lambda t: not t.filename.endswith("miniflask/miniflask.py"), reversed(caller_traceback)))
+                        adj = (fg('blue') + "Defined" if definition_type == "definition" else fg('yellow') + "Overwritten") + attr('reset')
+                        arg_err_str += linesep + "\t  " + adj + " in line %s in file '%s'." % (highlight_event(str(summary.lineno)), attr('dim') + path.relpath(summary.filename) + attr('reset'))
                 args_err_strs.append(arg_err_str)
             raise ValueError(("Missing CLI-arguments or unspecified variables during miniflask call." + linesep + linesep.join(args_err_strs)))
 
