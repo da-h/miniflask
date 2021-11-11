@@ -91,7 +91,7 @@ class state(dict):
         self.fuzzy_names = {}
         # self.temporary = temporary_state(self)
 
-    def scope(self, module_name, local=False):
+    def scope(self, module_name):
         r"""
         Working on multiple scopes.
 
@@ -130,7 +130,7 @@ class state(dict):
         ```
         """  # noqa: W291
 
-        return state(self.module_id + "." + module_name if local else module_name, self.all, self.default)
+        return state(module_name, self.all, self.default)
 
     def temporary(self, variables):
         r"""
