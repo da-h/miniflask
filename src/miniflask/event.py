@@ -29,23 +29,28 @@ class event(dict):
         self._mf = mf
         self.optional_value = optional
         self.hook = {}
+        self._data = {}
         super().__init__()
 
-    def make_dummy_fn(self, name, call_before_after=True):
+    def make_dummy_fn(self, name, call_before_after=True):  # noqa: C901 too-complex  pylint: disable=too-many-statements
         # automatic before/after events
         name_before = 'before_' + name
         name_after = 'after_' + name
         has_before = name_before in self._mf.event_objs and call_before_after
         has_after = name_after in self._mf.event_objs and call_before_after
-        fn_after = getattr(self._mf.event, name_after) if has_after else None
-        fn_before = getattr(self._mf.event, name_before) if has_before else None
+
+        # ensure attached events are created
+        if has_before:
+            getattr(self._mf.event, name_before)
+        if has_after:
+            getattr(self._mf.event, name_after)
 
         def dummy_fn(*args, altfn=None, _event_overwrite=None, **kwargs):
             if callable(altfn):
 
                 # call before_-event functions
                 if has_before:
-                    for fn_b in fn_before.subevents:
+                    for fn_b in self._data[name_before]["wrapped_single_events"]:
                         if fn_b.needs_event_obj:
                             event_call = eventCall(self, name, args, kwargs)
                             fn_b(_event_overwrite=event_call)
@@ -58,7 +63,7 @@ class event(dict):
 
                 # call after_-event functions
                 if has_after:
-                    for fn_a in fn_after.subevents:
+                    for fn_a in self._data[name_after]["wrapped_single_events"]:
                         if fn_a.needs_event_obj:
                             event_call = eventCall(self, name, args, kwargs, result=result)
                             fn_a(_event_overwrite=event_call)
@@ -122,6 +127,10 @@ class event(dict):
             if not self.optional_value:
                 raise AttributeError("The Event '%s' has not been registered yet." % name)
             fn_wrap = self.make_dummy_fn(name, call_before_after=True)
+            modules_of_single_events = ["dummy-module"]
+            wrapped_single_events = [fn_wrap]
+            raw_events = [lambda:[]]
+            mf_args = []
 
         else:
 
@@ -158,9 +167,13 @@ class event(dict):
                 name_after = 'after_' + name
                 has_before = name_before in self._mf.event_objs and call_before_after
                 has_after = name_after in self._mf.event_objs and call_before_after
-                fn_after = getattr(self._mf.event, name_after) if has_after else None
-                fn_before = getattr(self._mf.event, name_before) if has_before else None
                 miniflask_args_event_i = -1
+
+                # ensure attached events are created
+                if has_before:
+                    getattr(self._mf.event, name_before)
+                if has_after:
+                    getattr(self._mf.event, name_after)
 
                 # get index of "state" / "event"
                 for i in range(min(len(arg_names), 3)):
@@ -189,7 +202,7 @@ class event(dict):
 
                         # call before_-event functions
                         if has_before:
-                            for fn_b in fn_before.subevents:
+                            for fn_b in self._data[name_before]["wrapped_single_events"]:
                                 if fn_b.needs_event_obj:
                                     event_call = eventCall(self, name, args, kwargs)
                                     fn_b(_event_overwrite=event_call)
@@ -208,7 +221,7 @@ class event(dict):
 
                         # call after_-event functions
                         if has_after:
-                            for fn_a in fn_after.subevents:
+                            for fn_a in self._data[name_after]["wrapped_single_events"]:
                                 if fn_a.needs_event_obj:
                                     event_call = eventCall(self, name, args, kwargs, result=result)
                                     fn_a(_event_overwrite=event_call)
@@ -225,7 +238,7 @@ class event(dict):
 
                         # call before_-event functions
                         if has_before:
-                            for fn_b in fn_before.subevents:
+                            for fn_b in self._data[name_before]["wrapped_single_events"]:
                                 if fn_b.needs_event_obj:
                                     event_call = eventCall(self, name, args, kwargs)
                                     fn_b(_event_overwrite=event_call)
@@ -244,7 +257,7 @@ class event(dict):
 
                         # call after_-event functions
                         if has_after:
-                            for fn_a in fn_after.subevents:
+                            for fn_a in self._data[name_after]["wrapped_single_events"]:
                                 if fn_a.needs_event_obj:
                                     event_call = eventCall(self, name, args, kwargs, result=result)
                                     fn_a(_event_overwrite=event_call)
@@ -265,7 +278,7 @@ class event(dict):
 
                         # call before_-event functions
                         if has_before:
-                            for fn_b in fn_before.subevents:
+                            for fn_b in self._data[name_before]["wrapped_single_events"]:
                                 if fn_b.needs_event_obj:
                                     event_call = eventCall(self, name, args, kwargs)
                                     fn_b(_event_overwrite=event_call)
@@ -278,7 +291,7 @@ class event(dict):
 
                         # call after_-event functions
                         if has_after:
-                            for fn_a in fn_after.subevents:
+                            for fn_a in self._data[name_after]["wrapped_single_events"]:
                                 if fn_a.needs_event_obj:
                                     event_call = eventCall(self, name, args, kwargs, result=result)
                                     fn_a(_event_overwrite=event_call)
@@ -308,10 +321,9 @@ class event(dict):
             if eobj.unique:
                 fn_wrap, has_signature, mf_args = fn_wrap_scope(eobj.fn, eobj.modules, eobj.modules.state, eobj.modules.event, eobj.modules)
                 if has_signature:
-                    setattr(fn_wrap, 'mf_modules', [eobj.modules.module_id])
-                    setattr(fn_wrap, 'subevents', [fn_wrap])
-                    setattr(fn_wrap, 'fns', [eobj.fn])
-                    setattr(fn_wrap, 'fns_args', [mf_args])
+                    modules_of_single_events = [eobj.modules.module_id]
+                    wrapped_single_events = [fn_wrap]
+                    raw_events = [eobj.fn]
             else:
                 def multiple_fn_wrap_scope(orig_fns, modules=eobj.modules):
                     fns, have_signature, mf_args = zip(*[fn_wrap_scope(fn, _mf=module, _state=module.state, _event=module.event, module=module, skip_twice=True, call_before_after=False) for fn, module in zip(orig_fns, modules)])
@@ -321,15 +333,19 @@ class event(dict):
                     name_after = 'after_' + name
                     has_before = name_before in self._mf.event_objs and call_before_after
                     has_after = name_after in self._mf.event_objs and call_before_after
-                    fn_after = getattr(self._mf.event, name_after) if has_after else None
-                    fn_before = getattr(self._mf.event, name_before) if has_before else None
+
+                    # ensure attached events are created
+                    if has_before:
+                        getattr(self._mf.event, name_before)
+                    if has_after:
+                        getattr(self._mf.event, name_after)
 
                     def fn_wrap(*args, altfn=None, **kwargs):
                         del altfn  # unused
 
                         # call before_-event functions
                         if has_before:
-                            for fn_b in fn_before.subevents:
+                            for fn_b in self._data[name_before]["wrapped_single_events"]:
                                 if fn_b.needs_event_obj:
                                     event_call = eventCall(self, name, args, kwargs)
                                     fn_b(_event_overwrite=event_call)
@@ -344,7 +360,7 @@ class event(dict):
 
                         # call after_-event functions
                         if has_after:
-                            for fn_a in fn_after.subevents:
+                            for fn_a in self._data[name_after]["wrapped_single_events"]:
                                 if fn_a.needs_event_obj:
                                     event_call = eventCall(self, name, args, kwargs, result=results)
                                     fn_a(_event_overwrite=event_call)
@@ -357,11 +373,17 @@ class event(dict):
                     return fn_wrap, fns, have_signature, mf_args
 
                 fn_wrap, fns, have_signature, mf_args = multiple_fn_wrap_scope(eobj.fn)
-                setattr(fn_wrap, 'mf_modules', [m.module_id for m, has_sig in zip(eobj.modules, have_signature) if has_sig])
-                setattr(fn_wrap, 'subevents', [fn for fn, has_sig in zip(fns, have_signature) if has_sig])
-                setattr(fn_wrap, 'fns', eobj.fn)
-                setattr(fn_wrap, 'fns_args', [mf_args])
+                modules_of_single_events = [m.module_id for m, has_sig in zip(eobj.modules, have_signature) if has_sig]
+                wrapped_single_events = [fn for fn, has_sig in zip(fns, have_signature) if has_sig]
+                raw_events = eobj.fn
 
+        self._data[name] = {
+            "modules": modules_of_single_events,
+            "wrapped_event": fn_wrap,
+            "wrapped_single_events": wrapped_single_events,
+            "raw_function_args": mf_args,
+            "raw_functions": raw_events,
+        }
         setattr(self, name, fn_wrap)
         return fn_wrap
 
