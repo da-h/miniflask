@@ -98,6 +98,7 @@ class miniflask():
         self._settings_parse_later = {}
         self._settings_parse_later_overwrites_list = []
         self._settings_parse_later_overwrites = {}
+        self._settings_parser_tracebacks = {}
         self.settings_parser_required_arguments = []
         self.default_modules = []
         self.bind_events = True
@@ -744,6 +745,11 @@ class miniflask():
                     self.state[varname] = val
 
                 self._settings_parse_later[varname] = (val, cliargs, parsefn, caller_traceback, self)
+
+            # save all tracebacks in case we need this information due to an error
+            if varname not in self._settings_parser_tracebacks:
+                self._settings_parser_tracebacks[varname] = []
+            self._settings_parser_tracebacks[varname].append(("overwrite" if overwrite else "definition", caller_traceback))
 
     def _settings_parser_add(self, varname, val, caller_traceback, nargs=None, default=None):  # noqa: C901 too-complex
 
