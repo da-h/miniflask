@@ -1,5 +1,6 @@
 import sys
 import re
+from collections.abc import MutableMapping
 
 from colored import fg, attr
 
@@ -7,7 +8,7 @@ from .util import get_varid_from_fuzzy, highlight_module, get_relative_id
 from .exceptions import StateKeyError
 
 
-class temporary_state(dict):
+class temporary_state:
     def __init__(self, _state, variables):
         self.variables = variables
         self.state = _state
@@ -35,13 +36,16 @@ class temporary_state(dict):
 relative_import_re = re.compile(r"(\.+)(.*)")
 
 
-class state(dict):
+class state(MutableMapping):
     def __init__(self, module_name, internal_state_dict, state_default):  # pylint: disable=super-init-not-called
         r"""!... is a local dict
         Global Variables, but Fancy. ;)
 
         Every event gets called with a state-Object as its first argument.
         This is the modules **local** and **persistent** variable scope.
+
+        **Local dict**:
+        You can use this object like a persistent dict for all events defined in the same module.
 
         **Fuzzy matching**:  
         The module dict will use local variables first. If however, a variable does not exist locally, miniflask will look in the parent modules as well.
@@ -62,6 +66,9 @@ class state(dict):
             print()
             state["var"] *= 500
             print(state["var"])
+            print("This module uses", len(state), "variables.")
+            for key in state:
+                print("This module is using the variable", key)
 
         def register(mf):
             mf.register_defaults({
@@ -331,6 +338,12 @@ class state(dict):
     def __deepcopy__(self, memo):
         del memo
         return self
+
+    def __iter__(self):
+        return filter(lambda key: key.startswith(self.module_id), self.all)
+
+    def __len__(self):
+        return len(list(filter(lambda key: key.startswith(self.module_id), self.all)))
 
 
 def _create_excpetion_notfound(module_id, varid, name):
