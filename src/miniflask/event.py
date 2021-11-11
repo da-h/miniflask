@@ -109,6 +109,15 @@ class event(dict):
         - `event.optional.eventname(..., altfn=...)` treats the event like a `unique` event, but in case no event was defined, it uses altfn to parse the arguments.
         # .{.end}
 
+        # Internal Event Data
+        The `event` object contains a hidden `_data` dictionary that saves the information needed to construct the events from the actual code.
+        In more detail:
+        - `event._data[eventname]` contains the dictionary with all information required to construct the events
+        - `event._data[eventname]["modules"]`: list of modules that define the event `eventname`
+        - `event._data[eventname]["wrapped_event"]`: symlink to `event.eventname`
+        - `event._data[eventname]["wrapped_single_events"]`: list of all wrapped events in case of non-unique event `eventname`
+        - `event._data[eventname]["raw_functions"]`: list of all raw functions (as defined in code) in the modules given above (same order as in the modules list)
+        - `event._data[eventname]["raw_function_args"]`: the `mf`, `state` and `event` objects arguments needed for the raw functions
 
         ### Performance Note {.alert}
         Leaving the `event`, `state` and `mf` arguments out from an event function definition removes an extra function wrapper around every function. Thus, without them the time consumption should not differ at all from a normal function call.
