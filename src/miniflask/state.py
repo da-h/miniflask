@@ -98,19 +98,18 @@ class state(MutableMapping):
         self.fuzzy_names = {}
         # self.temporary = temporary_state(self)
 
-    def scope(self, module_name, local=False):
+    def scope(self, module_name):
         r"""
         Working on multiple scopes.
 
         The default behaviour of state is to work on the local module variables of the module the state is defined in.
-        Working on multiple module variables is easily possible with this command.
+        Working on module variables of other modules is easily possible with this command.
 
         Returns:
         A new `state` variable bound to a given scope.
 
         Args:
         - `module_name`: The module id to use for the variable.
-        - `local`: Setting to `True` uses relative module identifiers, setting to `False` uses `module_name` as an unique module id/scope.
 
         Examples:
 
@@ -137,7 +136,7 @@ class state(MutableMapping):
         ```
         """  # noqa: W291
 
-        return state(self.module_id + "." + module_name if local else module_name, self.all, self.default)
+        return state(module_name, self.all, self.default)
 
     def temporary(self, variables):
         r"""
