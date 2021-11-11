@@ -1,5 +1,6 @@
 import sys
 import re
+from collections.abc import MutableMapping
 
 from colored import fg, attr
 
@@ -35,7 +36,7 @@ class temporary_state:
 relative_import_re = re.compile(r"(\.+)(.*)")
 
 
-class state(dict):
+class state(MutableMapping):
     def __init__(self, module_name, internal_state_dict, state_default):  # pylint: disable=super-init-not-called
         r"""!... is a local dict
         Global Variables, but Fancy. ;)
@@ -331,6 +332,12 @@ class state(dict):
     def __deepcopy__(self, memo):
         del memo
         return self
+
+    def __iter__(self):
+        return filter(lambda key: key.startswith(self.module_id), self.all)
+
+    def __len__(self):
+        return len(list(filter(lambda key: key.startswith(self.module_id), self.all)))
 
 
 def _create_excpetion_notfound(module_id, varid, name):
