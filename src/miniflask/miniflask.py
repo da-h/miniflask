@@ -835,7 +835,7 @@ class miniflask():
             If set to `False` disables fuzzy variable name search for the module arguments.
         """  # noqa: W291
         if self.argparse_called:
-            raise SystemError("The function `parse_args` has been called already. Did you maybe called `mf.parse_args()` and `mf.run()` in the same script? Solutions are:\n\t- Please use only one of those functions.\n\t- If you actually need both functions, please do not hesitate to write an issue on\n\t\thttps://github/da-h/miniflask/issues\n\t  to explain you used case.\n\t  (It's not hard to implement, but I need to know, if and when this functionality is needed. ;) )")
+            raise SystemError("The function `parse_args` has been called already. Did you maybe called `mf.parse_args()` and `mf.run()` in the same script? Solutions are:\n\t- Please use only one of those functions.\n\t- If you actually need both functions, please do not hesitate to write an issue on\n\t\thttps://github/da-h/miniflask/issues\n\t  to explain yout used case.\n\t  (It's not hard to implement, but I need to know, if and when this functionality is needed. ;) )")
 
         has_module_args = argv is None or argv == sys.argv
         if argv is None:  # check if 'argv' is passed
