@@ -20,7 +20,7 @@ def main(state, event):
     assert len(state.all) == 4, "Found global Variables %i" % len(state.all)
 
     # Check if local state iterator has all variables that we expect
-    assert len(state) == 1, "Found lokal Variables %i" % len(state)
+    assert len(state) == 1, "Found local Variables %i" % len(state)
 
     # Checking if variable can be temporarily overwritten
     with state.temporary({
