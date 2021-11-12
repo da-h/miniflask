@@ -39,6 +39,10 @@ for i, (clsname, cls) in enumerate(classes):  # noqa: C901
         if fn in fns_done:
             continue
 
+        # skip non-miniflask funcitons (from derived classes)
+        if not fn.__module__.startswith("miniflask"):
+            continue
+
         # skip private api
         # if name.startswith("_"):
         #     continue
