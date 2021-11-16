@@ -645,7 +645,7 @@ class miniflask():
     # Note: the problem lies in the fact that the true id of a variable is defined as scope.key,
     #       however scope can be empty if key is meant as a reference in the global scope=="".
     #       Otherwise, this function would be a lot simpler.
-    def register_defaults(self, defaults, scope="", overwrite=False, cliargs=True, parsefn=True, caller_traceback=None):
+    def register_defaults(self, defaults, scope="", overwrite=False, cliargs=True, parsefn=True, caller_traceback=None, missing_argument_message=None):
         r"""
         Register variables bound to a module.
 
@@ -750,7 +750,7 @@ class miniflask():
             # save all tracebacks in case we need this information due to an error
             if varname not in self._settings_parser_tracebacks:
                 self._settings_parser_tracebacks[varname] = []
-            self._settings_parser_tracebacks[varname].append(("overwrite" if overwrite else "definition", caller_traceback))
+            self._settings_parser_tracebacks[varname].append(("overwrite" if overwrite else "definition", caller_traceback, missing_argument_message))
 
     def _settings_parser_add(self, varname, val, caller_traceback, nargs=None, default=None, is_optional=False):  # noqa: C901 too-complex
 
@@ -1043,15 +1043,18 @@ class miniflask():
                 missing_arguments.append(variables)
         if len(missing_arguments) > 0:
             args_err_strs = []
+            error_message_str = ""
             for args in missing_arguments:
                 arg_err_str = "\t" + " or ".join([highlight_module("--" + arg) for arg in reversed(args)])
                 if args[0] in self._settings_parser_tracebacks:
-                    for definition_type, caller_traceback in self._settings_parser_tracebacks[args[0]]:
+                    for definition_type, caller_traceback, missing_argument_message in self._settings_parser_tracebacks[args[0]]:
                         summary = next(filter(lambda t: not t.filename.endswith("miniflask/miniflask.py"), reversed(caller_traceback)))
                         adj = (fg('blue') + "Defined" if definition_type == "definition" else fg('yellow') + "Overwritten") + attr('reset')
                         arg_err_str += linesep + "\t  " + adj + " in line %s in file '%s'." % (highlight_event(str(summary.lineno)), attr('dim') + path.relpath(summary.filename) + attr('reset'))
+                        if isinstance(missing_argument_message, str):
+                            error_message_str = linesep * 2 + attr("bold") + missing_argument_message + attr("reset")
                 args_err_strs.append(arg_err_str)
-            raise ValueError(("Missing CLI-arguments or unspecified variables during miniflask call." + linesep + linesep.join(args_err_strs)))
+            raise ValueError("Missing CLI-arguments or unspecified variables during miniflask call." + linesep + linesep.join(args_err_strs) + error_message_str)
 
         # finally parse lambda-dependencies
         for varname, (val, cliargs, parsefn, caller_traceback, _mf) in self._settings_parse_later.items():
