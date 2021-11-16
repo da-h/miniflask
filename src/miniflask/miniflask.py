@@ -982,6 +982,43 @@ class miniflask():
         # (argparse does only allow the `key=value`-syntax for single-dash definitions)
         argv = [v for val in argv for v in (val.split("=", 1) if val.startswith("--") else [val])]  # pylint: disable=superfluous-parens
 
+        # parse nested expressions
+        argv_flat = []
+        namespaces = [""]
+        len_argv = len(argv)
+        for i, arg in enumerate(argv):
+
+            # here the actual nesting takes place, remember any new level by adding to the namespace list
+            if arg == "[":
+                namespaces.append("")
+                continue
+            if arg == "]":
+                namespaces.pop()
+                if len(namespaces) == 0:
+                    raise ValueError("Nesting-Error during parse of CLI-Arguments. Did you forget to include an '[' ?")
+                continue
+
+            # all non-arguments are values and thus should be retained
+            if not arg.startswith("--"):
+                argv_flat.append(arg)
+                continue
+
+            # remember argument as possible namespace in case of following nested arguments
+            namespaces[-1] = arg[2:]
+
+            # skip argument if is just a namespace
+            if i < len_argv and argv[i + 1] == "[":
+                continue
+
+            # actual name is name with namespace
+            if arg.startswith("--no-"):
+                namespaces[-1] = namespaces[-1][3:]
+                arg = "--no-" + ".".join(namespaces)
+            else:
+                arg = "--" + ".".join(namespaces)
+            argv_flat.append(arg)
+        argv = argv_flat
+
         # remember varids from user-args & fuzzy matching the settings
         user_varids = {}
         for i, varid in enumerate(argv):
