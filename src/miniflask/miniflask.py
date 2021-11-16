@@ -693,6 +693,8 @@ class miniflask():
             Setting to `False` disables function parsing if the value is a method itself. Doing so may be required if the value to be saved is a function itself. By default miniflask will call function values to set the value dynamically as part of the variable dependency chain.
         - `caller_traceback`:  
             The traceback to use when an error occurs during registration of any of the listed variables. (Defaults to current traceback).
+        - `missing_argument_message`:  
+            String to show the user whenever one of the given (and required) arguments are not present after CLI-parsing.
 
         Examples:
         ```python
