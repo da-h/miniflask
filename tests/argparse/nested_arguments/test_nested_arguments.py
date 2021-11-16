@@ -60,7 +60,7 @@ def test_nested_arguments_level1_nesting(capsys):
 
     mf.event.main()
     captured = capsys.readouterr()
-    assert captured.out == """
+    assert ansi_escape(captured.out) == """
 modules.all
     ├── modules.otherdir.module2.submodule
     ├── modules.parentdir.module1
@@ -94,7 +94,7 @@ def test_nested_arguments_level2_nesting(capsys):
 
     mf.event.main()
     captured = capsys.readouterr()
-    assert captured.out == """
+    assert ansi_escape(captured.out) == """
 modules.all
     ├── modules.otherdir.module2.submodule
     ├── modules.parentdir.module1
@@ -139,7 +139,7 @@ def test_nested_arguments_level3_nesting(capsys):
 
     mf.event.main()
     captured = capsys.readouterr()
-    assert captured.out == """
+    assert ansi_escape(captured.out) == """
 modules.all
     ├── modules.otherdir.module2.submodule
     ├── modules.parentdir.module1
@@ -188,7 +188,7 @@ def test_nested_arguments_level5_nesting(capsys):
 
     mf.event.main()
     captured = capsys.readouterr()
-    assert captured.out == """
+    assert ansi_escape(captured.out) == """
 modules.all
     ├── modules.otherdir.module2.submodule
     ├── modules.parentdir.module1
