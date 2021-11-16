@@ -86,3 +86,23 @@ def register(mf):
 
 
 
+
+## Nested Arguments
+Given nested modules, it is possible to group variables in the CLI using the folllowing syntax:
+```python
+--module1.submodule [ --var1 42 --var2 43 ]
+```
+or
+```python
+--module1 [ --submodule [ --var1 42 --var2 43 ] ]
+```
+
+These calls would translate to the following:
+```
+--module1.submodule.var1 42
+--module1.submodule.var2 43
+```
+
+
+
+
