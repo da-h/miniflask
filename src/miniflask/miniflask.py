@@ -222,9 +222,12 @@ class miniflask():
         return mf.getEvents()
 
     # pretty print of all available modules
-    def showModules(self, directory=None, prepend="", id_pre=None, with_event=True, direct_print=True):  # noqa: C901 too-complex pylint: disable=inconsistent-return-statements
+    def showModules(self, directory=None, prepend="", id_pre=None, with_event=True, direct_print=True, visited=None):  # noqa: C901 too-complex pylint: disable=inconsistent-return-statements
         out = ""
         any_module_found = False
+
+        if visited is None:
+            visited = set()
 
         if not directory:
             for basename, loop_directory in self.module_dirs.items():
@@ -237,10 +240,13 @@ class miniflask():
             out += "\n"
             out += highlight_name(path.basename(id_pre)) + "\n"
         dirs = [d for d in listdir(directory) if path.isdir(path.join(directory, d)) and not d.startswith("_")]
+        visited_next = visited.union(set([path.realpath(path.join(directory, d)) for d in dirs]))
         for i, d in enumerate(dirs):
             if d.startswith("."):
                 continue
             if path.exists(path.join(directory, d, ".ignoredir")):
+                continue
+            if path.realpath(path.join(directory, d)) in visited:
                 continue
             module_id = id_pre + "." + d if id_pre != "" else d
 
@@ -269,7 +275,8 @@ class miniflask():
                         for e in events:
                             unique_flag = "!" if e[1] else ">"
                             print(prepend + tree_symb_next + unique_flag + " " + highlight_event(e[0]))
-            out_sub, module_found_sub = self.showModules(path.join(directory, d), prepend=prepend + tree_symb_next, id_pre=module_id, with_event=with_event, direct_print=False)
+
+            out_sub, module_found_sub = self.showModules(path.join(directory, d), prepend=prepend + tree_symb_next, id_pre=module_id, with_event=with_event, direct_print=False, visited=visited_next)
             if module_found_sub:
                 out += out_sub
         if direct_print:
