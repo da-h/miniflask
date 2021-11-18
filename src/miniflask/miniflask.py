@@ -1296,7 +1296,8 @@ class miniflask_wrapper(miniflask):
         Define optional variables.
 
         # Note {.alert}
-        Optional variables are `None` if unspecified by the user.
+        - Optional variables are `None` if unspecified by the user.
+        - Exception are optional list types. These return `[]` if unspecified by the user.
 
         Args:
         - `variable_type`: The type to ask the user for in cli.
@@ -1305,6 +1306,7 @@ class miniflask_wrapper(miniflask):
         ```python
         mf.register_defaults({
             "myvar": mf.optional(int)
+            "myvarlist": mf.optional([int])
         })
         ```
         """  # noqa: W291
