@@ -396,6 +396,13 @@ class event(dict):
         setattr(self, name, fn_wrap)
         return fn_wrap
 
+    def named_call(self, event_name, *args, **kwargs):
+        eobj = self._mf.event_objs[event_name]
+        results = getattr(self, event_name)(*args, **kwargs)
+        if eobj.unique:
+            results = [results]
+        return dict(zip(self._data[event_name]["modules"], results))
+
     # disables deepcopy(event), as it is tightly bounded to other miniflask objects
     def __deepcopy__(self, memo):
         del memo
