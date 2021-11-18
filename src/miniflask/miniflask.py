@@ -240,7 +240,7 @@ class miniflask():
             out += "\n"
             out += highlight_name(path.basename(id_pre)) + "\n"
         dirs = [d for d in listdir(directory) if path.isdir(path.join(directory, d)) and not d.startswith("_")]
-        visited_next = visited.union(set([path.realpath(path.join(directory, d)) for d in dirs]))
+        visited_next = visited.union(set(path.realpath(path.join(directory, d)) for d in dirs))
         for i, d in enumerate(dirs):
             if d.startswith("."):
                 continue
