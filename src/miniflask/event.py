@@ -396,6 +396,31 @@ class event(dict):
         setattr(self, name, fn_wrap)
         return fn_wrap
 
+    def named_call(self, event_name, *args, **kwargs):
+        r"""
+        Retrieve the names of the modules together with the results.
+
+        **Note**:
+        Can be combined with `event.optional` functionality to return an empty dict if the event has not been registered, yet.
+
+        Args:
+        - `event_name`: (required)  
+            Event to be called.
+        - `*args`, `**kwargs`:  
+            Arguments to be passed to the event call.
+
+        Examples:
+        ```python
+        for module_id, result in event.named_call('myevent', the_argument=42):
+            print(f"Module with id {module_id} has returned", result)
+        ```
+        """  # noqa: W291
+        eobj = self._mf.event_objs[event_name]
+        results = getattr(self, event_name)(*args, **kwargs)
+        if eobj.unique:
+            results = [results]
+        return dict(zip(self._data[event_name]["modules"], results))
+
     # disables deepcopy(event), as it is tightly bounded to other miniflask objects
     def __deepcopy__(self, memo):
         del memo
