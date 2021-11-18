@@ -25,6 +25,7 @@ def print_all(state):
     printVal(state, "bool1")
     printVal(state, "bool2")
     printVal(state, "enum1")
+    printVal(state, "enum2")
     printVal(state, "str1")
     printVal(state, "str2")
     printVal(state, "str3")
@@ -38,18 +39,19 @@ def print_bool(state):
 def register(mf):
     mf.register_defaults({
         "int1": optional(int),
-        "int2": optional(int),
+        "int2": optional([int]),
         "float1": optional(float),
         "float2": optional(float),
         "float3": optional(float),
         "float4": optional(float),
         "float5": optional(float),
-        "float6": optional(float),
+        "float6": optional([float]),
         "bool1": optional(bool),
-        "bool2": optional(bool),
+        "bool2": optional([bool]),
         "enum1": optional(SIZE),
+        "enum2": optional([SIZE]),
         "str1": optional(str),
-        "str2": optional(str),
+        "str2": optional([str]),
         "str3": optional(str),
     })
     mf.register_event('print_all', print_all, unique=False)

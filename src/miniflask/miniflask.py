@@ -771,7 +771,7 @@ class miniflask():
                 else:
                     val_type, start_del, end_del = "tuple", "(", ",)"
                 raise RegisterError(f"Variable '%s' is registered as {val_type} of length 0 (see exception below), however it is required to define the type of the {val_type} arguments for it to become accessible from cli.\n\nYour options are:\n\t- define a default {val_type}, e.g. {start_del}\"a\", \"b\", \"c\"{end_del}\n\t- define the {val_type} type, e.g. {start_del}str{end_del}\n\t- define the variable as a helper using register_helpers(...)" % (fg('red') + varname + attr('reset')), traceback=caller_traceback)
-            self._settings_parser_add(varname, val[0], caller_traceback, nargs="*" if isinstance(val, list) else len(val), default=val)
+            self._settings_parser_add(varname, val[0], caller_traceback, nargs="*" if isinstance(val, list) else len(val), default=val, is_optional=is_optional)
             return
 
         # get argument type from value (this can be int, but also 42 for instance)
@@ -788,7 +788,7 @@ class miniflask():
         # we know the default argument, if the value is given
         # otherwise the value is a required argument (to be tested later)
         if is_optional:
-            kwarg["default"] = None
+            kwarg["default"] = None if nargs is None else []
         elif not isinstance(val, type) and not isinstance(val, EnumMeta):
             kwarg["default"] = default if default is not None else val
         else:
@@ -934,9 +934,6 @@ class miniflask():
 
             for varname, (val, cliargs, parsefn, caller_traceback, _mf) in settings.items():
                 is_fn = callable(val) and not isinstance(val, type) and not isinstance(val, EnumMeta) and parsefn
-
-                # if isinstance(val, optional_default):
-                #     breakpoint()
 
                 # eval dependencies/like expressions
                 if is_fn:
@@ -1299,7 +1296,8 @@ class miniflask_wrapper(miniflask):
         Define optional variables.
 
         # Note {.alert}
-        Optional variables are `None` if unspecified by the user.
+        - Optional variables are `None` if unspecified by the user.
+        - Exception are optional list types. These return `[]` if unspecified by the user.
 
         Args:
         - `variable_type`: The type to ask the user for in cli.
@@ -1308,6 +1306,7 @@ class miniflask_wrapper(miniflask):
         ```python
         mf.register_defaults({
             "myvar": mf.optional(int)
+            "myvarlist": mf.optional([int])
         })
         ```
         """  # noqa: W291
