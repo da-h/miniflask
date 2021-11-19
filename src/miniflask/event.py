@@ -421,6 +421,22 @@ class event(dict):
             results = [results]
         return dict(zip(self._data[event_name]["modules"], results))
 
+    def exists(self, event_name):
+        r"""
+        Check if an event has been registered.
+
+        Args:
+        - `event_name`: (required)  
+            Eventname to check.
+
+        Examples:
+        ```python
+        if event.exists('to_be_called'):
+            event.to_be_called()
+        ```
+        """  # noqa: W291
+        return event_name in self._mf.event_objs
+
     # disables deepcopy(event), as it is tightly bounded to other miniflask objects
     def __deepcopy__(self, memo):
         del memo
