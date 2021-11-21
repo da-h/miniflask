@@ -101,6 +101,7 @@ class miniflask():
         self._settings_parser_tracebacks = {}
         self.settings_parser_required_arguments = []
         self.default_modules = []
+        self.default_modules_overwrites = []
         self.bind_events = True
 
         # internal
@@ -523,6 +524,7 @@ class miniflask():
         if not required_event and not required_id:
             raise RegisterError("Default Modules should depend either on a event interface OR a regular expression. However, none are given")
         self.default_modules.append((module, required_event, required_id, overwrite_globals, save_traceback()))
+        self.default_modules_overwrites.append((module, required_event, required_id, overwrite_globals, save_traceback()))
 
     # saves function to a given (event-)name
     def register_event(self, name, fn, unique=True, call_before_after=True):
@@ -885,14 +887,19 @@ class miniflask():
         keys = self.modules_loaded.keys()
         if len(self.default_modules) > 1:
             self.print_heading("Loading Automatically Requested Default Modules")
-        for module, evt, glob, overwrite_globals, caller_traceback in self.default_modules:
+
+        # the default_module list gives us the order (last-in, first-out) of the default-modules to call
+        # we assume that newer default modules are meant to overwrite older ones
+        while len(self.default_modules) > 0:
+            module, evt, glob, overwrite_globals, caller_traceback = self.default_modules.pop()
+            del overwrite_globals, caller_traceback
+
             if evt:
                 if not isinstance(module, list):
                     module = [module]
                 modules_already_loaded = all(self.getModuleId(m) in self.modules_loaded for m in module)
                 if not modules_already_loaded and evt not in self.event_objs:
                     self.load(module, loading_text=partial(highlight_loading_default, evt))
-                    self.register_defaults(overwrite_globals, scope="", overwrite=True, caller_traceback=caller_traceback)
                 else:
                     found = self.event_objs[evt].modules
                     if not isinstance(found, list):
@@ -900,19 +907,23 @@ class miniflask():
                     found = [f.module_id for f in found]
                     print(highlight_loaded_default(found, evt))
 
-                # overwrite defaults if loaded default module itself or did not load module yet
-                if modules_already_loaded:
-                    self.register_defaults(overwrite_globals, scope="", overwrite=True, caller_traceback=caller_traceback)
-
             elif glob:
                 found = [highlight_loading_module(x) for x in keys if re.search(glob, x)]
                 if len(found) == 0:
                     self.load(module, loading_text=partial(highlight_loading_default, glob))
-                    self.register_defaults(overwrite_globals, scope="", overwrite=True, caller_traceback=caller_traceback)
                 elif len(found) > 1:
                     print(highlight_loaded_default(found, glob))
                 else:
                     print(highlight_loaded_default(found, glob))
+
+        # in case a default module / overwrite_global-combination is used in two places in the loading-tree,
+        # we assume that we want to overwrite the older values with the newer values
+        for module, evt, glob, overwrite_globals, caller_traceback in self.default_modules_overwrites:
+            del evt, glob
+            if not isinstance(module, list):
+                module = [module]
+            if all(self.getModuleId(m) in self.modules_loaded for m in module):
+                self.register_defaults(overwrite_globals, scope="", overwrite=True, caller_traceback=caller_traceback)
 
         # check fuzzy matching of overwrites
         for varname, val, cliargs, parsefn, caller_traceback, _mf in self._settings_parse_later_overwrites_list:
