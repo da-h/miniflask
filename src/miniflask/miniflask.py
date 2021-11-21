@@ -484,7 +484,14 @@ class miniflask():
         Typically, the requirement will be tested after parsing the modules given using cli-arguments.
 
         # Note {.alert}
-        It is only possibly to specify a requirement based on an event name *or* a module id regex.
+        - It is only possibly to specify a requirement based on an event name *or* a module id regex.
+        - In case of multiple `register_default_module` calls with the same dependency (i.e. the same required event), the calls are parsed as follows:
+            - in case the given default-modules differ in these calls
+                - the latest settings (i.e. `overwrite_globals`-dict) are used
+                - the settings of the unrealised calls are ignored
+            - in case the given default-modules are equal, all those calls are realized, and thus
+                - all settings are loaded, but
+                - the latest settings overwrite the older settings
 
         Args:
         - `module`: (required)  
