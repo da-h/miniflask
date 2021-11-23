@@ -29,7 +29,7 @@ class event(dict):
         self._mf = mf
         self.optional_value = optional
         self.hook = {}
-        self._data = {}
+        self._data = mf.event_data
         super().__init__()
 
     def make_dummy_fn(self, name, call_before_after=True):  # noqa: C901 too-complex  pylint: disable=too-many-statements
@@ -131,7 +131,6 @@ class event(dict):
         eventcopy = mfcopy.event
         ```
         """  # noqa: W291
-
         if name not in self._mf.event_objs:
             if not self.optional_value:
                 raise AttributeError("The Event '%s' has not been registered yet." % name)

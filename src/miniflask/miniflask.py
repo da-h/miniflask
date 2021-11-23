@@ -108,6 +108,7 @@ class miniflask():
         self.halt_parse = False
         self.argparse_called = False
         self.event_objs = {}
+        self.event_data = {}
         self.event = event(self, optional=False)
         self.event.optional = event(self, optional=True)
         self.state = {}
