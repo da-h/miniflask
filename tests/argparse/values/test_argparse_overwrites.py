@@ -173,3 +173,24 @@ def test_bool_truefalse(capsys):
 modules.module1.bool1: False
 modules.module1.bool2: True
 """.lstrip()
+
+
+def test_bool_novalue(capsys):
+    mf = miniflask.init(
+        module_dirs=str(Path(__file__).parent / "modules"),
+        debug=True
+    )
+
+    mf.load("module1")
+    mf.parse_args([
+        "--no-bool1",
+        "--bool2",
+    ])
+    captured = capsys.readouterr()
+
+    mf.event.print_bool()
+    captured = capsys.readouterr()
+    assert captured.out == """
+modules.module1.bool1: False
+modules.module1.bool2: True
+""".lstrip()
