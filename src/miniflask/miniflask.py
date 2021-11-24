@@ -1030,7 +1030,7 @@ class miniflask():
             namespaces[-1] = arg[2:]
 
             # skip argument if is just a namespace
-            if i < len_argv and argv[i + 1] == "[":
+            if i + 1 < len_argv and argv[i + 1] == "[":
                 continue
 
             # actual name is name with namespace
