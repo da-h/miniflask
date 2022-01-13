@@ -176,7 +176,7 @@ class state(MutableMapping):
 
         # check if key already known from this state-object
         if name in self.fuzzy_names:
-            return True
+            return self.fuzzy_names[name] in self.all
 
         # intern the string
         name = sys.intern(name)
