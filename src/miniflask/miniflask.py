@@ -1369,15 +1369,18 @@ class miniflask_wrapper(miniflask):
         return like(varname, alt, scope=scope, scope_name=scope_name)
 
     # loads module dependencies as child module
-    def load_as_child(self, module_name, **kwargs):
+    def load_as_child(self, module_name, bind_events=False, **kwargs):
         r"""
         Load another module as a child module.
 
+        Args:
+        - `bind_events`: (Default:`False`) Binding events of the module to attach as child-module.
+
         # Note {alert=warning}
-        These kinds of child modules are a feature of miniflask `v2.2`. Thus, at the moment the function is rather limited:
-        No events will be registered to be accessible globally. However, it is possible to access the state variables of that module.
+        These kinds of child modules are a preliminary feature of miniflask. Thus, at the moment the function is rather limited:
+        No events will be registered to be accessible globally by default. However, it is possible to access the state variables of that module.
         """  # noqa: W291
-        self.load(module_name, as_id='.', bind_events=False, **kwargs)
+        self.load(module_name, as_id='.', bind_events=bind_events, **kwargs)
 
     # enables relative imports
     def load(self, module_name, as_id=None, auto_query=True, **kwargs):
