@@ -21,11 +21,8 @@ def sorted_by_state_key_modules(items):
     module_tree_template = {"modules": {}, "params": []}
     module_tree = copy.deepcopy(module_tree_template)
     for k, v in items:
-        _splits = k.split('.')
-        _modules = _splits[:-1]
-        _param = _splits[-1]
         leaf = module_tree
-        for mod in _modules:
+        for mod in k.split('.')[:-1]:
             _leaf = leaf["modules"].get(mod, copy.deepcopy(module_tree_template))
             if mod not in leaf:
                 leaf["modules"][mod] = _leaf
