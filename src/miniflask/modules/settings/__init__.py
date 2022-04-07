@@ -1,6 +1,8 @@
 import os
+import copy
 from enum import EnumMeta
 from itertools import zip_longest
+from collections import deque
 
 from colored import attr, fg
 
@@ -12,6 +14,31 @@ html_module = lambda x: x  # noqa: E731 no-lambda
 html_name = lambda x: x  # noqa: E731 no-lambda
 html_val = lambda x: x  # noqa: E731 no-lambda
 html_val_overwrite = lambda x: x  # noqa: E731 no-lambda
+
+
+def sorted_by_state_key_modules(items):
+    """Sort items based on state keys with module nesting, and alphabetical order."""
+    module_tree_template = {"modules": {}, "params": []}
+    module_tree = copy.deepcopy(module_tree_template)
+    for k, v in items:
+        _splits = k.split('.')
+        _modules = _splits[:-1]
+        _param = _splits[-1]
+        leaf = module_tree
+        for mod in _modules:
+            _leaf = leaf["modules"].get(mod, copy.deepcopy(module_tree_template))
+            if mod not in leaf:
+                leaf["modules"][mod] = _leaf
+            leaf = _leaf
+        leaf["params"].append((k, v))
+    # iterate over tree
+    modules = deque([module_tree])
+    while modules:
+        mod = modules.pop()
+        for m in sorted(mod["modules"], reverse=True):
+            modules.append(mod["modules"][m])
+        for e in sorted(mod["params"]):
+            yield e
 
 
 def listsettings(mf, state, asciicodes=True):
@@ -33,7 +60,7 @@ def listsettings(mf, state, asciicodes=True):
     preamble_text = "Folder│" + color_name("module") + "│" + color_module("variable") + (" " * (max_k_len - 22)) + " = " + color_val("value") + linesep
     preamble_text += "—" * (max_k_len + 8) + linesep if asciicodes else ''
 
-    for k, v in sorted(state.all.items()):
+    for k, v in sorted_by_state_key_modules(state.all.items()):
 
         # ignore state variables that are not registered for argument parsing
         if k not in state.default:
