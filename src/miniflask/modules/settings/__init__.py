@@ -32,9 +32,9 @@ def sorted_by_state_key_modules(items):
     modules = deque([module_tree])
     while modules:
         mod = modules.pop()
-        for m in sorted(mod["modules"], reverse=True):
+        for m in sorted(mod["modules"], reverse=True, key=str.lower):
             modules.append(mod["modules"][m])
-        for e in sorted(mod["params"]):
+        for e in sorted(mod["params"], key=lambda tup: str.lower(tup[0])):
             yield e
 
 
