@@ -24,20 +24,23 @@ def listsettings(mf, state, asciicodes=True):
     linesep = os.linesep if asciicodes else "\n"
     attr_fn = (lambda x: '') if not asciicodes else attr
 
+    text_list = []
     last_k = []
     if len(state.all) == 0:
         return "No Settings available."
-    maxklen = max(len(k) for k in state.all.keys())
-    text = "Folder│" + color_name("module") + "│" + color_module("variable") + (" " * (maxklen - 22)) + " = " + color_val("value") + linesep
-    text += "—" * (maxklen + 8) + linesep if asciicodes else ''
+    max_k_len = max(len(k) for k in state.all.keys())
+
+    preamble_text = "Folder│" + color_name("module") + "│" + color_module("variable") + (" " * (max_k_len - 22)) + " = " + color_val("value") + linesep
+    preamble_text += "—" * (max_k_len + 8) + linesep if asciicodes else ''
+
     for k, v in sorted(state.all.items()):
 
         # ignore state variables that are not registered for argument parsing
         if k not in state.default:
             continue
 
-        klen = len(k)
-        korig = k
+        k_len = len(k)
+        k_orig = k
         overwritten = v != (state.default[k].default if hasattr(state.default[k], 'default') else state.default[k])
         k = k.split(".")
         if len(k) > 1:
@@ -49,20 +52,20 @@ def listsettings(mf, state, asciicodes=True):
             k_hidden = k
             k_hidden[-1] = color_module(k_hidden[-1])
 
-        is_lambda = callable(state.default[korig]) and not isinstance(state.default[korig], type) and not isinstance(state.default[korig], EnumMeta) and not isinstance(state.default[korig], like)
-        value_str = attr_fn('dim') + "λ ⟶   " + attr_fn('reset') + str(state.default[korig].default) if is_lambda else state.default[korig].str(asciicodes=False) if hasattr(state.default[korig], 'str') else str(state.default[korig])
+        is_lambda = callable(state.default[k_orig]) and not isinstance(state.default[k_orig], type) and not isinstance(state.default[k_orig], EnumMeta) and not isinstance(state.default[k_orig], like)
+        value_str = attr_fn('dim') + "λ ⟶   " + attr_fn('reset') + str(state.default[k_orig].default) if is_lambda else state.default[k_orig].str(asciicodes=False) if hasattr(state.default[k_orig], 'str') else str(state.default[k_orig])
         append = "" if not overwritten else " ⟶   " + color_val_overwrite(str(v))
-        text += "│".join(k_hidden) + (" " * (maxklen - klen)) + " = " + color_val(value_str) + append + linesep
+        text_list.append("│".join(k_hidden) + (" " * (max_k_len - k_len)) + " = " + color_val(value_str) + append)
 
         # add definition paths
         if state["show_registration_definitions"]:
-            prefix = "│".join([" " * len(k) for k in korig.split(".")]) + (" " * (maxklen - klen)) + "   "
-            for definition_type, caller_traceback in mf._settings_parser_tracebacks[korig]:
+            prefix = "│".join([" " * len(k) for k in k_orig.split(".")]) + (" " * (max_k_len - k_len)) + "   "
+            for definition_type, caller_traceback in mf._settings_parser_tracebacks[k_orig]:
                 summary = next(filter(lambda t: not t.filename.endswith("miniflask/miniflask.py"), reversed(caller_traceback)))
                 arg_err_str = (fg('blue') + "definition" if definition_type == "definition" else fg('yellow') + "overwritten") + attr('reset') + " in line %s in file '%s'." % (highlight_event(str(summary.lineno)), attr('dim') + os.path.relpath(summary.filename) + attr('reset'))
-                text += prefix + arg_err_str + linesep
+                text_list.append(prefix + arg_err_str)
 
-    return text
+    return preamble_text + linesep.join(text_list)
 
 
 def init(mf, state):
