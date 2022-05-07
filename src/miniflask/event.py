@@ -131,6 +131,8 @@ class event(dict):
         eventcopy = mfcopy.event
         ```
         """  # noqa: W291
+        if name == "optional" and self.optional_value:
+            return self
         if name not in self._mf.event_objs:
             if not self.optional_value:
                 raise AttributeError("The Event '%s' has not been registered yet." % name)
