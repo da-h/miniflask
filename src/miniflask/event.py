@@ -443,7 +443,7 @@ class event(dict):
         del memo
         return self
 
-    def outervar(self):  # pylint: disable=no-self-use
+    def outervar(self):
         r"""!outervar
         For debbuging mainly: Changing the variables an event is called with.
 
