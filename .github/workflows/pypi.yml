@@ -21,8 +21,8 @@ jobs:
         with:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           source_file: "src/miniflask/__init__.py"
-          # extraction_regex: "^__version__\\s*=\\s*\"(\\d[\\d\\.]+)\""
-          extraction_regex: "__version__\\s*=\\s*\"(\\d[\\d\\.]+)\""
+          extraction_regex: "__version__\\s*=\\s*[\\'\"]((?:0|[1-9]\\d*)\\.(?:0|[1-9]\\d*)\\.(?:0|[1-9]\\d*)(?:-(?:(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\\.(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\\+(?:[0-9a-zA-Z-]+(?:\\.[0-9a-zA-Z-]+)*))?)[\\'\"]"
+          capture_group: 1
           tag_message: "Release"
           tag_format: "v{version}"
       - name: Show version
