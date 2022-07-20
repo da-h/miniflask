@@ -1310,7 +1310,7 @@ class miniflask_wrapper(miniflask):
         return new_module_name
 
     # wrapper for the optional class
-    def optional(self, variable_type):  # pylint: disable=no-self-use
+    def optional(self, variable_type):
         r"""
         Define optional variables.
 
