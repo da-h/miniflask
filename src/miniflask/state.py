@@ -376,6 +376,11 @@ class like:
         return self.str()
 
 
+class as_is_callable():  # pylint: disable=too-few-public-methods
+    def __init__(self, obj):
+        self.obj = obj
+
+
 class optional:
     def __init__(self, variable_type):
         self.type = variable_type
