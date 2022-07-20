@@ -17,7 +17,7 @@ from colored import fg, attr
 # package modules
 from .exceptions import save_traceback, format_traceback_list, RegisterError, StateKeyError
 from .event import event, event_obj
-from .state import state, like, optional as optional_default
+from .state import state, like, as_is_callable, optional as optional_default
 from .dummy import miniflask_dummy
 from .util import getModulesAvail, EnumAction, get_relative_id
 from .util import highlight_error, highlight_name, highlight_module, highlight_loading, highlight_loading_default, highlight_loaded_default, highlight_loading_module, highlight_loaded_none, highlight_loaded, highlight_event, str2bool, get_varid_from_fuzzy
@@ -752,6 +752,10 @@ class miniflask():
                 module_id = self.getModuleId(module_id)
                 varname = module_id + "." + key
 
+            # overwrite parsefn for as_is_callable object
+            if isinstance(val, as_is_callable):
+                parsefn = True
+
             # actual initialization is done when all modules has been parsed
             if overwrite:
                 self._settings_parse_later_overwrites_list.append((varname, val, cliargs, parsefn, caller_traceback, self))
@@ -1367,6 +1371,31 @@ class miniflask_wrapper(miniflask):
         if scope is not None:
             scope, _ = self._get_relative_module_id(scope)
         return like(varname, alt, scope=scope, scope_name=scope_name)
+
+    def as_is_callable(self, variable):
+        r"""
+        Wrap variables for register_-calls to ensure they are not parsed during initialization.
+
+        # Note {.alert}
+        This function is typically useful in case a module saves a callable object upon initialization inside a helper variable.
+
+        Args:
+        - `varname`: The variable to use.
+
+        Examples:
+
+        **Background / When to use this feature?**  
+        Consider the following variable definitions of `var1` and `var2`, whene `MyClass` is callable, i.e. we can run `state["var1"](*args, **kwargs)`.
+        ```python
+        mf.register_helpers({
+            "var1": MyClass(),
+            "var2": mf.as_is_callable(MyClass()),
+        })
+        ```
+        The definition of `var1` may cause problems because miniflask allows to specify functions as variables. This allows dependencies between variables that are ”solved“ during the initialization of the program. To do this, miniflask needs to evaluate the callable variables (also recursively due to possible multi-level dependencies) until their result is not a callable function anymore. Unfortunately, we cannot decide programatically when a callable is intended to be evaluated during initialization to solve variable dependencies, or, as in this case, it is just a class-instance that we want to use in a modules events.
+        Same applies to functions: if we want to save a function, we need to specify that it has nothing to do with variable dependencies, i.e. we need to define it using `mf.as_is_callable`.
+        """  # noqa: W291
+        return as_is_callable(variable)
 
     # loads module dependencies as child module
     def load_as_child(self, module_name, bind_events=False, **kwargs):
