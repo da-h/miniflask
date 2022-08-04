@@ -25,6 +25,15 @@ jobs:
           capture_group: 1
           tag_message: "Release"
           tag_format: "v{version}"
+      - name: Create Release
+        if: steps.autotag.outputs.tagsha
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: v${{ steps.autotag.outputs.tagname }}
+          release_name: "Miniflask ${{ steps.autotag.outputs.tagname }}"
       - name: Show version
         if: steps.autotag.outputs.tagsha
         run: echo ${{ steps.autotg.outputs.tagsha }}
