@@ -754,7 +754,7 @@ class miniflask():
 
             # overwrite parsefn for as_is_callable object
             if isinstance(val, as_is_callable):
-                parsefn = True
+                parsefn = False
 
             # actual initialization is done when all modules has been parsed
             if overwrite:
