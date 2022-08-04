@@ -380,6 +380,9 @@ class as_is_callable():  # pylint: disable=too-few-public-methods
     def __init__(self, obj):
         self.obj = obj
 
+    def __call__(self, *args, **kwargs):
+        return self.obj(*args, **kwargs)
+
 
 class optional:
     def __init__(self, variable_type):
