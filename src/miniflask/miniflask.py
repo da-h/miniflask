@@ -179,9 +179,13 @@ class miniflask():
         if importpath == "system":
             return import_module(module_spec["importname"])
 
-        direct_import = import_module(module_spec["importname"])
-        if direct_import:
-            return direct_import
+        try:
+            direct_import = import_module(module_spec["importname"])
+            if direct_import:
+                return direct_import
+        except ModuleNotFoundError:
+            pass
+
         # imports across filesystem
         # the random id (_instance_id) ensures sys.modules does not cache different miniflask instances
         # (first we need to load the parent module, if available)
