@@ -177,10 +177,10 @@ class miniflask():
 
         # system import (e.g. miniflask internal modules or pip-module repositories)
         if importpath == "system":
-            return import_module(module_spec["importname"])
+            return import_module(module_spec["id"])
 
         try:
-            direct_import = import_module(module_spec["importname"])
+            direct_import = import_module(module_spec["id"])
             if direct_import:
                 return direct_import
         except ModuleNotFoundError:
