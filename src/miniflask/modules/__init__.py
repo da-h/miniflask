@@ -1,11 +1,9 @@
+def showModules(state, event):
+    print(event._mf.showModules(with_event=state.all["events"]))
 
-def registerPredefined(modules_avail):
-    for m in ["modules", "events", "info", "settings", "definitions"]:
-        module_name_id = 'miniflask.' + m
-        importname = 'miniflask.modules.' + m
-        modules_avail[module_name_id] = {
-            'id': module_name_id,
-            'importpath': "system",
-            'importname': importname,
-            'lowpriority': False
-        }
+
+def register(mf):
+    mf.register_globals({
+        "events": False
+    })
+    mf.register_event('init', showModules, unique=False)

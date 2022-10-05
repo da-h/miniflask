@@ -6,8 +6,8 @@ from collections import deque
 
 from colored import attr, fg
 
-from ...util import highlight_module, highlight_val, highlight_name, highlight_val_overwrite, highlight_event
-from ...state import like
+from ..util import highlight_module, highlight_val, highlight_name, highlight_val_overwrite, highlight_event
+from ..state import like
 
 
 html_module = lambda x: x  # noqa: E731 no-lambda
