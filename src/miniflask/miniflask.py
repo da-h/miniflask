@@ -6,7 +6,6 @@ import traceback
 from functools import partial
 from os import path, listdir, linesep, get_terminal_size
 from importlib import import_module
-from importlib.machinery import PathFinder as ImportPathFinder
 from enum import Enum, EnumMeta
 from argparse import ArgumentParser, REMAINDER as ARGPARSE_REMAINDER
 from typing import List
@@ -44,7 +43,6 @@ def registerPredefined(modules_avail):
         importname = 'miniflask.' + m
         modules_avail[module_name_id] = {
             'id': module_name_id,
-            'importpath': "system",
             'importname': importname,
             'lowpriority': False
         }
@@ -181,40 +179,8 @@ class miniflask():
 
     def import_module(self, module_name):
         module_spec = self.modules_avail[module_name]
-        importpath = module_spec["importpath"]
+        return import_module(module_spec["id"])
 
-        # system import (e.g. miniflask internal modules or pip-module repositories)
-        if importpath == "system":
-            return import_module(module_spec["id"])
-
-        try:
-            direct_import = import_module(module_spec["id"])
-            if direct_import:
-                return direct_import
-        except ModuleNotFoundError:
-            pass
-
-        # imports across filesystem
-        # the random id (_instance_id) ensures sys.modules does not cache different miniflask instances
-        # (first we need to load the parent module, if available)
-        parent_module_name, rest = "miniflask." + self._instance_id + "." + path.basename(path.abspath(module_spec["importpath"])), ""
-        spec = ImportPathFinder().find_spec(parent_module_name, [path.dirname(importpath)])
-        if spec is None:
-            if rest:
-                raise ValueError("Could not import parent Module named '%s'. This is needed for module named '%s' (defined in '%s')." % (parent_module_name, module_spec["id"], module_spec["importpath"]))
-            raise ValueError("Module named '%s' (defined in '%s') could not be imported." % (module_spec["id"], module_spec["importpath"]))
-        if spec.loader is None:
-            raise ValueError("Could not import parent Module named '%s'. This is needed for module named '%s' (defined in '%s'). Did you maybe miss to define a `__init__.py` file in any subfolder?" % (parent_module_name, module_spec["id"], module_spec["importpath"]))
-
-        # set parent module name to identifier given by dict (base_id)
-        parent_module_name = "miniflask." + self._instance_id + "." + module_spec["base_id"]
-        spec.loader.name = parent_module_name
-
-        # actually load the parent module
-        spec.loader.load_module()
-
-        # now load the requested module
-        return import_module(parent_module_name + "." + module_spec["importname"])
 
     # module event
     def getModuleEvents(self, module_id, mf=None):
