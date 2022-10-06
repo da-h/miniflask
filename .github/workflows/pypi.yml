@@ -32,7 +32,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: v${{ steps.autotag.outputs.tagname }}
+          tag_name: ${{ steps.autotag.outputs.tagname }}
           release_name: "Miniflask ${{ steps.autotag.outputs.tagname }}"
       - name: Show version
         if: steps.autotag.outputs.tagsha
