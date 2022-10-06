@@ -937,8 +937,7 @@ class miniflask():
 
         # in case a default module / overwrite_global-combination is used in two places in the loading-tree,
         # we assume that we want to overwrite the older values with the newer values
-        for module, evt, glob, overwrite_globals, caller_traceback in self.default_modules_overwrites:
-            del evt, glob
+        for module, _, _, overwrite_globals, caller_traceback in self.default_modules_overwrites:
             if not isinstance(module, list):
                 module = [module]
             if all(self.getModuleId(m) in self.modules_loaded for m in module):
