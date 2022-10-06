@@ -22,8 +22,7 @@ from .dummy import miniflask_dummy
 from .util import getModulesAvail, EnumAction, get_relative_id
 from .util import highlight_error, highlight_name, highlight_module, highlight_loading, highlight_loading_default, highlight_loaded_default, highlight_loading_module, highlight_loaded_none, highlight_loaded, highlight_event, str2bool, get_varid_from_fuzzy
 
-from .modules import registerPredefined
-from .modules.settings import listsettings
+from .settings import listsettings
 
 
 def print_info(*args, color=fg('green'), msg="INFO"):
@@ -37,6 +36,18 @@ def get_default_args(func):
         for k, v in signature.parameters.items()
         if v.default is not inspect.Parameter.empty and v.default is not None
     }
+
+
+def registerPredefined(modules_avail):
+    for m in ["modules", "events", "info", "settings", "definitions"]:
+        module_name_id = 'miniflask.' + m
+        importname = 'miniflask.modules.' + m
+        modules_avail[module_name_id] = {
+            'id': module_name_id,
+            'importpath': "system",
+            'importname': importname,
+            'lowpriority': False
+        }
 
 
 # ================ #
@@ -177,10 +188,10 @@ class miniflask():
 
         # system import (e.g. miniflask internal modules or pip-module repositories)
         if importpath == "system":
-            return import_module(module_spec["importname"])
+            return import_module(module_spec["id"])
 
         try:
-            direct_import = import_module(module_spec["importname"])
+            direct_import = import_module(module_spec["id"])
             if direct_import:
                 return direct_import
         except ModuleNotFoundError:
