@@ -36,7 +36,6 @@ def getModulesAvail(module_dirs, f=None):
                 'id': module_name_id,
                 'lowpriority': path.exists(path.join(dirpath, ".lowpriority")),
                 'importname': local_import_name,
-                'importpath': directory,
             }
     return f
 
