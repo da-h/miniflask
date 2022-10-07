@@ -30,7 +30,10 @@ def getModulesAvail(module_dirs, f=None):
 
         for (dirpath, dirnames, filenames) in walk(directory):
             local_import_name = dirpath[len(directory) + 1:].replace(path.sep, ".")
-            module_name_id = base_module_name + "." + local_import_name
+            if local_import_name:
+                module_name_id = base_module_name + "." + local_import_name
+            else:
+                module_name_id = base_module_name
 
             # empty module id is not allowed
             if len(module_name_id) == 0:
