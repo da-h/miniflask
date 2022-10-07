@@ -65,7 +65,6 @@ class miniflask():
                 (The directory name will also be repository name / module prefix for all modules inside that folder.)
             - **List**: specifies multiple paths to the module repository to use.  
                 (The directory names will also be repository names / module prefixes for all modules inside that folders.)
-            - **Dict**: specifies repository names / module prefixes together with their respective repository paths.
         - `debug`: Debug Mode  
             Debug Mode disables catching/printing + beautifying Exceptions. Also, it disables truncating the traceback messages of internal miniflask functions.
 
@@ -77,13 +76,6 @@ class miniflask():
 
         # Multiple Module Repositories (named "publicmodules" and "privatemodules")
         mf = miniflask.init(["privatemodules", "publicmodules"])
-
-        # Multiple Module Repositories (with custom names "pub" and "priv")
-        # -> modules inside of privatemodules will get the prefix "priv."
-        mf = miniflask.init({
-            "priv": "privatemodules",
-            "pub":  "publicmodules"
-        })
         ```
 
         """  # noqa: W291
@@ -97,10 +89,8 @@ class miniflask():
             self.module_dirs = {path.basename(m): m for m in module_dirs}
         elif isinstance(module_dirs, str):
             self.module_dirs = {path.basename(module_dirs): module_dirs}
-        elif isinstance(module_dirs, dict):
-            self.module_dirs = module_dirs
         else:
-            raise ValueError("Only dict or list allowed for `module_dirs'. Found type '%s'." % type(module_dirs))
+            raise ValueError("Only string or list allowed for `module_dirs'. Found type '%s'." % type(module_dirs))
 
         # arguments from cli-stdin
         self.settings_parser = ArgumentParser(usage=sys.argv[0] + " modulelist [optional arguments]")
@@ -1237,7 +1227,6 @@ class miniflask_wrapper(miniflask):
         The object has the following public variables:
         - `module_id`: The internal unique id used for this module.
         - `module_name`: The actual name of the module (the part after the last dot).
-        - `module_base`: The repository name of the module
         - `state`: The local state object.
 
         Also as a `miniflask` object itself it inherits all methods described in [miniflask object](../02-miniflask-instance/) with the exceptions listed in this chapter.
@@ -1246,7 +1235,6 @@ class miniflask_wrapper(miniflask):
         self.module_id = module_name
         self.module_id_initial = module_name
         self.module_name = module_name.split(".")[-1]
-        self.module_base = module_name.split(".")[0]
         self.wrapped_class = mf.wrapped_class if hasattr(mf, 'wrapped_class') else mf
         self.state = state(module_name, self.wrapped_class.state, self.wrapped_class.state_registrations)
         self._recently_loaded = []
