@@ -182,8 +182,7 @@ class miniflask():
 
     def import_module(self, module_name):
         module_spec = self.modules_avail[module_name]
-        return import_module(module_spec["id"])
-
+        return import_module(module_spec["importname"])
 
     # module event
     def getModuleEvents(self, module_id, mf=None):
