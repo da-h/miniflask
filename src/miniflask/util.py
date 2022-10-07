@@ -2,8 +2,22 @@ import re
 import argparse
 from argparse import Action
 from os import walk, path
+from pathlib import Path
 
 from colored import attr, fg
+
+
+# get total importable module name of directory, as seen from python
+# - i.e. $result can be loaded using `import $result`
+def get_full_base_module_name(directory):
+    directory = Path(directory).absolute()
+    base_import = directory.name
+
+    while (directory.parent / "__init__.py").exists():
+        directory = directory.parent
+        base_import = directory.name + "." + base_import
+
+    return base_import
 
 
 # get modules in a directory
@@ -13,6 +27,8 @@ def getModulesAvail(module_dirs, f=None):
     for base_module_name, directory in module_dirs.items():
         base_module_name = base_module_name.replace(".", "_")
         directory = str(directory)  # in case directory is given as PosixPath etc.
+        full_base_module_name = get_full_base_module_name(directory)
+
         for (dirpath, dirnames, filenames) in walk(directory):
             local_import_name = dirpath[len(directory) + 1:].replace(path.sep, ".")
             module_name_id = base_module_name + "." + local_import_name
@@ -35,8 +51,9 @@ def getModulesAvail(module_dirs, f=None):
                 'base_id': base_module_name,
                 'id': module_name_id,
                 'lowpriority': path.exists(path.join(dirpath, ".lowpriority")),
-                'importname': local_import_name,
+                'importname': full_base_module_name + "." + local_import_name
             }
+
     return f
 
 
