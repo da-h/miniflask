@@ -25,7 +25,6 @@ def getModulesAvail(module_dirs, f=None):
     if f is None:
         f = {}
     for base_module_name, directory in module_dirs.items():
-        base_module_name = base_module_name.replace(".", "_")
         directory = str(directory)  # in case directory is given as PosixPath etc.
         full_base_module_name = get_full_base_module_name(directory)
 
