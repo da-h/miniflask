@@ -1,10 +1,33 @@
-from pathlib import Path
+import os
 import pytest
 import miniflask  # noqa: E402
 
+# to test relative imports, we have to assume that the base-directory can be anywhere, for pytests sake
+relpath = os.path.relpath(os.path.dirname(__file__), os.getcwd())
+
 
 def init_mf():
-    return miniflask.init(module_dirs={"modules": str(Path(__file__).parent / "modules_b")}, debug=True)
+    return miniflask.init(module_dirs=[relpath + "/" + "./modules"], debug=True)
+
+
+def test_setup():
+    mf = init_mf()
+    mf.run(argv=[], modules=["miniflask.modules"])
+    assert sorted([m for m in mf.modules_avail.keys() if not m.startswith("miniflask")]) == [
+        'modules.otherdir.module2',
+        'modules.parentdir.module1',
+        'modules.parentdir.module2',
+        'modules.parentdir.module3',
+        'modules.parentdir.module3.submodule',
+        'modules.parentdir.module3.submodule.subsubmodule',
+        'modules.parentdir.module3.submodule2',
+        'modules.parentdir.module3.submodule_dir.submodule_with_folder_in_between',
+        'modules.parentdir.module3.submodule_without_autoload',
+        'modules.parentdir.module4',
+        'modules.parentdir.module5',
+        'modules.parentdir.module6',
+        'modules.parentdir.module7',
+    ]
 
 
 def test_shortid():
