@@ -41,7 +41,7 @@ def get_default_args(func):
 def registerPredefined(modules_avail):
     for m in ["modules", "events", "info", "settings", "definitions"]:
         module_name_id = 'miniflask.' + m
-        importname = 'miniflask.modules.' + m
+        importname = 'miniflask.' + m
         modules_avail[module_name_id] = {
             'id': module_name_id,
             'importpath': "system",
