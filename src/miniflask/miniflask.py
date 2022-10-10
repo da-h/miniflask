@@ -17,7 +17,7 @@ from colored import fg, attr
 # package modules
 from .exceptions import save_traceback, format_traceback_list, RegisterError, StateKeyError
 from .event import event, event_obj
-from .state import state, like, as_is_callable, optional as optional_default
+from .state import state, as_is_callable, optional as optional_default
 from .dummy import miniflask_dummy
 from .util import getModulesAvail, EnumAction, get_relative_id
 from .util import highlight_error, highlight_name, highlight_module, highlight_loading, highlight_loading_default, highlight_loaded_default, highlight_loading_module, highlight_loaded_none, highlight_loaded, highlight_event, str2bool, get_varid_from_fuzzy
@@ -701,9 +701,8 @@ class miniflask():
         - Enums (`Enum`)  
         - One-dimensional lists of basic types (e.g. `[int]`)
         - One-dimensional tuples of basic types (e.g. `(int,int)`)
-        - [Like Expressions](../../08-API/03-register(mf\)-Object/03-like.md)
         - Lambda Expressions of the form `lambda state, event: ...`.  
-            (Functionally, this is just like a `like`-Expression, but cannot take circular dependencies into account. The pro-side, however, is that any expression can be used inside the lambda-function.)
+            (As with events, lambdas can take `state`, `event`, `mf` or a combination of these arguments. Miniflask will outomatically find out what variables are required when parsing the expressions.)
 
         Note:
         This method is the base method for variable registrations.
@@ -1351,43 +1350,6 @@ class miniflask_wrapper(miniflask):
         ```
         """  # noqa: W291
         return optional_default(variable_type)
-
-    # like with relative imports
-    def like(self, varname, alt, scope="."):
-        r"""
-        Define state dependencies.
-
-        # Note {.alert}
-        Like variables are parsed *after* the CLI-arguments have been parsed:
-        - In case any CLI-argument changes a dependency the like-Dependency should change accordingly.
-        - If any CLI-argument changes the variable defined as a dependency, the dependency is canceled.
-
-        Args:
-        - `varname`: The variable identifier to use for the dependency.
-        - `alt`: The default value if no variable found.
-        - `scope`: The variable scope to search for the variable.
-
-        Examples:
-
-        **Global variables with Fallback**
-        ```python
-        mf.register_defaults({
-            "myvar": mf.like("globalvar", alt=42)
-        })
-        ```
-
-        **Local dependencies**
-        ```python
-        mf.register_defaults({
-            "othervar": mf.like(".var"),
-            "likeparent": mf.like("..parentvar")
-        })
-        ```
-        """  # noqa: W291
-        scope_name = scope
-        if scope is not None:
-            scope, _ = self._get_relative_module_id(scope)
-        return like(varname, alt, scope=scope, scope_name=scope_name)
 
     def as_is_callable(self, variable):
         r"""

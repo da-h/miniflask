@@ -7,7 +7,6 @@ from collections import deque
 from colored import attr, fg
 
 from ..util import highlight_module, highlight_val, highlight_name, highlight_val_overwrite, highlight_event
-from ..state import like
 
 
 html_module = lambda x: x  # noqa: E731 no-lambda
@@ -76,7 +75,7 @@ def listsettings(mf, state, asciicodes=True):
             k_hidden = k
             k_hidden[-1] = color_module(k_hidden[-1])
 
-        is_lambda = callable(state.default[k_orig]) and not isinstance(state.default[k_orig], type) and not isinstance(state.default[k_orig], EnumMeta) and not isinstance(state.default[k_orig], like)
+        is_lambda = callable(state.default[k_orig]) and not isinstance(state.default[k_orig], type) and not isinstance(state.default[k_orig], EnumMeta)
         value_str = attr_fn('dim') + "λ ⟶   " + attr_fn('reset') + str(state.default[k_orig].default) if is_lambda else state.default[k_orig].str(asciicodes=False) if hasattr(state.default[k_orig], 'str') else str(state.default[k_orig])
         append = "" if not overwritten else " ⟶   " + color_val_overwrite(str(v))
         text_list.append("│".join(k_hidden) + (" " * (max_k_len - k_len)) + " = " + color_val(value_str) + append)

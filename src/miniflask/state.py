@@ -355,27 +355,6 @@ def _create_excpetion_notunique(found_varids, name):
     return StateKeyError("Variable-Identifier '%s' is not unique. Found %i variables:\n\t%s\n\n    Call:\n        %s" % (highlight_module(name), len(found_varids), "\n\t".join(found_varids), name))
 
 
-class like:
-    def __init__(self, varname, alt, scope=None, scope_name=None):
-        if scope_name is None:
-            scope_name = scope
-        global_varname = varname if scope is None else scope + "." + varname
-        self.varname = scope_name + "." + varname if scope_name is not None else varname
-        self.alt = alt
-        self.fn = lambda state, event: state[global_varname] if global_varname in state else alt  # noqa: E731 no-lambda
-
-    def __call__(self, state, event):  # pylint: disable=redefined-outer-name
-        return self.fn(state, event)
-
-    def str(self, asciicodes=True, color_attr=attr):
-        if not asciicodes:
-            color_attr = lambda x: ''  # noqa: E731 no-lambda
-        return color_attr('dim') + "'" + str(self.varname) + "' or '" + str(self.alt) + "' ⟶   " + color_attr('reset') + str(self.default)
-
-    def __str__(self):
-        return self.str()
-
-
 class as_is_callable():  # pylint: disable=too-few-public-methods
     def __init__(self, obj):
         self.obj = obj
