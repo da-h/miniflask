@@ -773,7 +773,7 @@ class miniflask():
             if isinstance(val, as_is_callable):
                 parsefn = False
 
-            # actual initialization is done when all modules has been parsed
+            # actual initialization is done when all modules have been parsed
             if overwrite:
                 self._settings_parse_later_overwrites_list.append((varname, val, cliargs, parsefn, caller_traceback, self))
             else:
