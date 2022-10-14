@@ -16,7 +16,7 @@ Telling MiniFlask what exists.
 import miniflask
 
 # tell miniflask where to look for modules
-mf = miniflask.init(module_dirs="./modules")
+mf = miniflask.init(".modules")
 
 # parse CLI-args & run the main event
 mf.run()
@@ -48,7 +48,7 @@ For instance, we could organize the folder `./modules` like this:
 ```shell
 > ls
 main.py
-modules/
+mods/
     module1/__init__.py
       ...  /.module
     module2/__init__.py
@@ -63,11 +63,9 @@ modules/
 
 Further, we initialized miniflask using the line
 ```py
-mf = miniflask.init({
-    "mods": "./modules",
-})
+mf = miniflask.init(".mods")
 ```
-by specifying the name `mods` for our main repository contained in the folder `./modules/`.
+by specifying the name `mods` for our main repository contained in the folder `./mods/`.
 
 
 Every module in this repository can now be referenced in two ways: \block[
