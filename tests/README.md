@@ -28,14 +28,6 @@ or simply run all tests
 pytest
 ```
 
-#### Some notes
-
-- pytest executes all tests with the initial working directory (e.g. `tests`).
-    Therefore, relative module imports in miniflask down work and the absolute path is used (e.g. `str(Path(__file__).parent / "modules")` to add the `modules` directory as module).
-- pytest adds additional arguments to the execution call.
-    Therefore, pass the `argv` to miniflask manually (e.g. `mf.run(argv=[])`). 
-
-
 ### More information
 
 - [Full pytest documentation](https://docs.pytest.org/)
