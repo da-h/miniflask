@@ -3,11 +3,13 @@ import argparse
 from argparse import Action
 from os import walk, path
 from pathlib import Path
+from pkgutil import resolve_name
 
 from colored import attr, fg
+import inspect
 
 
-# get total importable module name of directory, as seen from python
+# get the absolute package name of the current file to cwd() 
 # - i.e. $result can be loaded using `import $result`
 def get_full_base_module_name(directory):
     directory = Path(directory).absolute()
@@ -21,22 +23,28 @@ def get_full_base_module_name(directory):
 
 
 # get modules in a directory
-def getModulesAvail(module_dirs, f=None):
+def getModulesAvail(python_import_paths, f=None):
     if f is None:
         f = {}
-    for base_module_name, directory in module_dirs.items():
-        directory = str(directory)  # in case directory is given as PosixPath etc.
-        full_base_module_name = get_full_base_module_name(directory)
+    for base_module_id, base_module_path in python_import_paths.items():
+        if base_module_path.startswith("."):
+            stack_frame = inspect.stack()[2] # the frame in which miniflask.init has been called
+            callee_module_path = Path(stack_frame.filename).parent
+            base_module_path = get_full_base_module_name(callee_module_path) + base_module_path
+        module = resolve_name(base_module_path)
+        directory = module.__path__[0]
 
         for (dirpath, dirnames, filenames) in walk(directory):
             local_import_name = dirpath[len(directory) + 1:].replace(path.sep, ".")
             if local_import_name:
-                module_name_id = base_module_name + "." + local_import_name
+                module_id = base_module_id + "." + local_import_name
+                module_path = base_module_path + "." + local_import_name
             else:
-                module_name_id = base_module_name
+                module_id = base_module_id
+                module_path = base_module_path
 
             # empty module id is not allowed
-            if len(module_name_id) == 0:
+            if len(module_id) == 0:
                 continue
 
             # ignore sub directories
@@ -49,10 +57,10 @@ def getModulesAvail(module_dirs, f=None):
                 continue
 
             # module found
-            f[module_name_id] = {
-                'id': module_name_id,
+            f[module_id] = {
+                'id': module_id,
                 'lowpriority': path.exists(path.join(dirpath, ".lowpriority")),
-                'importname': full_base_module_name + "." + local_import_name
+                'importname': module_path
             }
 
     return f
