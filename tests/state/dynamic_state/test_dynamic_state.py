@@ -1,11 +1,10 @@
-from pathlib import Path
 from os.path import dirname
 import pytest
 import miniflask  # noqa: E402
 
 
 def init_mf():
-    return miniflask.init(module_dirs=str(Path(__file__).parent / "modules"), debug=True)
+    return miniflask.init(".modules", debug=True)
 
 
 all_modules = ["otherdir", "otherdir.module2", "parentdir", "parentdir.module1", "parentdir.module2", "parentdir.module3", "parentdir.module3.submodule", "parentdir.module3.submodule.subsubmodule"]

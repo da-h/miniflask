@@ -1,4 +1,3 @@
-from pathlib import Path
 import miniflask  # noqa: E402
 
 
@@ -8,9 +7,6 @@ def printAll(state):
 
 
 def setup():
-    mf = miniflask.init(
-        module_dirs=str(Path(__file__).parent / "modules"),
-        debug=True
-    )
-    mf.register_event('main', printAll, unique=False)
+    mf = miniflask.init(".modules")
+    mf.register_event("main", printAll, unique=False)
     return mf

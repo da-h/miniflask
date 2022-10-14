@@ -1,10 +1,9 @@
-from pathlib import Path
 import miniflask  # noqa: E402
 
 
 def test_named_call(capsys):
     mf = miniflask.init(
-        module_dirs=str(Path(__file__).parent / "modules"),
+        ".modules",
         debug=False
     )
 

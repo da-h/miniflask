@@ -1,11 +1,9 @@
-from pathlib import Path
-
 import miniflask  # noqa: [E402]
 
 
 def test_space(capsys):
     mf = miniflask.init(
-        module_dirs=str(Path(__file__).parent / "modules"),
+        ".modules",
         debug=True
     )
 
@@ -50,7 +48,7 @@ modules.module1.str3: ['']
 
 def test_equal(capsys):
     mf = miniflask.init(
-        module_dirs=str(Path(__file__).parent / "modules"),
+        ".modules",
         debug=True
     )
 
@@ -95,7 +93,7 @@ modules.module1.str3: ['']
 
 def test_bool_int(capsys):
     mf = miniflask.init(
-        module_dirs=str(Path(__file__).parent / "modules"),
+        ".modules",
         debug=True
     )
 
@@ -116,7 +114,7 @@ modules.module1.bool2: [True]
 
 def test_bool_yesno(capsys):
     mf = miniflask.init(
-        module_dirs=str(Path(__file__).parent / "modules"),
+        ".modules",
         debug=True
     )
 
@@ -137,7 +135,7 @@ modules.module1.bool2: [True]
 
 def test_bool_tf(capsys):
     mf = miniflask.init(
-        module_dirs=str(Path(__file__).parent / "modules"),
+        ".modules",
         debug=True
     )
 
@@ -158,7 +156,7 @@ modules.module1.bool2: [True]
 
 def test_bool_truefalse(capsys):
     mf = miniflask.init(
-        module_dirs=str(Path(__file__).parent / "modules"),
+        ".modules",
         debug=True
     )
 
