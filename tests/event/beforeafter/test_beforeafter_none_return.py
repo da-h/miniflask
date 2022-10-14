@@ -4,7 +4,7 @@ import miniflask  # noqa: E402
 
 def test_beforeafter_setup_none_return(capsys):
     mf = miniflask.init(
-        module_dirs=str(Path(__file__).parent / "modules"),
+        "modules",
         debug=True
     )
     mf.load("setup_none_return")
@@ -20,7 +20,7 @@ event returned value: None
 
 def test_beforeafter_before(capsys):
     mf = miniflask.init(
-        module_dirs=str(Path(__file__).parent / "modules"),
+        "modules",
         debug=True
     )
     mf.load(["setup_none_return", "beforeevent", "beforeevent2"])
@@ -38,7 +38,7 @@ event returned value: None
 
 def test_beforeafter_before_otherorder(capsys):
     mf = miniflask.init(
-        module_dirs=str(Path(__file__).parent / "modules"),
+        "modules",
         debug=True
     )
     mf.load(["setup_none_return", "beforeevent2", "beforeevent"])
@@ -56,7 +56,7 @@ event returned value: None
 
 def test_beforeafter_after(capsys):
     mf = miniflask.init(
-        module_dirs=str(Path(__file__).parent / "modules"),
+        "modules",
         debug=True
     )
     mf.load(["setup_none_return", "afterevent", "afterevent2"])
@@ -74,7 +74,7 @@ event returned value: None
 
 def test_beforeafter_after_otherorder(capsys):
     mf = miniflask.init(
-        module_dirs=str(Path(__file__).parent / "modules"),
+        "modules",
         debug=True
     )
     mf.load(["setup_none_return", "afterevent2", "afterevent"])
@@ -92,7 +92,7 @@ event returned value: None
 
 def test_beforeafter_all(capsys):
     mf = miniflask.init(
-        module_dirs=str(Path(__file__).parent / "modules"),
+        "modules",
         debug=True
     )
     mf.load(["setup_none_return", "beforeevent", "beforeevent2", "afterevent", "afterevent2"])

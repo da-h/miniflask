@@ -5,7 +5,7 @@ import miniflask  # noqa: E402
 
 def test_unregister():
     mf = miniflask.init(
-        module_dirs=str(Path(__file__).parent / "modules"),
+        "modules",
         debug=False
     )
 

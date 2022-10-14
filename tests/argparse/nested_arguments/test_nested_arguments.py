@@ -12,7 +12,7 @@ def ansi_escape(s):
 
 def init_mf():
     mf = miniflask.init(
-        module_dirs=str(Path(__file__).parent / "modules"),
+        "modules",
         debug=True
     )
     mf.load("all")

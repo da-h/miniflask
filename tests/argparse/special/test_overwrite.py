@@ -5,7 +5,7 @@ import miniflask  # noqa: E402
 
 def test_setup(capsys):
     mf = miniflask.init(
-        module_dirs=str(Path(__file__).parent / "modules"),
+        "modules",
         debug=True
     )
 
@@ -26,7 +26,7 @@ modules.defaults.var_default_override_twice_and_cli: 1114
 
 def test_override(capsys):
     mf = miniflask.init(
-        module_dirs=str(Path(__file__).parent / "modules"),
+        "modules",
         debug=True
     )
 
@@ -47,7 +47,7 @@ modules.defaults.var_default_override_twice_and_cli: 1114
 
 def test_override_twice(capsys):
     mf = miniflask.init(
-        module_dirs=str(Path(__file__).parent / "modules"),
+        "modules",
         debug=True
     )
 
@@ -68,7 +68,7 @@ modules.defaults.var_default_override_twice_and_cli: 1114
 
 def test_override_conflict():
     mf = miniflask.init(
-        module_dirs=str(Path(__file__).parent / "modules"),
+        "modules",
         debug=True
     )
 
@@ -80,7 +80,7 @@ def test_override_conflict():
 
 def test_override_scoped_absolute():
     mf = miniflask.init(
-        module_dirs=str(Path(__file__).parent / "modules"),
+        "modules",
         debug=True
     )
 
@@ -91,7 +91,7 @@ def test_override_scoped_absolute():
 
 def test_override_scoped_relative():
     mf = miniflask.init(
-        module_dirs=str(Path(__file__).parent / "modules"),
+        "modules",
         debug=True
     )
 

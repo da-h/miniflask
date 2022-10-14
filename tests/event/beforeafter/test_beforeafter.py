@@ -4,7 +4,7 @@ import miniflask  # noqa: E402
 
 def test_beforeafter_setup(capsys):
     mf = miniflask.init(
-        module_dirs=str(Path(__file__).parent / "modules"),
+        "modules",
         debug=True
     )
     mf.load("setup")
@@ -20,7 +20,7 @@ event returned value: 42
 
 def test_beforeafter_before(capsys):
     mf = miniflask.init(
-        module_dirs=str(Path(__file__).parent / "modules"),
+        "modules",
         debug=True
     )
     mf.load(["setup", "beforeevent", "beforeevent2"])
@@ -38,7 +38,7 @@ event returned value: 85
 
 def test_beforeafter_before_otherorder(capsys):
     mf = miniflask.init(
-        module_dirs=str(Path(__file__).parent / "modules"),
+        "modules",
         debug=True
     )
     mf.load(["setup", "beforeevent2", "beforeevent"])
@@ -56,7 +56,7 @@ event returned value: 86
 
 def test_beforeafter_after(capsys):
     mf = miniflask.init(
-        module_dirs=str(Path(__file__).parent / "modules"),
+        "modules",
         debug=True
     )
     mf.load(["setup", "afterevent", "afterevent2"])
@@ -74,7 +74,7 @@ event returned value: 85
 
 def test_beforeafter_after_otherorder(capsys):
     mf = miniflask.init(
-        module_dirs=str(Path(__file__).parent / "modules"),
+        "modules",
         debug=True
     )
     mf.load(["setup", "afterevent2", "afterevent"])
@@ -92,7 +92,7 @@ event returned value: 86
 
 def test_beforeafter_all(capsys):
     mf = miniflask.init(
-        module_dirs=str(Path(__file__).parent / "modules"),
+        "modules",
         debug=True
     )
     mf.load(["setup", "beforeevent", "beforeevent2", "afterevent", "afterevent2"])

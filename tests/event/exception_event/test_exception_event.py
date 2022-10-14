@@ -5,7 +5,7 @@ import miniflask  # noqa: E402
 
 def test_exception_event():
     mf = miniflask.init(
-        module_dirs=str(Path(__file__).parent / "modules"),
+        "modules",
         debug=False
     )
 
@@ -17,7 +17,7 @@ def test_exception_event():
 
 def test_exception_event_debugmode():
     mf = miniflask.init(
-        module_dirs=str(Path(__file__).parent / "modules"),
+        "modules",
         debug=True
     )
 
@@ -29,7 +29,7 @@ def test_exception_event_debugmode():
 
 def test_exception_event_unique_register():
     mf = miniflask.init(
-        module_dirs=str(Path(__file__).parent / "modules"),
+        "modules",
         debug=False
     )
 
@@ -39,7 +39,7 @@ def test_exception_event_unique_register():
 
 def test_exception_event_unique_register_debugmode():
     mf = miniflask.init(
-        module_dirs=str(Path(__file__).parent / "modules"),
+        "modules",
         debug=True
     )
 

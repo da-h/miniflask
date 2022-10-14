@@ -3,7 +3,7 @@ import miniflask  # noqa: E402
 
 
 def init_mf():
-    return miniflask.init(module_dirs=str(Path(__file__).parent / "modules"), debug=True)
+    return miniflask.init("modules", debug=True)
 
 
 def test_event_exists_false():
