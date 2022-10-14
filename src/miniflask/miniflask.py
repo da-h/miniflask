@@ -52,7 +52,7 @@ def registerPredefined(modules_avail):
 # MiniFlask Kernel #
 # ================ #
 class miniflask():
-    def __init__(self, module_dirs, debug=False):
+    def __init__(self, *module_repositories, debug=False):
         r"""miniflask.init
         Initializes miniflask with a module repository.
 
@@ -60,10 +60,10 @@ class miniflask():
         By initializing miniflask, we have to define the folders miniflask will look in.
 
         Args:
-        - `module_dirs`: a string, a list or a dict of paths to module repositories.
-            - **String**: specifies a single path to the module repository to use.  
+        - `module_repositories`: a string, a list python packages to search module repositories in.
+            - **String**: specifies a single import path to the module repository to use.  
                 (The directory name will also be repository name / module prefix for all modules inside that folder.)
-            - **List**: specifies multiple paths to the module repository to use.  
+            - **List**: specifies multiple import path to the module repository to use.  
                 (The directory names will also be repository names / module prefixes for all modules inside that folders.)
         - `debug`: Debug Mode  
             Debug Mode disables catching/printing + beautifying Exceptions. Also, it disables truncating the traceback messages of internal miniflask functions.
@@ -81,16 +81,11 @@ class miniflask():
         """  # noqa: W291
         self._instance_id = str(random.getrandbits(128))
         self.debug = debug
-        if not module_dirs:
+        if not module_repositories:
             return
 
         # module dir to be read from
-        if isinstance(module_dirs, list):
-            self.module_dirs = {path.basename(m): m for m in module_dirs}
-        elif isinstance(module_dirs, str):
-            self.module_dirs = {path.basename(module_dirs): module_dirs}
-        else:
-            raise ValueError("Only string or list allowed for `module_dirs'. Found type '%s'." % type(module_dirs))
+        self.module_repositories = {m.split(".")[-1]: m for m in module_repositories}
 
         # arguments from cli-stdin
         self.settings_parser = ArgumentParser(usage=sys.argv[0] + " modulelist [optional arguments]")
@@ -114,7 +109,7 @@ class miniflask():
         self.state_default = {}
         self.modules_loaded = {}
         self.modules_ignored = []
-        self.modules_avail = getModulesAvail(self.module_dirs)
+        self.modules_avail = getModulesAvail(self.module_repositories)
         registerPredefined(self.modules_avail)
         self._varid_list = []
         self._recently_loaded = []
@@ -198,6 +193,7 @@ class miniflask():
 
     # pretty print of all available modules
     def showModules(self, directory=None, prepend="", id_pre=None, with_event=True, direct_print=True, visited=None):  # noqa: C901 too-complex pylint: disable=inconsistent-return-statements
+
         out = ""
         any_module_found = False
 
@@ -205,7 +201,8 @@ class miniflask():
             visited = set()
 
         if not directory:
-            for basename, loop_directory in self.module_dirs.items():
+            for basename, base_import_path in self.module_repositories.items():
+                TODO
                 self.showModules(loop_directory, prepend=prepend, id_pre=basename if id_pre is None else id_pre + "." + basename, with_event=with_event)
             return
 
