@@ -5,7 +5,7 @@ import miniflask  # noqa: E402
 
 def test_global_setup(capsys):
     mf = miniflask.init(
-        module_dirs=str(Path(__file__).parent / "modules"),
+        ".modules",
         debug=True
     )
 
@@ -22,7 +22,7 @@ globalvar: 1
 
 def test_global_cli_override(capsys):
     mf = miniflask.init(
-        module_dirs=str(Path(__file__).parent / "modules"),
+        ".modules",
         debug=True
     )
 
@@ -40,7 +40,7 @@ globalvar: 42
 
 def test_override(capsys):
     mf = miniflask.init(
-        module_dirs=str(Path(__file__).parent / "modules"),
+        ".modules",
         debug=True
     )
 
@@ -56,7 +56,7 @@ globalvar: 11
 
 def test_override_cli(capsys):
     mf = miniflask.init(
-        module_dirs=str(Path(__file__).parent / "modules"),
+        ".modules",
         debug=True
     )
 

@@ -5,7 +5,7 @@ import miniflask  # noqa: E402
 
 def test_space(capsys):
     mf = miniflask.init(
-        module_dirs=str(Path(__file__).parent / "modules"),
+        ".modules",
         debug=True
     )
 
@@ -49,7 +49,7 @@ modules.module1.str3: \n""".lstrip()
 
 def test_equal(capsys):
     mf = miniflask.init(
-        module_dirs=str(Path(__file__).parent / "modules"),
+        ".modules",
         debug=True
     )
 

@@ -5,7 +5,7 @@ import miniflask  # noqa: E402
 
 def test_outervar():
     mf = miniflask.init(
-        module_dirs=str(Path(__file__).parent / "modules"),
+        ".modules",
         debug=True
     )
 
@@ -18,7 +18,7 @@ def test_outervar():
 
 def test_outervar_with_before_event(capsys):
     mf = miniflask.init(
-        module_dirs=str(Path(__file__).parent / "modules"),
+        ".modules",
         debug=True
     )
 

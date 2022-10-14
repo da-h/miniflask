@@ -4,7 +4,7 @@ import miniflask  # noqa: E402
 
 def test_enum():
     mf = miniflask.init(
-        module_dirs=str(Path(__file__).parent / "modules"),
+        ".modules",
         debug=True
     )
     mf.run(
@@ -16,7 +16,7 @@ def test_enum():
 
 def test_enum_relative_import():
     mf = miniflask.init(
-        module_dirs=str(Path(__file__).parent / "modules"),
+        ".modules",
         debug=True
     )
     mf.run(

@@ -6,7 +6,7 @@ import miniflask  # noqa: [E402]
 
 def test_tuple_len_error(capsys):
     mf = miniflask.init(
-        module_dirs=str(Path(__file__).parent / "modules"),
+        ".modules",
         debug=True
     )
 

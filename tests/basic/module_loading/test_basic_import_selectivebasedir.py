@@ -6,10 +6,7 @@ relpath = os.path.relpath(os.path.dirname(__file__), os.getcwd())
 
 
 def init_mf():
-    return miniflask.init(module_dirs=[
-        relpath + "/" + "./modules/parentdir/module3",
-        relpath + "/" + "./modules/otherdir/module2"
-    ], debug=True)
+    return miniflask.init(".modules.parentdir.module3", ".modules.otherdir.module2", debug=True)
 
 
 def test_setup():
