@@ -1,11 +1,12 @@
 import sys
 import re
 from collections.abc import MutableMapping
+from inspect import getsource
 
 from colored import fg, attr
 
 from .util import get_varid_from_fuzzy, highlight_module, get_relative_id
-from .exceptions import StateKeyError
+from .exceptions import StateKeyError, RegisterError
 
 
 class temporary_state:
@@ -37,7 +38,7 @@ relative_import_re = re.compile(r"(\.+)(.*)")
 
 
 class state(MutableMapping):
-    def __init__(self, module_name, internal_state_dict, state_default):  # pylint: disable=super-init-not-called
+    def __init__(self, module_name, internal_state_dict, state_dependencies):  # pylint: disable=super-init-not-called
         r"""!... is a local dict
         Global Variables, but Fancy. ;)
 
@@ -93,7 +94,7 @@ class state(MutableMapping):
         """  # noqa: W291
 
         self.all = internal_state_dict
-        self.default = state_default
+        self.dependencies = state_dependencies
         self.module_id = module_name
         self.fuzzy_names = {}
         # self.temporary = temporary_state(self)
@@ -136,7 +137,7 @@ class state(MutableMapping):
         ```
         """  # noqa: W291
 
-        return state(module_name, self.all, self.default)
+        return state(module_name, self.all, self.dependencies)
 
     def temporary(self, variables):
         r"""
@@ -373,7 +374,111 @@ class optional:
     def str(self, asciicodes=True, color_attr=attr):
         if not asciicodes:
             color_attr = lambda x: ''  # noqa: E731 no-lambda
-        return color_attr('dim') + "'" + str(self.type) + "' or '" + "None" + "' ⟶   " + color_attr('reset') + str(self.default)
+        return color_attr('dim') + "'" + str(self.type) + "' or '" + "None" + "' ⟶   " + color_attr('reset') + str(self.dependencies)
 
     def __str__(self):
         return self.str()
+
+
+state_regex = re.compile(r"state\[\"((?:\.*\w+)+)\"\]")
+
+
+class state_node:
+    def __init__(self, varid, mf, caller_traceback, cliargs=False, parsefn=False, is_ovewriting=False, missing_argument_message=None, fn=None):
+        self.varid = varid
+        self.mf = mf
+        self.caller_traceback = caller_traceback
+        self.cliargs = cliargs
+        self.parsefn = parsefn
+        self.is_ovewriting = is_ovewriting
+        self.cli_overwritten = False
+        self.missing_argument_message = missing_argument_message
+
+        self.fn = fn
+        self.fn_src = getsource(self.fn) if self.fn is not None else None
+        if self.fn_src is not None:
+            if "lambda" not in self.fn_src:
+                raise RegisterError(f"Expected lambda expression, but found {self.fn_src}")
+            self.fn_src = self.fn_src.split("lambda")[1].strip().rstrip(',')
+
+
+        self.depends_on = state_regex.findall(self.fn_src) if self.fn_src else []
+        self.affects = []
+
+    def str(self):
+        return str(self.varid)
+
+    def __str__(self):
+        return self.str()
+
+    def __repr__(self):
+        content = [self.str()]
+        if self.fn_src is not None:
+            content.append(f"fn=λ {self.fn_src}")
+        if len(self.depends_on) > 0:
+            content.append(f"depends_on={self.depends_on}")
+        return f"variable({', '.join(content)})"
+
+    # ------------------- #
+    # dependency routines #
+    # ------------------- #
+    @staticmethod
+    def calculate_affects_lists(node_dict):
+        for node in node_dict.values():
+            for depends_on_varid in node.depends_on:
+                node_dict[depends_on_varid].affects(node.varid)
+
+    @staticmethod
+    def topological_sort(node_dict):  # noqa: C901
+        nodes = list(node_dict.values())
+        varid2index = {node.varid: i for i, node in enumerate(nodes)}
+        visited = [False for i in range(len(nodes))]
+        sorted_nodes, cycles, unresolved = [], [], []
+
+        # note: rewrite this recursive DFS to while-loop if RecursionError occurs
+        def DFS(node_i, parentnodes=None):
+            if parentnodes is None:
+                parentnodes = []
+
+            node = nodes[node_i]
+
+            if node in parentnodes:
+                cycles.append(parentnodes + [node])
+                return
+
+            parentnodes = parentnodes + [node]
+
+            if visited[node_i]:
+                return
+
+            visited[node_i] = True
+
+            for dependency in nodes[node_i].depends_on:
+                if dependency not in node.mf.state:
+                    unresolved.append((node, dependency))
+                    continue
+                if hasattr(node.mf.state, "fuzzy_names"):
+                    dependency_varid = node.mf.state.fuzzy_names[dependency]
+                else:
+                    dependency_varid = dependency
+                dependency_i = varid2index[dependency_varid]
+                DFS(dependency_i, parentnodes=parentnodes)
+
+            sorted_nodes.append(node)
+
+        for i in range(len(nodes)):
+            DFS(i)
+
+        return sorted_nodes, cycles, unresolved
+
+    @staticmethod
+    def evaluate(nodes, global_state):
+        for node in nodes:
+            varid = node.varid
+            if node.cli_overwritten or node.fn_src is None:
+                continue
+            if node.fn:
+                if node.fn_src.split(":")[0].strip() == "state":
+                    global_state[varid] = node.fn(node.mf.state)
+                else:
+                    global_state[varid] = node.fn()
