@@ -47,7 +47,7 @@ def highlight_loading_module(x):
     return fg('light_gray') + ".".join(x[:-1]) + ("" if len(x) == 1 else ".") + attr('reset') + fg('green') + attr('bold') + x[-1] + attr('reset')
 
 
-highlight_error = lambda: fg('red') + attr('bold') + "Error:" + attr('reset') + " "
+highlight_error = lambda x="Error:": fg('red') + attr('bold') + x + attr('reset') + " "
 highlight_name = lambda x: fg('blue') + attr('bold') + x + attr('reset')
 highlight_module = lambda x: fg('green') + attr('bold') + str(x) + attr('reset')
 highlight_loading = highlight_loading_module

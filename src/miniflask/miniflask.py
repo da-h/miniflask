@@ -17,7 +17,7 @@ from colored import fg, attr
 # package modules
 from .exceptions import save_traceback, format_traceback_list, RegisterError, StateKeyError
 from .event import event, event_obj
-from .state import state, as_is_callable, optional as optional_default
+from .state import state, as_is_callable, optional as optional_default, state_node
 from .dummy import miniflask_dummy
 from .util import getModulesAvail, EnumAction, get_relative_id
 from .util import highlight_error, highlight_name, highlight_module, highlight_loading, highlight_loading_default, highlight_loaded_default, highlight_loading_module, highlight_loaded_none, highlight_loaded, highlight_event, str2bool, get_varid_from_fuzzy
@@ -106,11 +106,7 @@ class miniflask():
 
         # arguments from cli-stdin
         self.settings_parser = ArgumentParser(usage=sys.argv[0] + " modulelist [optional arguments]")
-        self._settings_parse_later = {}
-        self._settings_parse_later_overwrites_list = []
-        self._settings_parse_later_overwrites = {}
-        self._settings_parser_tracebacks = {}
-        self.settings_parser_required_arguments = []
+        self.cli_required_arguments = []
         self.default_modules = []
         self.default_modules_overwrites = []
         self.bind_events = True
@@ -123,7 +119,8 @@ class miniflask():
         self.event = event(self, optional=False)
         self.event.optional = event(self, optional=True)
         self.state = {}
-        self.state_default = {}
+        self.state_registrations = {}  # saves the information of the respective variables (initial value, registration, etc.)
+        self._state_overwrites_list = []
         self.modules_loaded = {}
         self.modules_ignored = []
         self.modules_avail = getModulesAvail(self.module_dirs)
@@ -754,6 +751,12 @@ class miniflask():
         if not caller_traceback:
             caller_traceback = save_traceback()
 
+        # ensures that self.state is also usable for miniflask-wrapper
+        if hasattr(self.state, "all"):
+            local_state = self.state.all
+        else:
+            local_state = self.state
+
         # now register every key-value pair
         for key, val in defaults.items():
 
@@ -770,27 +773,37 @@ class miniflask():
                 varname = module_id + "." + key
 
             # overwrite parsefn for as_is_callable object
-            if isinstance(val, as_is_callable):
+            if isinstance(val, (as_is_callable, optional_default)):
                 parsefn = False
 
-            # actual initialization is done when all modules have been parsed
+            # pre-initialize variables using an intermediate representation
+            # note:
+            #   - some registrations need to be deferred, because we do not want overwrite-registrations to be dependent on module-call-orderings
+            #     thus, this enables to have base-settings loaded before the actual to-be-overwritten module is loaded by the user
+            #   - we need to remember overwrites for later because we need to check if the variables to overwrite actually exist
+            #    (we can only be sure, that the varname is a unique varid if we are not overwriting here)
+            #   - actual initialization is done when all modules have been parsed
+            #   - design decision is here to have the dependency nodes in a seperate dict and only the state actually store data
+            #   - we also save all tracebacks implicitly in case we need this information due to an error
+            is_dependency = callable(val) and not isinstance(val, type) and not isinstance(val, EnumMeta) and parsefn
+            node = state_node(
+                varid=varname,
+                mf=self,
+                caller_traceback=caller_traceback,
+                cliargs=cliargs,
+                parsefn=parsefn,
+                is_ovewriting=overwrite,
+                missing_argument_message=missing_argument_message,
+                fn=val if is_dependency else None
+            )
             if overwrite:
-                self._settings_parse_later_overwrites_list.append((varname, val, cliargs, parsefn, caller_traceback, self))
+                self._state_overwrites_list.append((varname, val, node))
             else:
+                local_state[varname] = val
 
-                # pre-initialize variable for possible lambda expressions in second pass
-                # (we can only be sure, that the varname is the unique varid if we are not overwriting)
-                if hasattr(self.state, "all"):
-                    self.state.all[varname] = val
-                else:
-                    self.state[varname] = val
-
-                self._settings_parse_later[varname] = (val, cliargs, parsefn, caller_traceback, self)
-
-            # save all tracebacks in case we need this information due to an error
-            if varname not in self._settings_parser_tracebacks:
-                self._settings_parser_tracebacks[varname] = []
-            self._settings_parser_tracebacks[varname].append(("overwrite" if overwrite else "definition", caller_traceback, missing_argument_message))
+                if varname not in self.state_registrations:
+                    self.state_registrations[varname] = []
+                self.state_registrations[varname].append(node)
 
     def _settings_parser_add(self, varname, val, caller_traceback, nargs=None, default=None, is_optional=False):  # noqa: C901 too-complex
 
@@ -802,8 +815,7 @@ class miniflask():
                 else:
                     val_type, start_del, end_del = "tuple", "(", ",)"
                 raise RegisterError(f"Variable '%s' is registered as {val_type} of length 0 (see exception below), however it is required to define the type of the {val_type} arguments for it to become accessible from cli.\n\nYour options are:\n\t- define a default {val_type}, e.g. {start_del}\"a\", \"b\", \"c\"{end_del}\n\t- define the {val_type} type, e.g. {start_del}str{end_del}\n\t- define the variable as a helper using register_helpers(...)" % (fg('red') + varname + attr('reset')), traceback=caller_traceback)
-            self._settings_parser_add(varname, val[0], caller_traceback, nargs="*" if isinstance(val, list) else len(val), default=val, is_optional=is_optional)
-            return
+            return self._settings_parser_add(varname, val[0], caller_traceback, nargs="*" if isinstance(val, list) else len(val), default=val, is_optional=is_optional)
 
         # get argument type from value (this can be int, but also 42 for instance)
         if isinstance(val, Enum):
@@ -823,7 +835,7 @@ class miniflask():
         elif not isinstance(val, type) and not isinstance(val, EnumMeta):
             kwarg["default"] = default if default is not None else val
         else:
-            self.settings_parser_required_arguments.append([varname])
+            self.cli_required_arguments.append([varname])
 
         # for bool: enable --varname as alternative for --varname true
         if argtype == Enum:
@@ -846,6 +858,8 @@ class miniflask():
 
         # remember the varname also for fuzzy searching
         self._varid_list.append(varname)
+
+        return kwarg
 
     # ======= #
     # runtime #
@@ -954,63 +968,53 @@ class miniflask():
                 self.register_defaults(overwrite_globals, scope="", overwrite=True, caller_traceback=caller_traceback)
 
         # check fuzzy matching of overwrites
-        for varname, val, cliargs, parsefn, caller_traceback, _mf in self._settings_parse_later_overwrites_list:
-            if varname not in self._settings_parse_later:
-                found_varids = get_varid_from_fuzzy(varname, self._settings_parse_later.keys())
+        for varname, val, node in self._state_overwrites_list:
+            if varname not in self.state_registrations:
+                found_varids = get_varid_from_fuzzy(varname, self.state_registrations.keys())
                 if len(found_varids) == 0:
-                    raise RegisterError("Variable '%s' is not registered yet, however it seems like you wold like to overwrite it (see exception below)." % (fg('red') + varname + attr('reset')), traceback=caller_traceback)
+                    raise RegisterError("Variable '%s' is not registered yet, however it seems like you wold like to overwrite it (see exception below)." % (fg('red') + varname + attr('reset')), traceback=node.caller_traceback)
                 if len(found_varids) > 1:
-                    raise RegisterError("Variable-Identifier '%s' is not unique. Found %i variables:\n\t%s\n\n    Call:\n        %s" % (highlight_module(found_varids), len(found_varids), "\n\t".join(found_varids), " ".join(found_varids)), traceback=caller_traceback)
-                self._settings_parse_later_overwrites[found_varids[0]] = (val, cliargs, parsefn, caller_traceback, _mf)
-            else:
-                self._settings_parse_later_overwrites[varname] = (val, cliargs, parsefn, caller_traceback, _mf)
+                    raise RegisterError("Variable-Identifier '%s' is not unique. Found %i variables:\n\t%s\n\n    Call:\n        %s" % (highlight_module(found_varids), len(found_varids), "\n\t".join(found_varids), " ".join(found_varids)), traceback=node.caller_traceback)
 
-        # add variables to argparse and remember defaults
-        settings_recheck = {}
-        for settings in [self._settings_parse_later, self._settings_parse_later_overwrites, settings_recheck]:
-            overwrite = settings == self._settings_parse_later_overwrites
-            recheck = settings == settings_recheck
+                varname = found_varids[0]
 
-            for varname, (val, cliargs, parsefn, caller_traceback, _mf) in settings.items():
-                is_fn = callable(val) and not isinstance(val, type) and not isinstance(val, EnumMeta) and parsefn
+                # this is important: the deferred node could not not know to this point what variable it manages
+                node.varid = varname
 
-                # eval dependencies/like expressions
-                if is_fn:
-                    visited_callables = set()
-                    try:
-                        the_val = val
-                        while callable(the_val) and not isinstance(the_val, type):
-                            if the_val in visited_callables:
-                                raise RecursionError("Circular dependency found in state variable definitions.")
-                            visited_callables.add(the_val)
-                            the_val = the_val(_mf.state, self.event)
-                    except RecursionError as e:
-                        raise RecursionError("In parsing of value '%s'." % varname) from e
-                else:
-                    the_val = val
+            # apply the deferred initialization
+            self.state[varname] = val
+            self.state_registrations[varname].append(node)
 
-                # remember caculated values for other lambda expressions
-                self.state[varname] = the_val
+        # first we build the reversed graph of dependency, i.e. the graph of what nodes are affected by each node
+        last_state_registrations = {varid: nodes[-1] for varid, nodes in self.state_registrations.items()}
 
-                # register user-changeable variables
-                if cliargs:
+        # sort nodes topologically, check for circular_dependencies & dependency errors for variables
+        topolically_sorted_state_nodes, circular_dependencies, unresolved_dependencies = state_node.topological_sort(last_state_registrations)
+        registration_errors = []
+        if len(circular_dependencies) > 0:
+            registration_errors.append("Circular dependencies found! (A → B means \"A depends on B\")\n\n" + "\n".join([
+                "\n    → ".join(highlight_loading_module(str(c)) for c in cycle) for cycle in circular_dependencies
+            ]))
+        if len(unresolved_dependencies) > 0:
+            registration_errors.append("Dependency not found! (A → B means \"A depends on B\")\n\n" + "\n".join([
+                "\n    → ".join(highlight_loading_module(str(c)) for c in cycle) + highlight_error(" ← not found") for cycle in unresolved_dependencies
+            ]))
 
-                    # remember default state for 'settings' module
-                    if is_fn:
-                        val.default = the_val
-                        self.state_default[varname] = val
-                    else:
-                        self.state_default[varname] = the_val
+        if len(registration_errors) > 0:
+            registration_errors_str = "\n\n\n".join([highlight_error() + r for r in registration_errors])
+            raise RegisterError(f"The registration of state variables has led to the following errors:\n\n{registration_errors_str}")
 
-                    # repeat function parsing later
-                    # (in case we have overwritten a dependency during second pass, overwrite == True)
-                    if is_fn and not recheck:
-                        settings_recheck[varname] = (val, cliargs, parsefn, caller_traceback, _mf)
+        # evaluate the dependency-graph into state
+        state_node.evaluate(topolically_sorted_state_nodes, self.state)
 
-                    # add to argument parser
-                    # Note: the condition ensures that the last value (an overwrite-variable) should be the one that generates the argparser)
-                    if recheck or overwrite and varname not in settings_recheck or varname not in self._settings_parse_later_overwrites and varname not in settings_recheck:
-                        self._settings_parser_add(varname, the_val, caller_traceback, is_optional=isinstance(val, optional_default))
+        # register user-changeable variables
+        for varid, node in last_state_registrations.items():
+            if node.cliargs:
+                node.pre_cli_value = self.state[varid]
+                val = self.state[varid] if not isinstance(self.state[varid], optional_default) else self.state[varid].type
+                argparse_kwargs = self._settings_parser_add(varid, val, node.caller_traceback, is_optional=isinstance(self.state[varid], optional_default))
+                if "default" in argparse_kwargs:
+                    self.state[varid] = argparse_kwargs["default"]
 
         # add help message
         print_help = False
@@ -1114,48 +1118,37 @@ class miniflask():
             user_varids[varid] = True
 
         # parse user overwrites (first time, s.t. lambdas change adaptively)
-        settings_args = self.settings_parser.parse_args(argv)
-        for varname, val in vars(settings_args).items():
-            self.state[varname] = val
+        settings_args = vars(self.settings_parser.parse_args(argv))
+        for varid in user_varids:
+            val = settings_args[varid]
+            self.state[varid] = val
+            self.state_registrations[varid][-1].cli_overwritten = True
 
         # check if required arguments are given by now
         missing_arguments = []
-        for variables in self.settings_parser_required_arguments:
-            if self.state[variables[0]] is None:
+        for variables in self.cli_required_arguments:
+            if not self.state_registrations[variables[0]][-1].cli_overwritten:
                 missing_arguments.append(variables)
         if len(missing_arguments) > 0:
             args_err_strs = []
             error_message_str = ""
             for args in missing_arguments:
                 arg_err_str = "\t" + " or ".join([highlight_module("--" + arg) for arg in reversed(args)])
-                if args[0] in self._settings_parser_tracebacks:
-                    for definition_type, caller_traceback, missing_argument_message in self._settings_parser_tracebacks[args[0]]:
-                        summary = next(filter(lambda t: not t.filename.endswith("miniflask/miniflask.py"), reversed(caller_traceback)))
-                        adj = (fg('blue') + "Defined" if definition_type == "definition" else fg('yellow') + "Overwritten") + attr('reset')
+                if args[0] in self.state_registrations:
+                    for node in self.state_registrations[args[0]]:
+                        summary = next(filter(lambda t: not t.filename.endswith("miniflask/miniflask.py"), reversed(node.caller_traceback)))
+                        adj = (fg('blue') + "Defined" if not node.is_ovewriting else fg('yellow') + "Overwritten") + attr('reset')
                         arg_err_str += linesep + "\t  " + adj + " in line %s in file '%s'." % (highlight_event(str(summary.lineno)), attr('dim') + path.relpath(summary.filename) + attr('reset'))
-                        if isinstance(missing_argument_message, str):
-                            error_message_str = linesep * 2 + attr("bold") + missing_argument_message + attr("reset")
+                        if isinstance(node.missing_argument_message, str):
+                            error_message_str = linesep * 2 + attr("bold") + node.missing_argument_message + attr("reset")
                 args_err_strs.append(arg_err_str)
             raise ValueError("Missing CLI-arguments or unspecified variables during miniflask call." + linesep + linesep.join(args_err_strs) + error_message_str)
 
-        # finally parse lambda-dependencies
-        for varname, (val, cliargs, parsefn, caller_traceback, _mf) in self._settings_parse_later.items():
-
-            # optional_default assumes that argparse has set the variable
-            if isinstance(val, optional_default):
-                continue
-
-            # Note: if has not been overwritten by user lambda can be evaluated again
-            # Three cases exist in wich lambda expression shall be recalculated:
-            # The value is a function AND one of
-            # 1. was helper variable, thus no cli-argument can overwrite it anyway
-            # 2. the value has not been overwritten by user
-            while callable(val) and not isinstance(val, type) and not isinstance(val, EnumMeta) and parsefn and (not cliargs or varname not in user_varids):
-                val = val(_mf.state, _mf.event)
-                self.state[varname] = val
+        # re-evaluate the dependency-graph with the user-cli arguments
+        state_node.evaluate(topolically_sorted_state_nodes, self.state)
 
         # print help message when everything is parsed
-        self.settings_parser.print_help = lambda: (print("usage: modulelist [optional arguments]"), print(), print("optional arguments (and their defaults):"), print(listsettings(state("", self.state, self.state_default), self.event)))
+        self.settings_parser.print_help = lambda: (print("usage: modulelist [optional arguments]"), print(), print("optional arguments (and their defaults):"), print(listsettings(state("", self.state, self.state_registrations), self.event)))
         if print_help:
             self.settings_parser.parse_args(['--help'])
 
@@ -1278,7 +1271,7 @@ class miniflask_wrapper(miniflask):
         self.module_name = module_name.split(".")[-1]
         self.module_base = module_name.split(".")[0]
         self.wrapped_class = mf.wrapped_class if hasattr(mf, 'wrapped_class') else mf
-        self.state = state(module_name, self.wrapped_class.state, self.wrapped_class.state_default)
+        self.state = state(module_name, self.wrapped_class.state, self.wrapped_class.state_registrations)
         self._recently_loaded = []
         self._defined_events = {}
 
