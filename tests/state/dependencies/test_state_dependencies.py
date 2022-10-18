@@ -6,10 +6,18 @@ from miniflask.exceptions import RegisterError
 def test_lambda_arguments():
     mf = setup()
     mf.load("lambdaarguments_module1")
-    mf.parse_args([])
-    with pytest.raises(RecursionError):
-        mf.parse_args([])
-# TODO: test
+    assert mf.state_registrations["modules.lambdaarguments_module1.var1"][-1].depends_on == []
+    assert mf.state_registrations["modules.lambdaarguments_module1.var1"][-1].depends_alternatives == {}
+    assert mf.state_registrations["modules.lambdaarguments_module1.var2"][-1].depends_on == ["var1"]
+    assert mf.state_registrations["modules.lambdaarguments_module1.var2"][-1].depends_alternatives == {}
+    assert mf.state_registrations["modules.lambdaarguments_module1.var3"][-1].depends_on == ["var2", "var1"]
+    assert mf.state_registrations["modules.lambdaarguments_module1.var3"][-1].depends_alternatives == {}
+    assert mf.state_registrations["modules.lambdaarguments_module1.var4"][-1].depends_on == ["var1"]
+    assert mf.state_registrations["modules.lambdaarguments_module1.var4"][-1].depends_alternatives == {}
+    assert mf.state_registrations["modules.lambdaarguments_module1.var5"][-1].depends_on == ["var1", "var3"]
+    assert mf.state_registrations["modules.lambdaarguments_module1.var5"][-1].depends_alternatives == {"var1": ["var3"]}
+    assert mf.state_registrations["modules.lambdaarguments_module1.var6"][-1].depends_on == ["var1", "var2", "var3", "var4"]
+    assert mf.state_registrations["modules.lambdaarguments_module1.var6"][-1].depends_alternatives == {"var1": ["var3", "var4"], "var2": ["var3", "var4"]}
 
 
 def test_circular_dependency_errors():
@@ -59,9 +67,8 @@ The registration of state variables has led to the following errors:
 Error: Dependency not found! (A → B means "A depends on B")
 
 modules.unresolveddep_error_dependencynotfound.foo
-    → varnotfound
+    → varnotfound ← not found
 """.strip() == str(excinfo.value).strip()
-
 
 
 def test_working_dependencies(capsys):
@@ -80,65 +87,79 @@ modules.dependencychain_module1.foo1: 100
 modules.dependencychain_module1.foo2: 200
 modules.dependencychain_module1.foo3: 600
 modules.dependencychain_module1.foo4: 31105924806303
-modules.dependencychain_module1.foo5: 2048
+modules.dependencychain_module1.foo5: 24000
 modules.dependencychain_module2.foo1: 100
 modules.dependencychain_module2.foo2: 200
 modules.dependencychain_module2.foo3: 300
 modules.dependencychain_module2.foo4: 10368641602101
-modules.dependencychain_module2.foo5: 512
+modules.dependencychain_module2.foo5: 6000
 modules.dependencychain_module3.foo1: 101
 modules.dependencychain_module3.foo2: 200
 modules.dependencychain_module3.foo3: 300
 modules.dependencychain_module3.foo4: 400
-modules.dependencychain_module3.foo5: 512
+modules.dependencychain_module3.foo5: 6000
 modules.dependencychain_module4.foo5: 500
 """.lstrip()
 
 
-def test_alternative_dependencies():#capsys):
+def test_alternative_dependencies(capsys):
     mf = setup()
     mf.load("settings")
     mf.load("dependencychain_module1")
     mf.load("dependencychain_module2")
     mf.load("dependencychain_module3")
     mf.parse_args([])
-    # captured = capsys.readouterr()
+    captured = capsys.readouterr()
     mf.event.print_all()
-    # captured = capsys.readouterr()
-#     assert captured.out == """
-# modules.dependencychain_module1.foo1: 100
-# modules.dependencychain_module1.foo2: 200
-# modules.dependencychain_module1.foo3: 600
-# modules.dependencychain_module1.foo4: 31105924806303
-# modules.dependencychain_module1.foo5: 2048
-# modules.dependencychain_module2.foo1: 100
-# modules.dependencychain_module2.foo2: 200
-# modules.dependencychain_module2.foo3: 300
-# modules.dependencychain_module2.foo4: 10368641602101
-# modules.dependencychain_module2.foo5: 512
-# modules.dependencychain_module3.foo1: 101
-# modules.dependencychain_module3.foo2: 200
-# modules.dependencychain_module3.foo3: 300
-# modules.dependencychain_module3.foo4: 400
-# modules.dependencychain_module3.foo5: 512
-# modules.dependencychain_module4.foo5: 500
-# """.lstrip()
+    captured = capsys.readouterr()
+    assert captured.out == """
+modules.dependencychain_module1.foo1: 100
+modules.dependencychain_module1.foo2: 200
+modules.dependencychain_module1.foo3: 600
+modules.dependencychain_module1.foo4: 31105924806303
+modules.dependencychain_module1.foo5: 24
+modules.dependencychain_module2.foo1: 100
+modules.dependencychain_module2.foo2: 200
+modules.dependencychain_module2.foo3: 300
+modules.dependencychain_module2.foo4: 10368641602101
+modules.dependencychain_module2.foo5: 6
+modules.dependencychain_module3.foo1: 101
+modules.dependencychain_module3.foo2: 200
+modules.dependencychain_module3.foo3: 300
+modules.dependencychain_module3.foo4: 400
+modules.dependencychain_module3.foo5: 6
+""".lstrip()
 
 
-
-
-
-
-# def test_state_argument_error():
-#     mf = setup()
-#     mf.load("selfdependency_module1")
-#     mf.parse_args([])
-#     # with pytest.raises(RecursionError):
-#     #     mf.parse_args([])
-
-
-
-if __name__ == "__main__":
-    # test_lambda_arguments()
-    # test_working_dependencies()
-    test_alternative_dependencies()
+def test_overwritten_dependencies(capsys):
+    mf = setup()
+    mf.load("settings")
+    mf.load("dependencychain_module1")
+    mf.load("dependencychain_module2")
+    mf.load("dependencychain_module3")
+    mf.parse_args([
+        "--dependencychain_module1.foo1", "101",
+        "--dependencychain_module2.foo2", "201",
+        "--dependencychain_module2.foo3", "301",
+        "--dependencychain_module3.foo4", "401",
+    ])
+    captured = capsys.readouterr()
+    mf.event.print_all()
+    captured = capsys.readouterr()
+    assert captured.out == """
+modules.dependencychain_module1.foo1: 101
+modules.dependencychain_module1.foo2: 201
+modules.dependencychain_module1.foo3: 602
+modules.dependencychain_module1.foo4: 31495718496396
+modules.dependencychain_module1.foo5: 24
+modules.dependencychain_module2.foo1: 100
+modules.dependencychain_module2.foo2: 201
+modules.dependencychain_module2.foo3: 301
+modules.dependencychain_module2.foo4: 10498572832132
+modules.dependencychain_module2.foo5: 6
+modules.dependencychain_module3.foo1: 101
+modules.dependencychain_module3.foo2: 200
+modules.dependencychain_module3.foo3: 300
+modules.dependencychain_module3.foo4: 401
+modules.dependencychain_module3.foo5: 6
+""".lstrip()
