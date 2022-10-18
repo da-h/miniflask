@@ -699,7 +699,19 @@ class miniflask():
         - One-dimensional lists of basic types (e.g. `[int]`)
         - One-dimensional tuples of basic types (e.g. `(int,int)`)
         - Lambda Expressions of the form `lambda state, event: ...`.  
-            (As with events, lambdas can take `state`, `event`, `mf` or a combination of these arguments. Miniflask will outomatically find out what variables are required when parsing the expressions.)
+            - As with events, lambdas can take a `state`-argument. Miniflask will automatically find out what variables are required when parsing the expressions.
+            - Miniflask will also automatically detect circular dependencies and missing arguments in the variable dependency graph.
+            - Note that only "simple" if-statements of the following form are implemented for Lambda-Expressions. See below for examples of what is supported.
+            - Examples:
+                ```
+                lambda: somefunction("arguments")
+                lambda state: state["myvariable"]
+                lambda state: (state["myvariable"] * 5) + state["othervariable"]
+                lambda state: somefunction(state["myvariable"]) + state["othervariable"]
+                lambda state: state["myvariable"] * 5 if "myvariable" in state else state["othervariable"]
+                lambda state: state["myvariable"] * state["othervariable"] if "myvariable" in state and "othervariable" in state else state["yetanothervariable"]
+                ```
+
 
         Note:
         This method is the base method for variable registrations.
