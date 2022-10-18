@@ -380,7 +380,10 @@ class optional:
         return self.str()
 
 
-state_regex = re.compile(r"state\[\"((?:\.*\w+)+)\"\]")
+state_regex = re.compile(r"state\[(\"|\')((?:\.*\w+)+)\1\]")
+string_regex_g2 = r"([\"'])((?:\\\1|(?:(?!\1)).)*)(?:\1)"
+if_else_regex = re.compile(r"(.*)if\s+(.*)\s+else(.*)")
+state_in_regex = re.compile(string_regex_g2 + r"\s+in\s+state")
 
 
 class state_node:
@@ -394,16 +397,45 @@ class state_node:
         self.cli_overwritten = False
         self.missing_argument_message = missing_argument_message
 
+        self.depends_on = []
+        self.depends_alternatives = {}
+
         self.fn = fn
         self.fn_src = getsource(self.fn) if self.fn is not None else None
+
         if self.fn_src is not None:
             if "lambda" not in self.fn_src:
                 raise RegisterError(f"Expected lambda expression, but found {self.fn_src}")
-            self.fn_src = self.fn_src.split("lambda")[1].strip().rstrip(',')
+            fn_lambda_split = self.fn_src.split("lambda")
+            if len(fn_lambda_split) > 2:
+                raise RegisterError(f"Lambda expression is required to consist of a single lambda-keyword in that line of source, but found: {self.fn_src}")
+            self.fn_src = fn_lambda_split[1].strip().rstrip(',')
 
+            # find all state-dependencies in the source code
+            self.depends_on = [m[1] for m in state_regex.findall(self.fn_src)]
 
-        self.depends_on = state_regex.findall(self.fn_src) if self.fn_src else []
-        self.affects = []
+            # we allow one simple alternative: state[x] if x in state else y
+            if_matches = if_else_regex.findall(self.fn_src.split(":")[1]) if self.fn_src else []
+            if len(if_matches) > 1:
+                raise RegisterError(f"Lambda expression with only one if-else-statement of the form `EXPR(state[x]) if x in state else OTHEREXPR` allowed, but found multiple in: {self.fn_src}")
+
+            # we know parse for lambda expressions of the form:
+            # expr1(x,y,...) if x in state and y in state ... else expr2
+            if len(if_matches) == 1:
+                true_expr_src = if_matches[0][0]
+                false_expr_src = if_matches[0][2]
+                state_cond_src = if_matches[0][1]
+                false_expr_dependencies = [m[1] for m in state_regex.findall(false_expr_src)]
+                for bad_keyword in ["or", "not"]:
+                    if f" {bad_keyword} " in state_cond_src:
+                        raise RegisterError(f"Lambda expression allows only if-else-statements of the form `EXPR(state[x]) if x in state and ... else OTHEREXPR` allowed, but found `{bad_keyword}` in condition of: {self.fn_src}")
+                state_cond_vars = [m[1] for cond_src in state_cond_src.split(" and ") for m in state_in_regex.findall(cond_src)]
+
+                # if the condition is also used in the true_expr_src we can ignore it later to check for its alternatives
+                for state_cond_var in state_cond_vars:
+                    true_expr_regex = re.compile(r"state\s*\[\s*([\"'])" + state_cond_var + r"\1\s*\]")
+                    if true_expr_regex.search(true_expr_src):
+                        self.depends_alternatives[state_cond_var] = false_expr_dependencies
 
     def str(self):
         return str(self.varid)
@@ -425,8 +457,10 @@ class state_node:
     @staticmethod
     def calculate_affects_lists(node_dict):
         for node in node_dict.values():
+            node.affects = []
+        for node in node_dict.values():
             for depends_on_varid in node.depends_on:
-                node_dict[depends_on_varid].affects(node.varid)
+                node_dict[depends_on_varid].affects.append(node.varid)
 
     @staticmethod
     def topological_sort(node_dict):  # noqa: C901
@@ -453,8 +487,19 @@ class state_node:
 
             visited[node_i] = True
 
-            for dependency in nodes[node_i].depends_on:
+            for dependency in node.depends_on:
                 if dependency not in node.mf.state:
+
+                    # in case dependency has an alternative, we can ignore this if all alternatives exist
+                    if dependency in node.depends_alternatives:
+                        alternatives_exist = True
+                        for alternative_dependency in node.depends_alternatives[dependency]:
+                            if alternative_dependency not in node.mf.state:
+                                alternatives_exist = False
+                                break
+                        if alternatives_exist:
+                            continue
+
                     unresolved.append((node, dependency))
                     continue
                 if hasattr(node.mf.state, "fuzzy_names"):
