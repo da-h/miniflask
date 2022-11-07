@@ -10,7 +10,7 @@ def test_lambda_arguments():
     assert mf.state_registrations["modules.lambdaarguments_module1.var1"][-1].depends_alternatives == {}
     assert mf.state_registrations["modules.lambdaarguments_module1.var2"][-1].depends_on == ["var1"]
     assert mf.state_registrations["modules.lambdaarguments_module1.var2"][-1].depends_alternatives == {}
-    assert mf.state_registrations["modules.lambdaarguments_module1.var3"][-1].depends_on == ["var2", "var1"]
+    assert mf.state_registrations["modules.lambdaarguments_module1.var3"][-1].depends_on == ["var1", "var2"]
     assert mf.state_registrations["modules.lambdaarguments_module1.var3"][-1].depends_alternatives == {}
     assert mf.state_registrations["modules.lambdaarguments_module1.var4"][-1].depends_on == ["var1"]
     assert mf.state_registrations["modules.lambdaarguments_module1.var4"][-1].depends_alternatives == {}
@@ -27,7 +27,7 @@ def test_def_arguments():
     assert mf.state_registrations["modules.defarguments_module1.var1"][-1].depends_alternatives == {}
     assert mf.state_registrations["modules.defarguments_module1.var2"][-1].depends_on == ["var1"]
     assert mf.state_registrations["modules.defarguments_module1.var2"][-1].depends_alternatives == {}
-    assert mf.state_registrations["modules.defarguments_module1.var3"][-1].depends_on == ["var2", "var1"]
+    assert mf.state_registrations["modules.defarguments_module1.var3"][-1].depends_on == ["var1", "var2"]
     assert mf.state_registrations["modules.defarguments_module1.var3"][-1].depends_alternatives == {}
     assert mf.state_registrations["modules.defarguments_module1.var4"][-1].depends_on == ["var1"]
     assert mf.state_registrations["modules.defarguments_module1.var4"][-1].depends_alternatives == {}
