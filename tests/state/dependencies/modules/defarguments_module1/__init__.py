@@ -8,7 +8,7 @@ def somefunction(val):
     return val * 300 + 2
 
 
-def var1_fn(state):
+def var1_fn():
     return 42
 
 
