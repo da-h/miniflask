@@ -1,3 +1,4 @@
+import ast
 import sys
 import re
 from collections.abc import MutableMapping
@@ -6,7 +7,7 @@ from inspect import getsource
 from colored import fg, attr
 
 from .util import get_varid_from_fuzzy, highlight_module, get_relative_id
-from .exceptions import StateKeyError, RegisterError
+from .exceptions import StateKeyError
 
 
 class temporary_state:
@@ -380,13 +381,13 @@ class optional:
         return self.str()
 
 
-state_regex = re.compile(r"state\[(\"|\')((?:\.*\w+)+)\1\]")
-string_regex_g2 = r"([\"'])((?:\\\1|(?:(?!\1)).)*)(?:\1)"
-if_else_regex = re.compile(r"(.*)if\s+(.*)\s+else(.*)")
-state_in_regex = re.compile(string_regex_g2 + r"\s+in\s+state")
-
-
 class state_node:
+
+    _lambda_str_regex = re.compile(r"^{?\s*\"\w*\"\s*:\s*lambda\s*\w*:.*}?")
+    local_arguments = []
+    depends_on = []
+    depends_alternatives = []
+
     def __init__(self, varid, mf, caller_traceback, cliargs=False, parsefn=False, is_ovewriting=False, missing_argument_message=None, fn=None):
         self.varid = varid
         self.mf = mf
@@ -404,38 +405,36 @@ class state_node:
         self.fn_src = getsource(self.fn) if self.fn is not None else None
 
         if self.fn_src is not None:
-            if "lambda" not in self.fn_src:
-                raise RegisterError(f"Expected lambda expression, but found {self.fn_src}")
-            fn_lambda_split = self.fn_src.split("lambda")
-            if len(fn_lambda_split) > 2:
-                raise RegisterError(f"Lambda expression is required to consist of a single lambda-keyword in that line of source, but found: {self.fn_src}")
-            self.fn_src = fn_lambda_split[1].strip().rstrip(',')
-
-            # find all state-dependencies in the source code
-            self.depends_on = [m[1] for m in state_regex.findall(self.fn_src)]
-
-            # we allow one simple alternative: state[x] if x in state else y
-            if_matches = if_else_regex.findall(self.fn_src.split(":")[1]) if self.fn_src else []
-            if len(if_matches) > 1:
-                raise RegisterError(f"Lambda expression with only one if-else-statement of the form `EXPR(state[x]) if x in state else OTHEREXPR` allowed, but found multiple in: {self.fn_src}")
-
-            # we know parse for lambda expressions of the form:
-            # expr1(x,y,...) if x in state and y in state ... else expr2
-            if len(if_matches) == 1:
-                true_expr_src = if_matches[0][0]
-                false_expr_src = if_matches[0][2]
-                state_cond_src = if_matches[0][1]
-                false_expr_dependencies = [m[1] for m in state_regex.findall(false_expr_src)]
-                for bad_keyword in ["or", "not"]:
-                    if f" {bad_keyword} " in state_cond_src:
-                        raise RegisterError(f"Lambda expression allows only if-else-statements of the form `EXPR(state[x]) if x in state and ... else OTHEREXPR` allowed, but found `{bad_keyword}` in condition of: {self.fn_src}")
-                state_cond_vars = [m[1] for cond_src in state_cond_src.split(" and ") for m in state_in_regex.findall(cond_src)]
-
-                # if the condition is also used in the true_expr_src we can ignore it later to check for its alternatives
-                for state_cond_var in state_cond_vars:
-                    true_expr_regex = re.compile(r"state\s*\[\s*([\"'])" + state_cond_var + r"\1\s*\]")
-                    if true_expr_regex.search(true_expr_src):
-                        self.depends_alternatives[state_cond_var] = false_expr_dependencies
+            _fn_src = self.fn_src.strip()
+            _ast_mode = "exec"
+            if self._lambda_str_regex.match(_fn_src):
+                # function source of a lambda looks a little different, because a whole line is returned by 'getsource'
+                # we assume a k, v pair is given, only missing the brackets for a valid syntax
+                # Note: if the lambda is not written in a standalone line, it will break the following tweak
+                _fn_src = "{" + _fn_src + "}"
+                _ast_mode = "eval"
+            # find lambda or def expression
+            fn_lbd_iter = list(iter(
+                node
+                for node in ast.walk(ast.parse(_fn_src, mode=_ast_mode))
+                if isinstance(node, (ast.FunctionDef, ast.Lambda))
+            ))
+            # check if exactly one expression is found
+            if len(fn_lbd_iter) == 0:
+                raise RuntimeError(f"Exactly one expression needs to be defined, found {len(fn_lbd_iter)}.")
+            if len(fn_lbd_iter) > 1:
+                raise RuntimeError(f"Only one expression is allowed per line, found {len(fn_lbd_iter)}.")
+            fn_lbd_node = fn_lbd_iter[0]
+            # get argument names for def/lambda expression
+            self.local_arguments = [n.arg for n in fn_lbd_node.args.args]
+            # find all dependencies in the source code, which use local arguments
+            self.depends_on = self._find_var_names(fn_lbd_node, lcl_variables=self.local_arguments)
+            # find all alternative-dependencies
+            for node in ast.walk(fn_lbd_node):
+                if isinstance(node, ast.IfExp):
+                    rvs = self._find_var_names(node.orelse, lcl_variables=self.local_arguments)
+                    for lv in self._find_comp_names(node.test, self.local_arguments):
+                        self.depends_alternatives[lv] = rvs
 
     def str(self):
         return str(self.varid)
@@ -450,6 +449,35 @@ class state_node:
         if len(self.depends_on) > 0:
             content.append(f"depends_on={self.depends_on}")
         return f"variable({', '.join(content)})"
+
+    # ------------------- #
+    # AST routines #
+    # ------------------- #
+
+    @staticmethod
+    def _find_var_names(tree: ast.AST, lcl_variables=None):
+        lcl_variables = set([]) if lcl_variables is None else set(lcl_variables)
+        return sorted([
+            node.slice.value
+            for node in ast.walk(tree)
+            if hasattr(node, "value") and isinstance(node.value, ast.Name) and node.value.id in lcl_variables
+        ])
+
+    @staticmethod
+    def _find_comp_names(tree: ast.AST, lcl_variables):
+        ret = []
+        for node in ast.walk(tree):
+            if isinstance(node, ast.Compare):
+                _args = [nc.id for c in node.comparators for nc in ast.walk(c) if
+                         isinstance(nc, ast.Name) and nc.id in lcl_variables]
+                _names = sorted([
+                    node.value
+                    for node in ast.walk(tree)
+                    if hasattr(node, "value") and isinstance(node, ast.Constant)
+                ])
+                if len(_args):
+                    ret += _names
+        return ret
 
     # ------------------- #
     # dependency routines #
@@ -523,11 +551,12 @@ class state_node:
     @staticmethod
     def evaluate(nodes, global_state):
         for node in nodes:
-            varid = node.varid
             if node.cli_overwritten or node.fn_src is None:
                 continue
             if node.fn:
-                if node.fn_src.split(":")[0].strip() == "state":
-                    global_state[varid] = node.fn(node.mf.state)
+                # Note: This is very precise, we could also assume the first
+                # arguments needs to be 'state', regardless of its name
+                if "state" in node.local_arguments:
+                    global_state[node.varid] = node.fn(node.mf.state)
                 else:
-                    global_state[varid] = node.fn()
+                    global_state[node.varid] = node.fn()
