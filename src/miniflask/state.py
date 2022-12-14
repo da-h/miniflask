@@ -548,11 +548,12 @@ class state_node:
     @staticmethod
     def evaluate(nodes, global_state):
         for node in nodes:
-            varid = node.varid
             if node.cli_overwritten or node.fn_src is None:
                 continue
             if node.fn:
-                if node.fn_src.split(":")[0].strip() == "state":
-                    global_state[varid] = node.fn(node.mf.state)
+                # Note: This is very precise, we could also assume the first
+                # arguments needs to be 'state', regardless of its name
+                if "state" in node.local_arguments:
+                    global_state[node.varid] = node.fn(node.mf.state)
                 else:
-                    global_state[varid] = node.fn()
+                    global_state[node.varid] = node.fn()
