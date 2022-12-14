@@ -6,7 +6,7 @@ def some_function(val):
     return val * 300 + 2
 
 
-class TestClass:
+class TestClass:  # noqa
 
     def __init__(self, state):
         self.state = state
