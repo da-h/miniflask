@@ -3,7 +3,7 @@ from setup import setup
 from miniflask.exceptions import RegisterError
 
 
-def test_lambda_arguments():
+def test_lambda_arguments_1():
     mf = setup()
     mf.load("lambdaarguments_module1")
     assert mf.state_registrations["modules.lambdaarguments_module1.var1"][-1].depends_on == []
@@ -18,6 +18,18 @@ def test_lambda_arguments():
     assert mf.state_registrations["modules.lambdaarguments_module1.var5"][-1].depends_alternatives == {"var1": ["var3"]}
     assert mf.state_registrations["modules.lambdaarguments_module1.var6"][-1].depends_on == ["var1", "var2", "var3", "var4"]
     assert mf.state_registrations["modules.lambdaarguments_module1.var6"][-1].depends_alternatives == {"var1": ["var3", "var4"], "var2": ["var3", "var4"]}
+
+
+def test_lambda_arguments_2():
+    mf = setup()
+    with pytest.raises(Exception):
+        mf.load("lambdaarguments_module2")
+
+
+def test_lambda_arguments_3():
+    mf = setup()
+    with pytest.raises(Exception):
+        mf.load("lambdaarguments_module3")
 
 
 def test_def_arguments():
