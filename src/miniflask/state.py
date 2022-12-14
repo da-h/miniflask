@@ -411,12 +411,18 @@ class state_node:
                 # Note: if the lambda is not written in a standalone line, it will break the following tweak
                 _fn_src = "{" + _fn_src + "}"
                 _ast_mode = "eval"
-            # find first lambda of def expression
-            fn_lbd_node = next(iter(
+            # find lambda or def expression
+            fn_lbd_iter = list(iter(
                 node
                 for node in ast.walk(ast.parse(_fn_src, mode=_ast_mode))
                 if isinstance(node, (ast.FunctionDef, ast.Lambda))
             ))
+            # check if exactly one expression is found
+            if len(fn_lbd_iter) == 0:
+                raise RuntimeError(f"Exactly one expression needs to be defined, found {len(fn_lbd_iter)}.")
+            if len(fn_lbd_iter) > 1:
+                raise RuntimeError(f"Only one expression is allowed per line, found {len(fn_lbd_iter)}.")
+            fn_lbd_node = fn_lbd_iter[0]
             # get argument names for def/lambda expression
             lcl_vars = [n.arg for n in fn_lbd_node.args.args]
             # find all dependencies in the source code, which use local arguments
