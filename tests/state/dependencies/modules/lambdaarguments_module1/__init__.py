@@ -1,5 +1,3 @@
-
-
 def getvalue(state):
     return state["42"]
 
