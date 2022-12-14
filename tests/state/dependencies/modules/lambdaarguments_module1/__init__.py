@@ -8,7 +8,7 @@ def some_function(val):
 
 class TestClass:  # noqa
 
-    def __init__(self, state):
+    def __init__(self, state):  # noqa
         self.state = state
 
 
