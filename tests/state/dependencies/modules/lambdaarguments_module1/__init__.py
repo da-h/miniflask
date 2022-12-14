@@ -6,7 +6,7 @@ def some_function(val):
     return val * 300 + 2
 
 
-class TestClass:
+class TestClass:  # pylint: disable=too-few-public-methods
 
     def __init__(self, state):
         self.state = state
