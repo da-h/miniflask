@@ -385,6 +385,9 @@ class optional:
 class state_node:
 
     _lambda_str_regex = re.compile(r"^{?\s*\"\w*\"\s*:\s*lambda\s*\w*:.*}?")
+    local_arguments = []
+    depends_on = []
+    depends_alternatives = []
 
     def __init__(self, varid, mf, caller_traceback, cliargs=False, parsefn=False, is_ovewriting=False, missing_argument_message=None, fn=None):
         self.varid = varid
@@ -424,14 +427,14 @@ class state_node:
                 raise RuntimeError(f"Only one expression is allowed per line, found {len(fn_lbd_iter)}.")
             fn_lbd_node = fn_lbd_iter[0]
             # get argument names for def/lambda expression
-            lcl_vars = [n.arg for n in fn_lbd_node.args.args]
+            self.local_arguments = [n.arg for n in fn_lbd_node.args.args]
             # find all dependencies in the source code, which use local arguments
-            self.depends_on = self._find_var_names(fn_lbd_node, lcl_variables=lcl_vars)
+            self.depends_on = self._find_var_names(fn_lbd_node, lcl_variables=self.local_arguments)
             # find all alternative-dependencies
             for node in ast.walk(fn_lbd_node):
                 if isinstance(node, ast.IfExp):
-                    rvs = self._find_var_names(node.orelse, lcl_variables=lcl_vars)
-                    for lv in self._find_comp_names(node.test, lcl_vars):
+                    rvs = self._find_var_names(node.orelse, lcl_variables=self.local_arguments)
+                    for lv in self._find_comp_names(node.test, self.local_arguments):
                         self.depends_alternatives[lv] = rvs
 
     def str(self):
