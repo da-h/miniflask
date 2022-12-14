@@ -12,7 +12,7 @@ class TestClass:  # pylint: disable=too-few-public-methods
         self.state = state
 
 
-lambda_definition = lambda: 42  # noqa
+lambda_definition = lambda: 42  # noqa  # pylint: disable=unnecessary-lambda-assignment
 
 
 def register(mf):
