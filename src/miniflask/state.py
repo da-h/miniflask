@@ -2,7 +2,6 @@ import ast
 import sys
 import re
 from collections.abc import MutableMapping
-import inspect
 from inspect import getsource
 
 from colored import fg, attr
