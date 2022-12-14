@@ -402,12 +402,6 @@ class state_node:
         self.fn = fn
         self.fn_src = getsource(self.fn) if self.fn is not None else None
 
-        # TODO: inspect register() call to maybe get more insights.
-        frame = inspect.currentframe()
-        frame = frame.f_back.f_back.f_back  # go up one in the stack
-        register_defaults_src = inspect.getsource(frame)
-        register_defaults_ast = ast.parse(register_defaults_src, mode="exec")
-
         if self.fn_src is not None:
             _fn_src = self.fn_src.strip()
             _ast_mode = "exec"
