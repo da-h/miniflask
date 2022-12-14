@@ -17,3 +17,4 @@ per-file-ignores =
     # C901 loop to complex
     # R1702 too many nested blocks
     src/miniflask/__init__.py: E221,F401,F403
+    tests/state/dependencies/modules/lambdaarguments_module1/__init__.py: R0903

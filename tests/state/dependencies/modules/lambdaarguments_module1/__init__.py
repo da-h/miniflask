@@ -6,9 +6,9 @@ def some_function(val):
     return val * 300 + 2
 
 
-class TestClass:  # noqa
+class TestClass:
 
-    def __init__(self, state):  # noqa
+    def __init__(self, state):
         self.state = state
 
 
