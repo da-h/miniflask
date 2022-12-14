@@ -17,15 +17,12 @@ class TestClass:
 lambda_definition = lambda: 42  # noqa
 
 
-lambda_tuple_definition = lambda: 42, lambda: 43  # noqa
-
-
 def register(mf):
     mf.register_defaults({
-        "test_multiple_inline_I": lambda: 1 * 42, "test_multiple_inline_II": lambda: 2 * 42,
+        "test_multiple_inline_I": lambda: 1 * 42,
+        "test_multiple_inline_II": lambda: 2 * 42,
         "test_lambda_def": lambda_definition,
         "test_class": TestClass,
-        "test_lambda_tuple": lambda_tuple_definition[1],
         "test_line_breaks": lambda state: state[
             "var1"
         ],
