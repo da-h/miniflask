@@ -497,24 +497,30 @@ class state_node:
         visited = [False for i in range(len(nodes))]
         sorted_nodes, cycles, unresolved = [], [], []
 
-        # note: rewrite this recursive DFS to while-loop if RecursionError occurs
-        def DFS(node_i, parentnodes=None):
-            if parentnodes is None:
-                parentnodes = []
+        # the following code implements DFS using a stack of nodes-to-traverse
+        stack = [(node_i, []) for node_i in range(len(nodes) - 1, -1, -1)]
+        while len(stack) > 0:
+            node_i, parentnodes = stack.pop()
+
+            if node_i == "add_to_sorted_nodes":
+                sorted_nodes.append(parentnodes)
+                continue
 
             node = nodes[node_i]
 
             if node in parentnodes:
                 cycles.append(parentnodes + [node])
-                return
+                continue
 
             parentnodes = parentnodes + [node]
 
             if visited[node_i]:
-                return
+                continue
 
             visited[node_i] = True
+            stack.append(("add_to_sorted_nodes", node))
 
+            dependency_stack = []
             for dependency in node.depends_on:
                 if dependency not in node.mf.state:
 
@@ -535,12 +541,10 @@ class state_node:
                 else:
                     dependency_varid = dependency
                 dependency_i = varid2index[dependency_varid]
-                DFS(dependency_i, parentnodes=parentnodes)
+                dependency_stack.append((dependency_i, parentnodes))
 
-            sorted_nodes.append(node)
-
-        for i in range(len(nodes)):
-            DFS(i)
+            dependency_stack.reverse()
+            stack = stack + dependency_stack
 
         return sorted_nodes, cycles, unresolved
 
