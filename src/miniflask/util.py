@@ -1,15 +1,14 @@
 import re
 import argparse
+import inspect
 from argparse import Action
 from os import walk, path
 from pathlib import Path
 from pkgutil import resolve_name
-
 from colored import attr, fg
-import inspect
 
 
-# get the absolute package name of the current file to cwd() 
+# get the absolute package name of the current file to cwd()
 # - i.e. $result can be loaded using `import $result`
 def get_full_base_module_name(directory):
     directory = Path(directory).absolute()
@@ -28,7 +27,7 @@ def getModulesAvail(python_import_paths, f=None):
         f = {}
     for base_module_id, base_module_path in python_import_paths.items():
         if base_module_path.startswith("."):
-            stack_frame = inspect.stack()[2] # the frame in which miniflask.init has been called
+            stack_frame = inspect.stack()[2]  # the frame in which miniflask.init has been called
             callee_module_path = Path(stack_frame.filename).parent
             base_module_path = get_full_base_module_name(callee_module_path) + base_module_path
         module = resolve_name(base_module_path)

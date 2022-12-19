@@ -151,7 +151,7 @@ class miniflask:
         line = "—" * self._consolecolumns
         if len(args) > 0:
             s = " ".join(args)
-            line = line[:margin] + " " + s + " " + line[margin + len(s) + 2 :]
+            line = line[:margin] + " " + s + " " + line[margin + len(s) + 2:]
         print()
         print(color + attr("bold") + line + attr("reset"))
 
@@ -165,7 +165,7 @@ class miniflask:
 
             # if previously printed parent, make the module_id shorter
             if module_id.startswith(last):
-                module_id_formatted = last_formatted + module_id[len(last) :]
+                module_id_formatted = last_formatted + module_id[len(last):]
 
             is_last = i == len(self._recently_loaded) - 1
             has_children = len(mod.miniflask_obj._recently_loaded) > 0
@@ -446,7 +446,7 @@ class miniflask:
             try:
                 module_id = self.getModuleId(scope)
                 if varid.startswith(scope):
-                    varid = varid[len(scope) + 1 :]
+                    varid = varid[len(scope) + 1:]
                 return module_id, varid
             except ValueError:
                 pass
