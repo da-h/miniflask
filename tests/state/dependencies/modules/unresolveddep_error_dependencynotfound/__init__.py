@@ -1,6 +1,5 @@
 
 def register(mf):
     mf.register_defaults({
-        "foobar1": 111,
-        "foobar2": 112
+        "foo": lambda state: state["varnotfound"],
     })
