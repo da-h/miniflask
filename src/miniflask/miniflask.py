@@ -6,9 +6,11 @@ import traceback
 from functools import partial
 from os import path, listdir, linesep, get_terminal_size
 from importlib import import_module
+from pathlib import Path
 from enum import Enum, EnumMeta
 from argparse import ArgumentParser, REMAINDER as ARGPARSE_REMAINDER
 from typing import List
+from pkgutil import resolve_name
 import random
 
 from colored import fg, attr
@@ -37,6 +39,7 @@ from .util import (
     highlight_event,
     str2bool,
     get_varid_from_fuzzy,
+    get_full_base_module_name,
 )
 
 from .settings import listsettings
@@ -242,9 +245,23 @@ class miniflask:
             visited = set()
 
         if not directory:
-            for basename, base_import_path in self.module_repositories.items():
+            for basename, base_module_path in self.module_repositories.items():
+                if base_module_path.startswith("."):
+                    stack_frame = inspect.stack()[
+                        2
+                    ]  # the frame in which miniflask.init has been called
+                    callee_module_path = Path(stack_frame.filename).parent
+                    base_module_path = (
+                        get_full_base_module_name(callee_module_path) + base_module_path
+                    )
+                if base_module_path.startswith("miniflask"):
+                    continue
+
+                module = resolve_name(base_module_path)
+                directory = module.__path__[0]
+
                 self.showModules(
-                    loop_directory,
+                    directory,
                     prepend=prepend,
                     id_pre=basename if id_pre is None else id_pre + "." + basename,
                     with_event=with_event,
