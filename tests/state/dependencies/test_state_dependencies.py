@@ -3,6 +3,11 @@ from setup import setup
 from miniflask.exceptions import RegisterError
 
 
+def test_potential_ast_bugs():
+    mf = setup()
+    mf.load("potential_ast_bugs_module")
+
+
 def test_lambda_arguments_1():
     mf = setup()
     mf.load("lambdaarguments_module1")

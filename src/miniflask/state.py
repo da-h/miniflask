@@ -411,7 +411,7 @@ class state_node:
                 # function source of a lambda looks a little different, because a whole line is returned by 'getsource'
                 # we assume a k, v pair is given, only missing the brackets for a valid syntax
                 # Note: if the lambda is not written in a standalone line, it will break the following tweak
-                _fn_src = "{" + _fn_src + "}"
+                _fn_src = "{\n" + _fn_src + "\n}"
                 _ast_mode = "eval"
             # find lambda or def expression
             fn_lbd_iter = list(iter(
