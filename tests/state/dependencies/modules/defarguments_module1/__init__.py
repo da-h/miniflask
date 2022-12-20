@@ -40,4 +40,6 @@ def register(mf):
         "var4": var4_fn,
         "var5": var5_fn,
         "var6": var6_fn,
+        "annotation": lambda: 10,
+        "annotation.bug": lambda: 10
     })
