@@ -1,10 +1,9 @@
-from pathlib import Path
 import miniflask  # noqa: E402
 
 
 def test_beforeafter_setup(capsys):
     mf = miniflask.init(
-        module_dirs=str(Path(__file__).parent / "modules"),
+        ".modules",
         debug=True
     )
     mf.load("setup_multiple")
@@ -23,7 +22,7 @@ event returned value: [42, 42, 42, 42]
 
 def test_beforeafter_before(capsys):
     mf = miniflask.init(
-        module_dirs=str(Path(__file__).parent / "modules"),
+        ".modules",
         debug=True
     )
     mf.load(["setup_multiple", "beforeevent", "beforeevent2"])
@@ -44,7 +43,7 @@ event returned value: [85, 85, 85, 85]
 
 def test_beforeafter_after(capsys):
     mf = miniflask.init(
-        module_dirs=str(Path(__file__).parent / "modules"),
+        ".modules",
         debug=True
     )
     mf.load(["setup_multiple", "afterevent_multiple", "afterevent2_multiple"])
@@ -65,7 +64,7 @@ event returned value: [1, 44, 87, 130]
 
 def test_beforeafter_before_and_after(capsys):
     mf = miniflask.init(
-        module_dirs=str(Path(__file__).parent / "modules"),
+        ".modules",
         debug=True
     )
     mf.load(["setup_multiple", "beforeevent", "beforeevent2", "afterevent_multiple", "afterevent2_multiple"])

@@ -6,27 +6,51 @@ import traceback
 from functools import partial
 from os import path, listdir, linesep, get_terminal_size
 from importlib import import_module
-from importlib.machinery import PathFinder as ImportPathFinder
+from pathlib import Path
 from enum import Enum, EnumMeta
 from argparse import ArgumentParser, REMAINDER as ARGPARSE_REMAINDER
 from typing import List
+from pkgutil import resolve_name
 import random
 
 from colored import fg, attr
 
 # package modules
-from .exceptions import save_traceback, format_traceback_list, RegisterError, StateKeyError
+from .exceptions import (
+    save_traceback,
+    format_traceback_list,
+    RegisterError,
+    StateKeyError,
+)
 from .event import event, event_obj
 from .state import state, as_is_callable, optional as optional_default, state_node
 from .dummy import miniflask_dummy
 from .util import getModulesAvail, EnumAction, get_relative_id
-from .util import highlight_error, highlight_name, highlight_module, highlight_loading, highlight_loading_default, highlight_loaded_default, highlight_loading_module, highlight_loaded_none, highlight_loaded, highlight_event, str2bool, get_varid_from_fuzzy
+from .util import (
+    highlight_error,
+    highlight_name,
+    highlight_module,
+    highlight_loading,
+    highlight_loading_default,
+    highlight_loaded_default,
+    highlight_loading_module,
+    highlight_loaded_none,
+    highlight_loaded,
+    highlight_event,
+    str2bool,
+    get_varid_from_fuzzy,
+    get_full_base_module_name,
+)
 
 from .settings import listsettings
 
 
-def print_info(*args, color=fg('green'), msg="INFO"):
-    print(color + attr('bold') + msg + attr('reset') + color + ": " + attr('reset'), *args, attr('reset'))
+def print_info(*args, color=fg("green"), msg="INFO"):
+    print(
+        color + attr("bold") + msg + attr("reset") + color + ": " + attr("reset"),
+        *args,
+        attr("reset"),
+    )
 
 
 def get_default_args(func):
@@ -40,21 +64,20 @@ def get_default_args(func):
 
 def registerPredefined(modules_avail):
     for m in ["modules", "events", "info", "settings", "definitions"]:
-        module_name_id = 'miniflask.' + m
-        importname = 'miniflask.modules.' + m
+        module_name_id = "miniflask." + m
+        importname = "miniflask." + m
         modules_avail[module_name_id] = {
-            'id': module_name_id,
-            'importpath': "system",
-            'importname': importname,
-            'lowpriority': False
+            "id": module_name_id,
+            "importname": importname,
+            "lowpriority": False,
         }
 
 
 # ================ #
 # MiniFlask Kernel #
 # ================ #
-class miniflask():
-    def __init__(self, module_dirs, debug=False):
+class miniflask:
+    def __init__(self, *module_repositories, debug=False):
         r"""miniflask.init
         Initializes miniflask with a module repository.
 
@@ -62,13 +85,12 @@ class miniflask():
         By initializing miniflask, we have to define the folders miniflask will look in.
 
         Args:
-        - `module_dirs`: a string, a list or a dict of paths to module repositories.
-            - **String**: specifies a single path to the module repository to use.  
+        - `module_repositories`: a string, a list python packages to search module repositories in.
+            - **String**: specifies a single import path to the module repository to use.
                 (The directory name will also be repository name / module prefix for all modules inside that folder.)
-            - **List**: specifies multiple paths to the module repository to use.  
+            - **List**: specifies multiple import path to the module repository to use.
                 (The directory names will also be repository names / module prefixes for all modules inside that folders.)
-            - **Dict**: specifies repository names / module prefixes together with their respective repository paths.
-        - `debug`: Debug Mode  
+        - `debug`: Debug Mode
             Debug Mode disables catching/printing + beautifying Exceptions. Also, it disables truncating the traceback messages of internal miniflask functions.
 
         Examples:
@@ -79,33 +101,21 @@ class miniflask():
 
         # Multiple Module Repositories (named "publicmodules" and "privatemodules")
         mf = miniflask.init(["privatemodules", "publicmodules"])
-
-        # Multiple Module Repositories (with custom names "pub" and "priv")
-        # -> modules inside of privatemodules will get the prefix "priv."
-        mf = miniflask.init({
-            "priv": "privatemodules",
-            "pub":  "publicmodules"
-        })
         ```
 
         """  # noqa: W291
         self._instance_id = str(random.getrandbits(128))
         self.debug = debug
-        if not module_dirs:
+        if not module_repositories:
             return
 
         # module dir to be read from
-        if isinstance(module_dirs, list):
-            self.module_dirs = {path.basename(m): m for m in module_dirs}
-        elif isinstance(module_dirs, str):
-            self.module_dirs = {path.basename(module_dirs): module_dirs}
-        elif isinstance(module_dirs, dict):
-            self.module_dirs = module_dirs
-        else:
-            raise ValueError("Only dict or list allowed for `module_dirs'. Found type '%s'." % type(module_dirs))
+        self.module_repositories = {m.split(".")[-1]: m for m in module_repositories}
 
         # arguments from cli-stdin
-        self.settings_parser = ArgumentParser(usage=sys.argv[0] + " modulelist [optional arguments]")
+        self.settings_parser = ArgumentParser(
+            usage=sys.argv[0] + " modulelist [optional arguments]"
+        )
         self.cli_required_arguments = []
         self.default_modules = []
         self.default_modules_overwrites = []
@@ -119,11 +129,13 @@ class miniflask():
         self.event = event(self, optional=False)
         self.event.optional = event(self, optional=True)
         self.state = {}
-        self.state_registrations = {}  # saves the information of the respective variables (initial value, registration, etc.)
+        self.state_registrations = (
+            {}
+        )  # saves the information of the respective variables (initial value, registration, etc.)
         self._state_overwrites_list = []
         self.modules_loaded = {}
         self.modules_ignored = []
-        self.modules_avail = getModulesAvail(self.module_dirs)
+        self.modules_avail = getModulesAvail(self.module_repositories)
         registerPredefined(self.modules_avail)
         self._varid_list = []
         self._recently_loaded = []
@@ -135,19 +147,21 @@ class miniflask():
     # ------- #
     # helpers #
     # ------- #
-    def print_heading(self, *args, color=fg('blue'), margin=8):
+    def print_heading(self, *args, color=fg("blue"), margin=8):
         line = "—" * self._consolecolumns
         if len(args) > 0:
             s = " ".join(args)
             line = line[:margin] + " " + s + " " + line[margin + len(s) + 2:]
         print()
-        print(color + attr('bold') + line + attr('reset'))
+        print(color + attr("bold") + line + attr("reset"))
 
     def print_recently_loaded(self, prepend="", loading_text=highlight_loading):
         last = ""
         last_formatted = ""
         for i, mod in enumerate(self._recently_loaded):
-            module_id = module_id_formatted = module_id = mod.miniflask_obj.module_id_initial
+            module_id = (
+                module_id_formatted
+            ) = module_id = mod.miniflask_obj.module_id_initial
 
             # if previously printed parent, make the module_id shorter
             if module_id.startswith(last):
@@ -155,25 +169,33 @@ class miniflask():
 
             is_last = i == len(self._recently_loaded) - 1
             has_children = len(mod.miniflask_obj._recently_loaded) > 0
-            part_of_next = i < len(self._recently_loaded) - 1 and self._recently_loaded[i + 1].miniflask_obj.module_id_initial.startswith(module_id)
+            part_of_next = i < len(self._recently_loaded) - 1 and self._recently_loaded[
+                i + 1
+            ].miniflask_obj.module_id_initial.startswith(module_id)
             if is_last:
-                tree_symb         = "    "  # noqa: E221
+                tree_symb = "    "  # noqa: E221
                 tree_symb_current = "╰── "  # "└── "
             elif has_children:
-                tree_symb         = "│   "  # noqa: E221
+                tree_symb = "│   "  # noqa: E221
                 tree_symb_current = "│   "
             else:
-                tree_symb         = "│   "  # noqa: E221
+                tree_symb = "│   "  # noqa: E221
                 tree_symb_current = "├── "  # "├── "
             if not part_of_next:
                 if prepend == "":
                     print(loading_text(module_id_formatted))
                 else:
-                    print(prepend + tree_symb_current + loading_text(module_id_formatted))
+                    print(
+                        prepend + tree_symb_current + loading_text(module_id_formatted)
+                    )
             if len(mod.miniflask_obj._recently_loaded) > 0:
-                mod.miniflask_obj.print_recently_loaded(prepend + tree_symb, loading_text)
+                mod.miniflask_obj.print_recently_loaded(
+                    prepend + tree_symb, loading_text
+                )
             last = module_id
-            last_formatted = loading_text(module_id_formatted) if part_of_next else module_id
+            last_formatted = (
+                loading_text(module_id_formatted) if part_of_next else module_id
+            )
 
     # ==================== #
     # module introspection #
@@ -181,40 +203,7 @@ class miniflask():
 
     def import_module(self, module_name):
         module_spec = self.modules_avail[module_name]
-        importpath = module_spec["importpath"]
-
-        # system import (e.g. miniflask internal modules or pip-module repositories)
-        if importpath == "system":
-            return import_module(module_spec["id"])
-
-        try:
-            direct_import = import_module(module_spec["id"])
-            if direct_import:
-                return direct_import
-        except ModuleNotFoundError:
-            pass
-
-        # imports across filesystem
-        # the random id (_instance_id) ensures sys.modules does not cache different miniflask instances
-        # (first we need to load the parent module, if available)
-        parent_module_name, rest = "miniflask." + self._instance_id + "." + path.basename(path.abspath(module_spec["importpath"])), ""
-        spec = ImportPathFinder().find_spec(parent_module_name, [path.dirname(importpath)])
-        if spec is None:
-            if rest:
-                raise ValueError("Could not import parent Module named '%s'. This is needed for module named '%s' (defined in '%s')." % (parent_module_name, module_spec["id"], module_spec["importpath"]))
-            raise ValueError("Module named '%s' (defined in '%s') could not be imported." % (module_spec["id"], module_spec["importpath"]))
-        if spec.loader is None:
-            raise ValueError("Could not import parent Module named '%s'. This is needed for module named '%s' (defined in '%s'). Did you maybe miss to define a `__init__.py` file in any subfolder?" % (parent_module_name, module_spec["id"], module_spec["importpath"]))
-
-        # set parent module name to identifier given by dict (base_id)
-        parent_module_name = "miniflask." + self._instance_id + "." + module_spec["base_id"]
-        spec.loader.name = parent_module_name
-
-        # actually load the parent module
-        spec.loader.load_module()
-
-        # now load the requested module
-        return import_module(parent_module_name + "." + module_spec["importname"])
+        return import_module(module_spec["importname"])
 
     # module event
     def getModuleEvents(self, module_id, mf=None):
@@ -222,9 +211,9 @@ class miniflask():
         Retrieve List of Events defined by specified module.
 
         Args:
-        - `module_id`: (required)  
+        - `module_id`: (required)
             unique module id
-        - `mf`:  
+        - `mf`:
             Internal variable to specify the miniflask object to register the events into. If set to `None` no events will be registered.
         """  # noqa: W291
         if not mf:
@@ -239,7 +228,16 @@ class miniflask():
         return mf.getEvents()
 
     # pretty print of all available modules
-    def showModules(self, directory=None, prepend="", id_pre=None, with_event=True, direct_print=True, visited=None):  # noqa: C901 too-complex pylint: disable=inconsistent-return-statements
+    def showModules(
+        self,
+        directory=None,
+        prepend="",
+        id_pre=None,
+        with_event=True,
+        direct_print=True,
+        visited=None,
+    ):  # noqa: C901 too-complex pylint: disable=inconsistent-return-statements
+
         out = ""
         any_module_found = False
 
@@ -247,8 +245,27 @@ class miniflask():
             visited = set()
 
         if not directory:
-            for basename, loop_directory in self.module_dirs.items():
-                self.showModules(loop_directory, prepend=prepend, id_pre=basename if id_pre is None else id_pre + "." + basename, with_event=with_event)
+            for basename, base_module_path in self.module_repositories.items():
+                if base_module_path.startswith("."):
+                    stack_frame = inspect.stack()[
+                        2
+                    ]  # the frame in which miniflask.init has been called
+                    callee_module_path = Path(stack_frame.filename).parent
+                    base_module_path = (
+                        get_full_base_module_name(callee_module_path) + base_module_path
+                    )
+                if base_module_path.startswith("miniflask"):
+                    continue
+
+                module = resolve_name(base_module_path)
+                directory = module.__path__[0]
+
+                self.showModules(
+                    directory,
+                    prepend=prepend,
+                    id_pre=basename if id_pre is None else id_pre + "." + basename,
+                    with_event=with_event,
+                )
             return
 
         if id_pre is None:
@@ -256,8 +273,14 @@ class miniflask():
         if len(prepend) == 0:
             out += "\n"
             out += highlight_name(path.basename(id_pre)) + "\n"
-        dirs = [d for d in listdir(directory) if path.isdir(path.join(directory, d)) and not d.startswith("_")]
-        visited_next = visited.union(set(path.realpath(path.join(directory, d)) for d in dirs))
+        dirs = [
+            d
+            for d in listdir(directory)
+            if path.isdir(path.join(directory, d)) and not d.startswith("_")
+        ]
+        visited_next = visited.union(
+            set(path.realpath(path.join(directory, d)) for d in dirs)
+        )
         for i, d in enumerate(dirs):
             if d.startswith("."):
                 continue
@@ -280,9 +303,23 @@ class miniflask():
             else:
                 tree_symb = "├── "
                 is_last = False
-            append = " " + fg('blue') + "(" + shortestid + ")" + attr('reset') if is_module and not has_shortid else ""
-            append += attr('dim') + " (low-priority module)" + attr('reset') if is_lowpriority_module else ""
-            out += prepend + tree_symb + (highlight_name(d) if is_module else d) + append + "\n"
+            append = (
+                " " + fg("blue") + "(" + shortestid + ")" + attr("reset")
+                if is_module and not has_shortid
+                else ""
+            )
+            append += (
+                attr("dim") + " (low-priority module)" + attr("reset")
+                if is_lowpriority_module
+                else ""
+            )
+            out += (
+                prepend
+                + tree_symb
+                + (highlight_name(d) if is_module else d)
+                + append
+                + "\n"
+            )
 
             tree_symb_next = "     " if is_last else "│    "
             if is_module:
@@ -291,9 +328,22 @@ class miniflask():
                     if len(events) > 0:
                         for e in events:
                             unique_flag = "!" if e[1] else ">"
-                            print(prepend + tree_symb_next + unique_flag + " " + highlight_event(e[0]))
+                            print(
+                                prepend
+                                + tree_symb_next
+                                + unique_flag
+                                + " "
+                                + highlight_event(e[0])
+                            )
 
-            out_sub, module_found_sub = self.showModules(path.join(directory, d), prepend=prepend + tree_symb_next, id_pre=module_id, with_event=with_event, direct_print=False, visited=visited_next)
+            out_sub, module_found_sub = self.showModules(
+                path.join(directory, d),
+                prepend=prepend + tree_symb_next,
+                id_pre=module_id,
+                with_event=with_event,
+                direct_print=False,
+                visited=visited_next,
+            )
             if module_found_sub:
                 out += out_sub
         if direct_print:
@@ -334,15 +384,31 @@ class miniflask():
 
         # if more than one module found, exclude all low-priority modules
         if len(found_modules) > 1:
-            found_modules = list(filter(lambda mid: not self.modules_avail[mid]["lowpriority"], found_modules))
+            found_modules = list(
+                filter(
+                    lambda mid: not self.modules_avail[mid]["lowpriority"],
+                    found_modules,
+                )
+            )
 
         # if more than one module found let the user know
         if len(found_modules) > 1:
-            raise ValueError(highlight_error() + "Module-Identifier '%s' is not unique. Found %i modules:\n\t%s" % (highlight_module(module_id), len(found_modules), "\n\t".join(found_modules)))
+            raise ValueError(
+                highlight_error()
+                + "Module-Identifier '%s' is not unique. Found %i modules:\n\t%s"
+                % (
+                    highlight_module(module_id),
+                    len(found_modules),
+                    "\n\t".join(found_modules),
+                )
+            )
 
         # no module found with both variants
         if len(found_modules) == 0:
-            raise ValueError(highlight_error() + "Module '%s' not known." % highlight_module(module_id))
+            raise ValueError(
+                highlight_error()
+                + "Module '%s' not known." % highlight_module(module_id)
+            )
 
         # module_id is a unique identifier
         module = found_modules[0]
@@ -354,7 +420,10 @@ class miniflask():
         Given the full unique module id this method returns the shortest module id that is still uniquely assignable by miniflask.
         """
         if module_id not in self.modules_avail:
-            raise ValueError(highlight_error() + "Module '%s' not known." % highlight_module(module_id))
+            raise ValueError(
+                highlight_error()
+                + "Module '%s' not known." % highlight_module(module_id)
+            )
         uniqueId = self.modules_avail[module_id]["id"].split(".")
 
         # find the shortest substring to match a module uniquely
@@ -368,7 +437,9 @@ class miniflask():
         return module_id
 
     # maps 'folder.subfolder.module.list.of.vars' to 'folder.subfoldder.module'
-    def _getModuleIdFromVarId(self, varid, varid_list=None, scope=None):  # noqa: C901 too-complex
+    def _getModuleIdFromVarId(
+        self, varid, varid_list=None, scope=None
+    ):  # noqa: C901 too-complex
 
         # try to use scope as module id
         if scope is not None:
@@ -394,7 +465,15 @@ class miniflask():
         return None, ".".join(varid_list)
 
     # loads module (once)
-    def load(self, module_name, verbose=True, auto_query=True, loading_text=highlight_loading, as_id=None, bind_events=True):  # noqa: C901 too-complex  pylint: disable=too-many-statements
+    def load(
+        self,
+        module_name,
+        verbose=True,
+        auto_query=True,
+        loading_text=highlight_loading,
+        as_id=None,
+        bind_events=True,
+    ):  # noqa: C901 too-complex  pylint: disable=too-many-statements
         r"""
         Directly load a module by name
 
@@ -403,18 +482,18 @@ class miniflask():
         - To prevent this, add the global variable `register_parents = False` to the modules `__init__.py`.
 
         Args:
-        - `module_name`: (required)  
+        - `module_name`: (required)
             Module name to be loaded directly.
             - Prepending the module name with a `-` sign lets miniflask ignore the module.
             - Can be a fuzzy or complete module identifier
             - Can be a `str`, a python `list` or string containing a list of modules seperated by a comma.
-        - `verbose`: (default: `True`)  
+        - `verbose`: (default: `True`)
             Visualizes the module tree that has been loaded during this call.
-        - `auto_query`: (default: `True`)  
+        - `auto_query`: (default: `True`)
             Enables/Disables fuzzy search.
-        - `as_id`: (default: `None`)  
+        - `as_id`: (default: `None`)
             The module id to be used to register the module upon loading.
-        - `bind_events`: (default: `None`)  
+        - `bind_events`: (default: `None`)
             Registers all events of the module to be loaded.
 
         Examples:
@@ -440,7 +519,14 @@ class miniflask():
             module_name = module_name.split(",")
         if isinstance(module_name, list):
             for m in module_name:
-                self.load(m, verbose=verbose, auto_query=auto_query, loading_text=loading_text, as_id=as_id, bind_events=bind_events)
+                self.load(
+                    m,
+                    verbose=verbose,
+                    auto_query=auto_query,
+                    loading_text=loading_text,
+                    as_id=as_id,
+                    bind_events=bind_events,
+                )
             return
 
         if module_name.startswith("-"):
@@ -453,7 +539,10 @@ class miniflask():
         if auto_query:
             module_name = self.getModuleId(module_name)
         elif module_name not in self.modules_avail:
-            raise ValueError(highlight_error() + "Module '%s' not known." % highlight_module(module_name))
+            raise ValueError(
+                highlight_error()
+                + "Module '%s' not known." % highlight_module(module_name)
+            )
 
         # check if already loaded
         if module_name in self.modules_loaded and as_id is None:
@@ -462,7 +551,10 @@ class miniflask():
         # load module
         mod = self.import_module(module_name)
         if not hasattr(mod, "register"):
-            raise ValueError(highlight_error() + "Module '%s' does not register itself." % module_name)
+            raise ValueError(
+                highlight_error()
+                + "Module '%s' does not register itself." % module_name
+            )
         module_name = module_name if as_id is None else as_id
         mod.miniflask_obj = miniflask_wrapper(module_name, self)
         mod.miniflask_obj.bind_events = bind_events
@@ -470,13 +562,25 @@ class miniflask():
 
         # first load all parents
         # (starting with root parent, specializing with every step)
-        if not hasattr(mod, 'register_parents') or mod.register_parents:
+        if not hasattr(mod, "register_parents") or mod.register_parents:
             module_path = module_name.split(".")
             for depth in range(1, len(module_path)):
                 parent_module = ".".join(module_path[:depth])
-                if parent_module in self.modules_avail and parent_module not in self.modules_loaded:
-                    parent_as_id = None if as_id is None else ".".join(as_id.split(".")[:-1])
-                    self.load(parent_module, verbose=False, auto_query=False, loading_text=loading_text, as_id=parent_as_id, bind_events=bind_events)
+                if (
+                    parent_module in self.modules_avail
+                    and parent_module not in self.modules_loaded
+                ):
+                    parent_as_id = (
+                        None if as_id is None else ".".join(as_id.split(".")[:-1])
+                    )
+                    self.load(
+                        parent_module,
+                        verbose=False,
+                        auto_query=False,
+                        loading_text=loading_text,
+                        as_id=parent_as_id,
+                        bind_events=bind_events,
+                    )
 
         # remember loaded modules
         self._recently_loaded.append(mod)
@@ -492,11 +596,13 @@ class miniflask():
             self._recently_loaded = []
 
     # register default module that is loaded if none of glob is matched
-    def register_default_module(self, module, required_event=None, required_id=None, overwrite_globals=None):
+    def register_default_module(
+        self, module, required_event=None, required_id=None, overwrite_globals=None
+    ):
         r"""
         Specify modules to load if specific behaviour is not yet matched by already loaded modules.
 
-        In more detail, this allows modules to be loaded depending on the choice of loaded modules upon start of the whole script.  
+        In more detail, this allows modules to be loaded depending on the choice of loaded modules upon start of the whole script.
         Typically, the requirement will be tested after parsing the modules given using cli-arguments.
 
         # Note {.alert}
@@ -510,16 +616,16 @@ class miniflask():
                 - the latest settings overwrite the older settings
 
         Args:
-        - `module`: (required)  
+        - `module`: (required)
             Module name to be loaded if the specified requirement is not met.
             - Can be fuzzy or complete
             - Can be a python list of module names.
-        - `required_event`:  
+        - `required_event`:
             Specifies the event name to be used as a condition to be met, otherwise the specified modules will be loaded.
-        - `required_id`:  
+        - `required_id`:
             Specifies a regular expression that shall be used as a test condition. If there was no match against all loaded module ids, the specified modules will be loaded.
-        - `overwrite_globals`:  
-            This argument takes a `dict` and binds a `register_globals` call to be called after the specified have been called.  
+        - `overwrite_globals`:
+            This argument takes a `dict` and binds a `register_globals` call to be called after the specified have been called.
             (If no modules are loaded due to already fulfilled conditions, the dict will be discarded.)
 
         Examples:
@@ -543,11 +649,19 @@ class miniflask():
         if overwrite_globals is None:
             overwrite_globals = {}
         if required_event and required_id:
-            raise RegisterError("Default Modules should depend either on a event interface OR a regular expression. However, both are given")
+            raise RegisterError(
+                "Default Modules should depend either on a event interface OR a regular expression. However, both are given"
+            )
         if not required_event and not required_id:
-            raise RegisterError("Default Modules should depend either on a event interface OR a regular expression. However, none are given")
-        self.default_modules.append((module, required_event, required_id, overwrite_globals, save_traceback()))
-        self.default_modules_overwrites.append((module, required_event, required_id, overwrite_globals, save_traceback()))
+            raise RegisterError(
+                "Default Modules should depend either on a event interface OR a regular expression. However, none are given"
+            )
+        self.default_modules.append(
+            (module, required_event, required_id, overwrite_globals, save_traceback())
+        )
+        self.default_modules_overwrites.append(
+            (module, required_event, required_id, overwrite_globals, save_traceback())
+        )
 
     # saves function to a given (event-)name
     def register_event(self, name, fn, unique=True, call_before_after=True):
@@ -558,14 +672,14 @@ class miniflask():
         Note, that `init`, `main` and `final` are predefined event names that are called automatically on every [`mf.run()`](../../08-API/02-miniflask-Instance/10-run.md) call.
 
         Args:
-        - `name`: (required)  
+        - `name`: (required)
             Event name to bind the function with.
-        - `fn`: (required)  
-            The function to be bound to the name.  
+        - `fn`: (required)
+            The function to be bound to the name.
 
             **Function Signatures**:
             - There are no requirements to the function signatures for plain events.
-                However, it is possible to prepend the argument list using the keywords: `state`, `event` and/or `mf` in any order.  
+                However, it is possible to prepend the argument list using the keywords: `state`, `event` and/or `mf` in any order.
                 Miniflask will look for these keywords in any event signature and pass the module specific objects,
                 - `state`, (see also the API-Reference for [state](../05-state))
                 - `event` (see also the API-Reference for [event](../04-event)) and
@@ -601,16 +715,16 @@ class miniflask():
                 - Any `before_`/`after_` event gets called with a unique event object, that behaves just like the *normal* event object.
                 - This new event-object has a dict-attribute `.hook`
                 - **`before_`-events can read and manipulate** the function call arguments *before* the actual event will be called using `event.hook["args"]` and `event.hook["kwargs"]`
-                - **`after_`-events can read** the function call arguments *after* the actual event has been called with (including the changes of potential `before_`-hooks using `event.hook["args"]` and `event.hook["kwargs"]`  
+                - **`after_`-events can read** the function call arguments *after* the actual event has been called with (including the changes of potential `before_`-hooks using `event.hook["args"]` and `event.hook["kwargs"]`
                    (**Note**: Any modification will only change the arguments for future `after_`-events but not for the function call itself.)
                 - `after_`-events can additionally alternate the return value of the event by modifying `event.hook["result"]`.
                 - both event types can access the name of the actual event-name using `event.hook["name"]`
-        - `unique`: (Default: `True`)  
-            - Unique functions can only be registered by exactly one module.  
+        - `unique`: (Default: `True`)
+            - Unique functions can only be registered by exactly one module.
               **Note**: Miniflask will throw an error if multiple modules register the same event.
             - Non-Unique events will be called in sequence of registration. The result of such an event is a list of all return values.
             - **Note**: Before/After events will be called only **once for non-unique event calls**.
-        - `call_before_after`: (Default: `True`)  
+        - `call_before_after`: (Default: `True`)
             Turning this flag off will disable the possibility to hook to this function using before/after events.
             This is especially useful, if the before/after event shall be directly defined.
 
@@ -656,15 +770,46 @@ class miniflask():
 
         # check if is unique event. if yes, check if event already registered
         if name in self.event_objs and (unique or self.event_objs[name].unique):
-            eobj = self.event_objs[name].modules if not self.event_objs[name].unique else [self.event_objs[name].modules]
+            eobj = (
+                self.event_objs[name].modules
+                if not self.event_objs[name].unique
+                else [self.event_objs[name].modules]
+            )
 
             # catch some user errors
             if not unique and self.event_objs[name].unique:
-                raise RegisterError(highlight_error() + "Event '%s' has been registered as `unique` before, but as `non-unique` now. Please check the registrations.\n\t(Imported by %s)" % (highlight_event(name), ", ".join(["'" + highlight_module(e.module_name) + "'" for e in eobj])))
+                raise RegisterError(
+                    highlight_error()
+                    + "Event '%s' has been registered as `unique` before, but as `non-unique` now. Please check the registrations.\n\t(Imported by %s)"
+                    % (
+                        highlight_event(name),
+                        ", ".join(
+                            ["'" + highlight_module(e.module_name) + "'" for e in eobj]
+                        ),
+                    )
+                )
             if unique and not self.event_objs[name].unique:
-                raise RegisterError(highlight_error() + "Event '%s' has been registered as `non-unique` before, but as `unique` now. Please check the registrations.\n\t(Imported by %s)" % (highlight_event(name), ", ".join(["'" + highlight_module(e.module_name) + "'" for e in eobj])))
+                raise RegisterError(
+                    highlight_error()
+                    + "Event '%s' has been registered as `non-unique` before, but as `unique` now. Please check the registrations.\n\t(Imported by %s)"
+                    % (
+                        highlight_event(name),
+                        ", ".join(
+                            ["'" + highlight_module(e.module_name) + "'" for e in eobj]
+                        ),
+                    )
+                )
 
-            raise RegisterError(highlight_error() + "Event '%s' is unique, and thus, cannot be imported twice.\n\t(Imported by %s)" % (highlight_event(name), ", ".join(["'" + highlight_module(e.module_name) + "'" for e in eobj])))
+            raise RegisterError(
+                highlight_error()
+                + "Event '%s' is unique, and thus, cannot be imported twice.\n\t(Imported by %s)"
+                % (
+                    highlight_event(name),
+                    ", ".join(
+                        ["'" + highlight_module(e.module_name) + "'" for e in eobj]
+                    ),
+                )
+            )
 
         # register event
         if name in self.event_objs:
@@ -677,14 +822,23 @@ class miniflask():
     # Note: the problem lies in the fact that the true id of a variable is defined as scope.key,
     #       however scope can be empty if key is meant as a reference in the global scope=="".
     #       Otherwise, this function would be a lot simpler.
-    def register_defaults(self, defaults, scope="", overwrite=False, cliargs=True, parsefn=True, caller_traceback=None, missing_argument_message=None):
+    def register_defaults(
+        self,
+        defaults,
+        scope="",
+        overwrite=False,
+        cliargs=True,
+        parsefn=True,
+        caller_traceback=None,
+        missing_argument_message=None,
+    ):
         r"""
         Register variables bound to a module.
 
         The variable registration process is the miniflask feature to
         - allow users to overwrite *default parameters* based on the value types defined during registration using the cli,
             (See the section [Modules/Register Settings](../../03-Modules/02-Register-Settings.md) in the documentation for details how to overwrite registered variables using the CLI.)
-        - allow variables to form *dependency chains* in between modules  
+        - allow variables to form *dependency chains* in between modules
             (”if one variable is like this then the other variable should be like that“)
         - but also to allow *other modules* to be predefined sets of default parameters themselves.
 
@@ -695,10 +849,10 @@ class miniflask():
         - Floats (`float`)
         - Strings (`string`)
         - Boolean (`bool`)
-        - Enums (`Enum`)  
+        - Enums (`Enum`)
         - One-dimensional lists of basic types (e.g. `[int]`)
         - One-dimensional tuples of basic types (e.g. `(int,int)`)
-        - Lambda Expressions of the form `lambda state, event: ...`.  
+        - Lambda Expressions of the form `lambda state, event: ...`.
             - As with events, lambdas can take a `state`-argument. Miniflask will automatically find out what variables are required when parsing the expressions.
             - Miniflask will also automatically detect circular dependencies and missing arguments in the variable dependency graph.
             - Note that only "simple" if-statements of the following form are implemented for Lambda-Expressions. See below for examples of what is supported.
@@ -723,20 +877,20 @@ class miniflask():
         - [`overwrite_globals`](../../08-API/03-register(mf\)-Object/08-overwrite_globals.md)
 
         Args:
-        - `defaults`: (required)  
+        - `defaults`: (required)
             Dict of variables to define under the defined scope (variable name -> value).
-        - `scope`:  
-            Scope to define variables in.  
+        - `scope`:
+            Scope to define variables in.
             (Defaults to global scope. This is the main difference to the local mf-object variants.)
-        - `overwrite`:  
+        - `overwrite`:
             Setting to `True` enables redefinition of predefined variables. Raises error if the variables to overwrite are not known.
-        - `cliargs`:  
+        - `cliargs`:
             Setting to `False` disables to change that variable using CLI.
-        - `parsefn`:  
+        - `parsefn`:
             Setting to `False` disables function parsing if the value is a method itself. Doing so may be required if the value to be saved is a function itself. By default miniflask will call function values to set the value dynamically as part of the variable dependency chain.
-        - `caller_traceback`:  
+        - `caller_traceback`:
             The traceback to use when an error occurs during registration of any of the listed variables. (Defaults to current traceback).
-        - `missing_argument_message`:  
+        - `missing_argument_message`:
             String to show the user whenever one of the given (and required) arguments are not present after CLI-parsing.
 
         Examples:
@@ -797,7 +951,12 @@ class miniflask():
             #   - actual initialization is done when all modules have been parsed
             #   - design decision is here to have the dependency nodes in a seperate dict and only the state actually store data
             #   - we also save all tracebacks implicitly in case we need this information due to an error
-            is_dependency = callable(val) and not isinstance(val, type) and not isinstance(val, EnumMeta) and parsefn
+            is_dependency = (
+                callable(val)
+                and not isinstance(val, type)
+                and not isinstance(val, EnumMeta)
+                and parsefn
+            )
             node = state_node(
                 varid=varname,
                 mf=self,
@@ -806,7 +965,7 @@ class miniflask():
                 parsefn=parsefn,
                 is_ovewriting=overwrite,
                 missing_argument_message=missing_argument_message,
-                fn=val if is_dependency else None
+                fn=val if is_dependency else None,
             )
             if overwrite:
                 self._state_overwrites_list.append((varname, val, node))
@@ -817,7 +976,15 @@ class miniflask():
                     self.state_registrations[varname] = []
                 self.state_registrations[varname].append(node)
 
-    def _settings_parser_add(self, varname, val, caller_traceback, nargs=None, default=None, is_optional=False):  # noqa: C901 too-complex
+    def _settings_parser_add(
+        self,
+        varname,
+        val,
+        caller_traceback,
+        nargs=None,
+        default=None,
+        is_optional=False,
+    ):  # noqa: C901 too-complex
 
         # lists are just multiple arguments
         if isinstance(val, (list, tuple)):
@@ -826,8 +993,19 @@ class miniflask():
                     val_type, start_del, end_del = "list", "[", "]"
                 else:
                     val_type, start_del, end_del = "tuple", "(", ",)"
-                raise RegisterError(f"Variable '%s' is registered as {val_type} of length 0 (see exception below), however it is required to define the type of the {val_type} arguments for it to become accessible from cli.\n\nYour options are:\n\t- define a default {val_type}, e.g. {start_del}\"a\", \"b\", \"c\"{end_del}\n\t- define the {val_type} type, e.g. {start_del}str{end_del}\n\t- define the variable as a helper using register_helpers(...)" % (fg('red') + varname + attr('reset')), traceback=caller_traceback)
-            return self._settings_parser_add(varname, val[0], caller_traceback, nargs="*" if isinstance(val, list) else len(val), default=val, is_optional=is_optional)
+                raise RegisterError(
+                    f'Variable \'%s\' is registered as {val_type} of length 0 (see exception below), however it is required to define the type of the {val_type} arguments for it to become accessible from cli.\n\nYour options are:\n\t- define a default {val_type}, e.g. {start_del}"a", "b", "c"{end_del}\n\t- define the {val_type} type, e.g. {start_del}str{end_del}\n\t- define the variable as a helper using register_helpers(...)'
+                    % (fg("red") + varname + attr("reset")),
+                    traceback=caller_traceback,
+                )
+            return self._settings_parser_add(
+                varname,
+                val[0],
+                caller_traceback,
+                nargs="*" if isinstance(val, list) else len(val),
+                default=val,
+                is_optional=is_optional,
+            )
 
         # get argument type from value (this can be int, but also 42 for instance)
         if isinstance(val, Enum):
@@ -838,7 +1016,7 @@ class miniflask():
             argtype = val if val != bool else str2bool
         else:
             argtype = type(val) if not isinstance(val, bool) else str2bool
-        kwarg = {'dest': varname, 'type': argtype, 'nargs': nargs}
+        kwarg = {"dest": varname, "type": argtype, "nargs": nargs}
 
         # we know the default argument, if the value is given
         # otherwise the value is a required argument (to be tested later)
@@ -853,20 +1031,29 @@ class miniflask():
         if argtype == Enum:
             kwarg["action"] = EnumAction
             kwarg["type"] = val if isinstance(val, EnumMeta) else type(val)
-        elif argtype == str2bool and nargs != '*':  # pylint: disable=comparison-with-callable
-            kwarg["nargs"] = '?'
+        elif (
+            argtype == str2bool and nargs != "*"
+        ):  # pylint: disable=comparison-with-callable
+            kwarg["nargs"] = "?"
             kwarg["const"] = True
 
         # define the actual arguments
         if argtype in [int, str, float, str2bool, Enum]:
             self.settings_parser.add_argument("--" + varname, **kwarg)
         else:
-            raise ValueError("Type '%s' not supported. (Used for setting '%s')" % (type(val), varname))
+            raise ValueError(
+                "Type '%s' not supported. (Used for setting '%s')"
+                % (type(val), varname)
+            )
 
         # for bool: enable --no-varname as alternative for --varname false
         # Note: this has to be defined AFTER --varname
-        if argtype == str2bool and nargs != '*':  # pylint: disable=comparison-with-callable
-            self.settings_parser.add_argument('--no-' + varname, dest=varname, action='store_false')
+        if (
+            argtype == str2bool and nargs != "*"
+        ):  # pylint: disable=comparison-with-callable
+            self.settings_parser.add_argument(
+                "--no-" + varname, dest=varname, action="store_false"
+            )
 
         # remember the varname also for fuzzy searching
         self._varid_list.append(varname)
@@ -882,10 +1069,12 @@ class miniflask():
         """  # noqa: W291
         self.halt_parse = True
 
-    def parse_args(self,  # noqa: C901 too-complex  pylint: disable=too-many-statements
-                   argv: List[str] or str = None,
-                   optional: bool = True,
-                   fuzzy_args: bool = True):
+    def parse_args(
+        self,  # noqa: C901 too-complex  pylint: disable=too-many-statements
+        argv: List[str] or str = None,
+        optional: bool = True,
+        fuzzy_args: bool = True,
+    ):
         r"""
         Parse CLI-Arguments.
 
@@ -893,22 +1082,26 @@ class miniflask():
         Typically you would call the run()-method instead. You will need this method only, if [run](./10-run.md) does not fit your needs.
 
         Args:
-        - `argv`: (can also be `str`)  
+        - `argv`: (can also be `str`)
             Arguments to parse. If is `None` will use CLI arguments (`sys.argv[1:]`).
-        - `optional`:  
+        - `optional`:
             If set to `False` disables the requirement to any modules to load. This option is interesting if your launch script is intended to use a predefined set of modules only.
-        - `fuzzy_args`:  
+        - `fuzzy_args`:
             If set to `False` disables fuzzy variable name search for the module arguments.
         """  # noqa: W291
         if self.argparse_called:
-            raise SystemError("The function `parse_args` has been called already. Did you maybe called `mf.parse_args()` and `mf.run()` in the same script? Solutions are:\n\t- Please use only one of those functions.\n\t- If you actually need both functions, please do not hesitate to write an issue on\n\t\thttps://github/da-h/miniflask/issues\n\t  to explain yout used case.\n\t  (It's not hard to implement, but I need to know, if and when this functionality is needed. ;) )")
+            raise SystemError(
+                "The function `parse_args` has been called already. Did you maybe called `mf.parse_args()` and `mf.run()` in the same script? Solutions are:\n\t- Please use only one of those functions.\n\t- If you actually need both functions, please do not hesitate to write an issue on\n\t\thttps://github/da-h/miniflask/issues\n\t  to explain yout used case.\n\t  (It's not hard to implement, but I need to know, if and when this functionality is needed. ;) )"
+            )
 
         has_module_args = argv is None or argv == sys.argv
         if argv is None:  # check if 'argv' is passed
             argv = sys.argv[1:]
         elif isinstance(argv, list):  # check if passed 'argv' is a list
             pass
-        elif isinstance(argv, str):  # check if passed 'argv' is a str (split by whitespace)
+        elif isinstance(
+            argv, str
+        ):  # check if passed 'argv' is a str (split by whitespace)
             argv = argv.split(" ")
         else:  # unknown passed variable (don't pass on any arguments)
             argv = []
@@ -916,8 +1109,8 @@ class miniflask():
         # actually parse the input
         if has_module_args:
             parser = ArgumentParser()
-            parser.add_argument('cmds', type=str, nargs=1 if not optional else "?")
-            parser.add_argument('module_arguments', nargs=ARGPARSE_REMAINDER)
+            parser.add_argument("cmds", type=str, nargs=1 if not optional else "?")
+            parser.add_argument("module_arguments", nargs=ARGPARSE_REMAINDER)
             args = parser.parse_args(argv)
 
             # save remainder for module setting parser
@@ -926,9 +1119,9 @@ class miniflask():
             # load modules
             if args.cmds:
                 if optional:
-                    cmds = args.cmds.split(',')
+                    cmds = args.cmds.split(",")
                 else:
-                    cmds = args.cmds[0].split(',')
+                    cmds = args.cmds[0].split(",")
                 for cmd in cmds:
                     if self.halt_parse:
                         break
@@ -946,15 +1139,25 @@ class miniflask():
         # the default_module list gives us the order (last-in, first-out) of the default-modules to call
         # we assume that newer default modules are meant to overwrite older ones
         while len(self.default_modules) > 0:
-            module, evt, glob, overwrite_globals, caller_traceback = self.default_modules.pop()
+            (
+                module,
+                evt,
+                glob,
+                overwrite_globals,
+                caller_traceback,
+            ) = self.default_modules.pop()
             del overwrite_globals, caller_traceback
 
             if evt:
                 if not isinstance(module, list):
                     module = [module]
-                modules_already_loaded = all(self.getModuleId(m) in self.modules_loaded for m in module)
+                modules_already_loaded = all(
+                    self.getModuleId(m) in self.modules_loaded for m in module
+                )
                 if not modules_already_loaded and evt not in self.event_objs:
-                    self.load(module, loading_text=partial(highlight_loading_default, evt))
+                    self.load(
+                        module, loading_text=partial(highlight_loading_default, evt)
+                    )
                 else:
                     found = self.event_objs[evt].modules
                     if not isinstance(found, list):
@@ -963,9 +1166,13 @@ class miniflask():
                     print(highlight_loaded_default(found, evt))
 
             elif glob:
-                found = [highlight_loading_module(x) for x in keys if re.search(glob, x)]
+                found = [
+                    highlight_loading_module(x) for x in keys if re.search(glob, x)
+                ]
                 if len(found) == 0:
-                    self.load(module, loading_text=partial(highlight_loading_default, glob))
+                    self.load(
+                        module, loading_text=partial(highlight_loading_default, glob)
+                    )
                 elif len(found) > 1:
                     print(highlight_loaded_default(found, glob))
                 else:
@@ -973,20 +1180,46 @@ class miniflask():
 
         # in case a default module / overwrite_global-combination is used in two places in the loading-tree,
         # we assume that we want to overwrite the older values with the newer values
-        for module, _, _, overwrite_globals, caller_traceback in self.default_modules_overwrites:
+        for (
+            module,
+            _,
+            _,
+            overwrite_globals,
+            caller_traceback,
+        ) in self.default_modules_overwrites:
             if not isinstance(module, list):
                 module = [module]
             if all(self.getModuleId(m) in self.modules_loaded for m in module):
-                self.register_defaults(overwrite_globals, scope="", overwrite=True, caller_traceback=caller_traceback)
+                self.register_defaults(
+                    overwrite_globals,
+                    scope="",
+                    overwrite=True,
+                    caller_traceback=caller_traceback,
+                )
 
         # check fuzzy matching of overwrites
         for varname, val, node in self._state_overwrites_list:
             if varname not in self.state_registrations:
-                found_varids = get_varid_from_fuzzy(varname, self.state_registrations.keys())
+                found_varids = get_varid_from_fuzzy(
+                    varname, self.state_registrations.keys()
+                )
                 if len(found_varids) == 0:
-                    raise RegisterError("Variable '%s' is not registered yet, however it seems like you wold like to overwrite it (see exception below)." % (fg('red') + varname + attr('reset')), traceback=node.caller_traceback)
+                    raise RegisterError(
+                        "Variable '%s' is not registered yet, however it seems like you wold like to overwrite it (see exception below)."
+                        % (fg("red") + varname + attr("reset")),
+                        traceback=node.caller_traceback,
+                    )
                 if len(found_varids) > 1:
-                    raise RegisterError("Variable-Identifier '%s' is not unique. Found %i variables:\n\t%s\n\n    Call:\n        %s" % (highlight_module(found_varids), len(found_varids), "\n\t".join(found_varids), " ".join(found_varids)), traceback=node.caller_traceback)
+                    raise RegisterError(
+                        "Variable-Identifier '%s' is not unique. Found %i variables:\n\t%s\n\n    Call:\n        %s"
+                        % (
+                            highlight_module(found_varids),
+                            len(found_varids),
+                            "\n\t".join(found_varids),
+                            " ".join(found_varids),
+                        ),
+                        traceback=node.caller_traceback,
+                    )
 
                 varname = found_varids[0]
 
@@ -998,23 +1231,46 @@ class miniflask():
             self.state_registrations[varname].append(node)
 
         # first we build the reversed graph of dependency, i.e. the graph of what nodes are affected by each node
-        last_state_registrations = {varid: nodes[-1] for varid, nodes in self.state_registrations.items()}
+        last_state_registrations = {
+            varid: nodes[-1] for varid, nodes in self.state_registrations.items()
+        }
 
         # sort nodes topologically, check for circular_dependencies & dependency errors for variables
-        topolically_sorted_state_nodes, circular_dependencies, unresolved_dependencies = state_node.topological_sort(last_state_registrations)
+        (
+            topolically_sorted_state_nodes,
+            circular_dependencies,
+            unresolved_dependencies,
+        ) = state_node.topological_sort(last_state_registrations)
         registration_errors = []
         if len(circular_dependencies) > 0:
-            registration_errors.append("Circular dependencies found! (A → B means \"A depends on B\")\n\n" + "\n".join([
-                "\n    → ".join(highlight_loading_module(str(c)) for c in cycle) for cycle in circular_dependencies
-            ]))
+            registration_errors.append(
+                'Circular dependencies found! (A → B means "A depends on B")\n\n'
+                + "\n".join(
+                    [
+                        "\n    → ".join(highlight_loading_module(str(c)) for c in cycle)
+                        for cycle in circular_dependencies
+                    ]
+                )
+            )
         if len(unresolved_dependencies) > 0:
-            registration_errors.append("Dependency not found! (A → B means \"A depends on B\")\n\n" + "\n".join([
-                "\n    → ".join(highlight_loading_module(str(c)) for c in cycle) + highlight_error(" ← not found") for cycle in unresolved_dependencies
-            ]))
+            registration_errors.append(
+                'Dependency not found! (A → B means "A depends on B")\n\n'
+                + "\n".join(
+                    [
+                        "\n    → ".join(highlight_loading_module(str(c)) for c in cycle)
+                        + highlight_error(" ← not found")
+                        for cycle in unresolved_dependencies
+                    ]
+                )
+            )
 
         if len(registration_errors) > 0:
-            registration_errors_str = "\n\n\n".join([highlight_error() + r for r in registration_errors])
-            raise RegisterError(f"The registration of state variables has led to the following errors:\n\n{registration_errors_str}")
+            registration_errors_str = "\n\n\n".join(
+                [highlight_error() + r for r in registration_errors]
+            )
+            raise RegisterError(
+                f"The registration of state variables has led to the following errors:\n\n{registration_errors_str}"
+            )
 
         # evaluate the dependency-graph into state
         state_node.evaluate(topolically_sorted_state_nodes, self.state)
@@ -1023,8 +1279,17 @@ class miniflask():
         for varid, node in last_state_registrations.items():
             if node.cliargs:
                 node.pre_cli_value = self.state[varid]
-                val = self.state[varid] if not isinstance(self.state[varid], optional_default) else self.state[varid].type
-                argparse_kwargs = self._settings_parser_add(varid, val, node.caller_traceback, is_optional=isinstance(self.state[varid], optional_default))
+                val = (
+                    self.state[varid]
+                    if not isinstance(self.state[varid], optional_default)
+                    else self.state[varid].type
+                )
+                argparse_kwargs = self._settings_parser_add(
+                    varid,
+                    val,
+                    node.caller_traceback,
+                    is_optional=isinstance(self.state[varid], optional_default),
+                )
                 if "default" in argparse_kwargs:
                     self.state[varid] = argparse_kwargs["default"]
 
@@ -1039,7 +1304,11 @@ class miniflask():
 
         # split `--varname=value` expressions to `--varname value`
         # (argparse does only allow the `key=value`-syntax for single-dash definitions)
-        argv = [v for val in argv for v in (val.split("=", 1) if val.startswith("--") else [val])]  # pylint: disable=superfluous-parens
+        argv = [
+            v
+            for val in argv
+            for v in (val.split("=", 1) if val.startswith("--") else [val])
+        ]  # pylint: disable=superfluous-parens
 
         # parse nested expressions
         argv_flat = []
@@ -1054,7 +1323,9 @@ class miniflask():
             if arg == "]":
                 namespaces.pop()
                 if len(namespaces) == 0:
-                    raise ValueError("Nesting-Error during parse of CLI-Arguments. Did you forget to include an '[' ?")
+                    raise ValueError(
+                        "Nesting-Error during parse of CLI-Arguments. Did you forget to include an '[' ?"
+                    )
                 continue
 
             # all non-arguments are values and thus should be retained
@@ -1086,7 +1357,11 @@ class miniflask():
             if not varid.startswith("--"):
 
                 # special case: negative scientific notation currently does not work for argparse
-                if varid.startswith("-") and "e" in varid and varid[1:].replace("e", "").isnumeric():
+                if (
+                    varid.startswith("-")
+                    and "e" in varid
+                    and varid[1:].replace("e", "").isnumeric()
+                ):
                     try:
                         argv[i] = str(float(varid))
                     except ValueError:
@@ -1114,12 +1389,25 @@ class miniflask():
                 # if no matching varid found, check for fuzzy identifier
                 if len(found_varids) > 1:
                     argv[i] = highlight_module(argv[i])
-                    raise ValueError(highlight_error() + "Variable-Identifier '--%s' is not unique. Found %i variables:\n\t%s\n\n    Call:\n        %s" % (highlight_module(varid), len(found_varids), "\n\t".join(found_varids), " ".join(argv)))
+                    raise ValueError(
+                        highlight_error()
+                        + "Variable-Identifier '--%s' is not unique. Found %i variables:\n\t%s\n\n    Call:\n        %s"
+                        % (
+                            highlight_module(varid),
+                            len(found_varids),
+                            "\n\t".join(found_varids),
+                            " ".join(argv),
+                        )
+                    )
 
                 # no module found with both variants
                 if len(found_varids) == 0:
                     argv[i] = highlight_module(argv[i])
-                    raise ValueError(highlight_error() + "Variable '--%s' not known.\n\n    Call:\n       %s" % (highlight_module(varid), " ".join(argv)))
+                    raise ValueError(
+                        highlight_error()
+                        + "Variable '--%s' not known.\n\n    Call:\n       %s"
+                        % (highlight_module(varid), " ".join(argv))
+                    )
 
                 varid = found_varids[0]
 
@@ -1145,29 +1433,77 @@ class miniflask():
             args_err_strs = []
             error_message_str = ""
             for args in missing_arguments:
-                arg_err_str = "\t" + " or ".join([highlight_module("--" + arg) for arg in reversed(args)])
+                arg_err_str = "\t" + " or ".join(
+                    [highlight_module("--" + arg) for arg in reversed(args)]
+                )
                 if args[0] in self.state_registrations:
                     for node in self.state_registrations[args[0]]:
-                        summary = next(filter(lambda t: not t.filename.endswith("miniflask/miniflask.py"), reversed(node.caller_traceback)))
-                        adj = (fg('blue') + "Defined" if not node.is_ovewriting else fg('yellow') + "Overwritten") + attr('reset')
-                        arg_err_str += linesep + "\t  " + adj + " in line %s in file '%s'." % (highlight_event(str(summary.lineno)), attr('dim') + path.relpath(summary.filename) + attr('reset'))
+                        summary = next(
+                            filter(
+                                lambda t: not t.filename.endswith(
+                                    "miniflask/miniflask.py"
+                                ),
+                                reversed(node.caller_traceback),
+                            )
+                        )
+                        adj = (
+                            fg("blue") + "Defined"
+                            if not node.is_ovewriting
+                            else fg("yellow") + "Overwritten"
+                        ) + attr("reset")
+                        arg_err_str += (
+                            linesep
+                            + "\t  "
+                            + adj
+                            + " in line %s in file '%s'."
+                            % (
+                                highlight_event(str(summary.lineno)),
+                                attr("dim")
+                                + path.relpath(summary.filename)
+                                + attr("reset"),
+                            )
+                        )
                         if isinstance(node.missing_argument_message, str):
-                            error_message_str = linesep * 2 + attr("bold") + node.missing_argument_message + attr("reset")
+                            error_message_str = (
+                                linesep * 2
+                                + attr("bold")
+                                + node.missing_argument_message
+                                + attr("reset")
+                            )
                 args_err_strs.append(arg_err_str)
-            raise ValueError("Missing CLI-arguments or unspecified variables during miniflask call." + linesep + linesep.join(args_err_strs) + error_message_str)
+            raise ValueError(
+                "Missing CLI-arguments or unspecified variables during miniflask call."
+                + linesep
+                + linesep.join(args_err_strs)
+                + error_message_str
+            )
 
         # re-evaluate the dependency-graph with the user-cli arguments
         state_node.evaluate(topolically_sorted_state_nodes, self.state)
 
         # print help message when everything is parsed
-        self.settings_parser.print_help = lambda: (print("usage: modulelist [optional arguments]"), print(), print("optional arguments (and their defaults):"), print(listsettings(state("", self.state, self.state_registrations), self.event)))
+        self.settings_parser.print_help = lambda: (
+            print("usage: modulelist [optional arguments]"),
+            print(),
+            print("optional arguments (and their defaults):"),
+            print(
+                listsettings(
+                    state("", self.state, self.state_registrations), self.event
+                )
+            ),
+        )
         if print_help:
-            self.settings_parser.parse_args(['--help'])
+            self.settings_parser.parse_args(["--help"])
 
         # mark this instance as run
         self.argparse_called = True
 
-    def run(self, modules: List[str] or str = None, call: str = "main", argv: List[str] or str = None):  # noqa: C901 too-complex  pylint: disable=too-many-statements
+    def run(
+        self,
+        modules: List[str] or str = None,
+        call: str = "main",
+        argv: List[str] or str = None,
+    ):  # noqa: C901 too-complex  pylint: disable=too-many-statements
         r"""
         Entrypoint of most miniflask programs.
 
@@ -1183,15 +1519,15 @@ class miniflask():
 
         This method also pretty prints
         - the distinct phases described above
-        - uncatched exceptions that occur during any event.  
+        - uncatched exceptions that occur during any event.
             (This method strips any miniflask-related exceptinos from the traceback. In case a debugger is used or the `debug` flag is set for the miniflask instance, the full exception traceback is shown.)
 
         Args:
-        - `modules`:  
+        - `modules`:
             List or String of modules
-        - `call`:  
+        - `call`:
             The name of the default “main” event.
-        - `argv`:  
+        - `argv`:
             Arguments to parse. If is `None` will use CLI arguments (`sys.argv[1:]`).
         """  # noqa: W291
         if modules is None or (isinstance(modules, list) and len(modules) == 0):
@@ -1210,7 +1546,7 @@ class miniflask():
             if not self.halt_parse:
 
                 # optional init event
-                if hasattr(self.event, 'init'):
+                if hasattr(self.event, "init"):
                     self.print_heading("init Event")
                     self.event.optional.init()
 
@@ -1225,35 +1561,47 @@ class miniflask():
                     else:
                         getattr(self.event, call)()
                 else:
-                    print("No event '{0}' registered. "
-                          "Please make sure to register the event '{0}', "
-                          "or provide a suitable event to call with mf.run(call=\"myevent\").".format(call))
+                    print(
+                        "No event '{0}' registered. "
+                        "Please make sure to register the event '{0}', "
+                        'or provide a suitable event to call with mf.run(call="myevent").'.format(
+                            call
+                        )
+                    )
 
                 # optional final event
-                if hasattr(self.event, 'final'):
+                if hasattr(self.event, "final"):
                     self.print_heading("final Event")
                     self.event.optional.final()
 
         except (RegisterError, StateKeyError) as e:
-            gettrace = getattr(sys, 'gettrace', None)
+            gettrace = getattr(sys, "gettrace", None)
 
             # check if debugger will catch this
             if not self.debug and (not gettrace or not gettrace()):
                 tb = traceback.extract_tb(e.__traceback__)
                 print()
-                print(fg("red") + "Uncatched Exception occured. Traceback:" + attr("reset"))
+                print(
+                    fg("red")
+                    + "Uncatched Exception occured. Traceback:"
+                    + attr("reset")
+                )
                 print(format_traceback_list(tb, exc=e, ignore_miniflask=False))
                 sys.exit(1)
             else:
                 raise
         except Exception as e:  # pylint: disable=broad-except
-            gettrace = getattr(sys, 'gettrace', None)
+            gettrace = getattr(sys, "gettrace", None)
 
             # check if debugger will catch this
             if not self.debug and (not gettrace or not gettrace()):
                 tb = traceback.extract_tb(e.__traceback__)
                 print()
-                print(fg("red") + "Uncatched Exception occured. Traceback:" + attr("reset"))
+                print(
+                    fg("red")
+                    + "Uncatched Exception occured. Traceback:"
+                    + attr("reset")
+                )
 
                 # nicer version of: print(traceback.format_exc())
                 print(format_traceback_list(tb, exc=e, ignore_miniflask=not self.debug))
@@ -1272,7 +1620,6 @@ class miniflask_wrapper(miniflask):
         The object has the following public variables:
         - `module_id`: The internal unique id used for this module.
         - `module_name`: The actual name of the module (the part after the last dot).
-        - `module_base`: The repository name of the module
         - `state`: The local state object.
 
         Also as a `miniflask` object itself it inherits all methods described in [miniflask object](../02-miniflask-instance/) with the exceptions listed in this chapter.
@@ -1281,25 +1628,32 @@ class miniflask_wrapper(miniflask):
         self.module_id = module_name
         self.module_id_initial = module_name
         self.module_name = module_name.split(".")[-1]
-        self.module_base = module_name.split(".")[0]
-        self.wrapped_class = mf.wrapped_class if hasattr(mf, 'wrapped_class') else mf
-        self.state = state(module_name, self.wrapped_class.state, self.wrapped_class.state_registrations)
+        self.wrapped_class = mf.wrapped_class if hasattr(mf, "wrapped_class") else mf
+        self.state = state(
+            module_name,
+            self.wrapped_class.state,
+            self.wrapped_class.state_registrations,
+        )
         self._recently_loaded = []
         self._defined_events = {}
 
     def _get_relative_module_id(self, possibly_relative_path, offset=1):
-        module_name, was_relative = get_relative_id(possibly_relative_path, self.module_id, offset=offset)
+        module_name, was_relative = get_relative_id(
+            possibly_relative_path, self.module_id, offset=offset
+        )
         return module_name, was_relative
 
     def __getattr__(self, name):
-        orig_attr = super().__getattribute__('wrapped_class').__getattribute__(name)
+        orig_attr = super().__getattribute__("wrapped_class").__getattribute__(name)
         if callable(orig_attr):
+
             def hooked(*args, **kwargs):
                 result = orig_attr(*args, **kwargs)
                 # prevent wrapped_class from becoming unwrapped
                 if result == self.wrapped_class:
                     return self
                 return result
+
             return hooked
         return orig_attr
 
@@ -1316,7 +1670,10 @@ class miniflask_wrapper(miniflask):
         old_module_name = self.module_id
         new_module_name = self.set_scope(new_module_name)
         if new_module_name in self.modules_avail:
-            raise ValueError("Scope `%s` already used. Cannot define multiple modules using `redefine_scope`. Did you maybe mean to use `set_scope`?" % new_module_name)
+            raise ValueError(
+                "Scope `%s` already used. Cannot define multiple modules using `redefine_scope`. Did you maybe mean to use `set_scope`?"
+                % new_module_name
+            )
         m = self.modules_avail[old_module_name]
         del self.modules_avail[old_module_name]
         m["id"] = new_module_name
@@ -1368,7 +1725,7 @@ class miniflask_wrapper(miniflask):
 
         Examples:
 
-        **Background / When to use this feature?**  
+        **Background / When to use this feature?**
         Consider the following variable definitions of `var1` and `var2`, whene `MyClass` is callable, i.e. we can run `state["var1"](*args, **kwargs)`.
         ```python
         mf.register_helpers({
@@ -1393,7 +1750,7 @@ class miniflask_wrapper(miniflask):
         These kinds of child modules are a preliminary feature of miniflask. Thus, at the moment the function is rather limited:
         No events will be registered to be accessible globally by default. However, it is possible to access the state variables of that module.
         """  # noqa: W291
-        self.load(module_name, as_id='.', bind_events=bind_events, **kwargs)
+        self.load(module_name, as_id=".", bind_events=bind_events, **kwargs)
 
     # enables relative imports
     def load(self, module_name, as_id=None, auto_query=True, **kwargs):
@@ -1443,7 +1800,9 @@ class miniflask_wrapper(miniflask):
         # call load (but ensure no querying is made if relative imports were given)
         if "verbose" in kwargs:
             del kwargs["verbose"]
-        super().load(module_name, verbose=False, auto_query=auto_query, as_id=as_id, **kwargs)
+        super().load(
+            module_name, verbose=False, auto_query=auto_query, as_id=as_id, **kwargs
+        )
 
     # checks if child modules are already loaded
     def any_child_loaded(self):
@@ -1459,7 +1818,9 @@ class miniflask_wrapper(miniflask):
             mf.load(".childmoduleA")
         ```
         """  # noqa: W291
-        return any(x for x in self.modules_loaded if re.search(self.module_id + r"\..*", x))
+        return any(
+            x for x in self.modules_loaded if re.search(self.module_id + r"\..*", x)
+        )
 
     # register default module that is loaded if none of glob is matched
     # (enables relative imports)
@@ -1478,13 +1839,15 @@ class miniflask_wrapper(miniflask):
 
         super().register_default_module(module, **kwargs)
 
-    def unregister_event(self, name: str, only_cache: bool = False, keep_attached_events: bool = True):
+    def unregister_event(
+        self, name: str, only_cache: bool = False, keep_attached_events: bool = True
+    ):
         r"""
         Clears an event by name.
 
         Args:
         - `name`: The event to clear from the event object.
-        - `only_cache`:  
+        - `only_cache`:
             - Setting to `True` means that the event cache will be cleared. Upon the next call of `event.name` the cache will be rebuild.
             - Setting to `False` means that the event cache will be cleared *and* the internal event objects will be removed as well. Upon the next call of `event.name` miniflask will not recognize the event anymore.
         - `keep_attached_events`:  By default (`True`), all events that are called together with this event (`before_`/`after_`-events) are kept. Setting to `False` clears those as well.
@@ -1513,7 +1876,9 @@ class miniflask_wrapper(miniflask):
         super().register_event(name, fn, **kwargs)
 
     # overwrite event definition
-    def overwrite_event(self, name: str, fn, keep_attached_events: bool = True, **kwargs):
+    def overwrite_event(
+        self, name: str, fn, keep_attached_events: bool = True, **kwargs
+    ):
         r"""
         Unregister an existing event & redefine it using another function.
 
@@ -1522,12 +1887,14 @@ class miniflask_wrapper(miniflask):
 
         Args:
         - `name`: The event to clear from the event object.
-        - `only_cache`:  
+        - `only_cache`:
             - Setting to `True` means that the event cache will be cleared. Upon the next call of `event.name` the cache will be rebuild.
             - Setting to `False` means that the event cache will be cleared *and* the internal event objects will be removed as well. Upon the next call of `event.name` miniflask will not recognize the event anymore.
         - `keep_attached_events`:  By default (`True`), all events that are called together with this event (`before_`/`after_`-events) are kept. Setting to `False` clears those as well.
         """  # noqa: W291
-        self.unregister_event(name, only_cache=False, keep_attached_events=keep_attached_events)
+        self.unregister_event(
+            name, only_cache=False, keep_attached_events=keep_attached_events
+        )
         self._defined_events[name] = fn
         super().register_event(name, fn, **kwargs)
 

@@ -62,7 +62,7 @@ Our main.py looks like this:
 import miniflask
 
 # initialize miniflask
-mf = miniflask.init(module_dirs="./modules")
+mf = miniflask.init(".modules")
 mf.parse_args()
 
 # check if all requested modules are loaded

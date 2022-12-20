@@ -1,11 +1,10 @@
-from pathlib import Path
 import miniflask  # noqa: E402
 import pytest
 
 
 def test_helper_setup(capsys):
     mf = miniflask.init(
-        module_dirs=str(Path(__file__).parent / "modules"),
+        ".modules",
         debug=True
     )
 
@@ -21,7 +20,7 @@ modules.helpervar.helpervar: 1
 
 def test_helper_overwrite(capsys):
     mf = miniflask.init(
-        module_dirs=str(Path(__file__).parent / "modules"),
+        ".modules",
         debug=True
     )
 
@@ -37,7 +36,7 @@ modules.helpervar.helpervar: 2
 
 def test_helper_cli(capsys):
     mf = miniflask.init(
-        module_dirs=str(Path(__file__).parent / "modules"),
+        ".modules",
         debug=True
     )
 
@@ -51,7 +50,7 @@ def test_helper_cli(capsys):
 
 def test_helper_cli_after_overwrite(capsys):
     mf = miniflask.init(
-        module_dirs=str(Path(__file__).parent / "modules"),
+        ".modules",
         debug=True
     )
 
