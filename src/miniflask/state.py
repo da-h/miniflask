@@ -383,7 +383,7 @@ class optional:
 
 class state_node:
 
-    _lambda_str_regex = re.compile(r"^{?\s*\"\w*\"\s*:\s*lambda\s*\w*:.*}?")
+    _lambda_str_regex = re.compile(r"^{?\s*(\"[^\"]*\")|('[^']*')\s*:\s*lambda\s*\w*:.*}?")
     local_arguments = []
     depends_on = []
     depends_alternatives = []
