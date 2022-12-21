@@ -458,11 +458,11 @@ class state_node:
     @staticmethod
     def _find_var_names(tree: ast.AST, lcl_variables=None):
         lcl_variables = set([]) if lcl_variables is None else set(lcl_variables)
-        return sorted(set([
+        return sorted({
             node.slice.value
             for node in ast.walk(tree)
             if hasattr(node, "value") and isinstance(node.value, ast.Name) and node.value.id in lcl_variables
-        ]))
+        })
 
     @staticmethod
     def _find_comp_names(tree: ast.AST, lcl_variables):
