@@ -466,19 +466,23 @@ class state_node:
 
     @staticmethod
     def _find_comp_names(tree: ast.AST, lcl_variables):
-        ret = []
+        # find all regular loaded local variables with slices
+        ret = [
+            n.slice.value for n in ast.walk(tree) if (
+                    hasattr(n, "value") and isinstance(n.value, ast.Name) and n.value.id in lcl_variables
+                    and hasattr(n, "ctx") and isinstance(n.ctx, ast.Load)
+                    and hasattr(n, "slice")
+            )
+        ]
+        # add all 'x in var' cases
         for node in ast.walk(tree):
-            if isinstance(node, ast.Compare):
+            if isinstance(node, ast.Compare) and hasattr(node, "left") and isinstance(node.left, ast.Constant):
                 _args = [nc.id for c in node.comparators for nc in ast.walk(c) if
                          isinstance(nc, ast.Name) and nc.id in lcl_variables]
-                _names = sorted([
-                    node.value
-                    for node in ast.walk(tree)
-                    if hasattr(node, "value") and isinstance(node, ast.Constant)
-                ])
+                _names = [node.left.value]
                 if len(_args):
                     ret += _names
-        return ret
+        return list(sorted(ret))
 
     # ------------------- #
     # dependency routines #
