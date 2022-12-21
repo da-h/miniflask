@@ -469,9 +469,9 @@ class state_node:
         # find all regular loaded local variables with slices
         ret = [
             n.slice.value for n in ast.walk(tree) if (
-                    hasattr(n, "value") and isinstance(n.value, ast.Name) and n.value.id in lcl_variables
-                    and hasattr(n, "ctx") and isinstance(n.ctx, ast.Load)
-                    and hasattr(n, "slice")
+                hasattr(n, "value") and isinstance(n.value, ast.Name) and n.value.id in lcl_variables
+                and hasattr(n, "ctx") and isinstance(n.ctx, ast.Load)
+                and hasattr(n, "slice")
             )
         ]
         # add all 'x in var' cases
