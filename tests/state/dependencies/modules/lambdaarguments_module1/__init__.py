@@ -17,6 +17,8 @@ lambda_definition = lambda: 42  # noqa  # pylint: disable=unnecessary-lambda-ass
 
 def register(mf):
     mf.register_defaults({
+        "multilevelindex": lambda state: "cuda:" + str(state["gpu"][0]) if state["gpu"][0] >= 0 else "cpu",
+        "multileveltag": lambda state: state["var1"]["other"],
         "test_multiple_inline_I": lambda: 1 * 42,
         "test_multiple_inline_II": lambda: 2 * 42,
         "test_lambda_def": lambda_definition,

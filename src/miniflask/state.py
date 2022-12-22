@@ -434,7 +434,8 @@ class state_node:
                 if isinstance(node, ast.IfExp):
                     rvs = self._find_var_names(node.orelse, lcl_variables=self.local_arguments)
                     for lv in self._find_comp_names(node.test, self.local_arguments):
-                        self.depends_alternatives[lv] = rvs
+                        if len(rvs):
+                            self.depends_alternatives[lv] = rvs
 
     def str(self):
         return str(self.varid)
@@ -457,27 +458,30 @@ class state_node:
     @staticmethod
     def _find_var_names(tree: ast.AST, lcl_variables=None):
         lcl_variables = set([]) if lcl_variables is None else set(lcl_variables)
-        return sorted([
+        return sorted({
             node.slice.value
             for node in ast.walk(tree)
             if hasattr(node, "value") and isinstance(node.value, ast.Name) and node.value.id in lcl_variables
-        ])
+        })
 
     @staticmethod
     def _find_comp_names(tree: ast.AST, lcl_variables):
-        ret = []
+        # find all regular loaded local variables with slices
+        ret = {
+            n.slice.value for n in ast.walk(tree) if (
+                hasattr(n, "value") and isinstance(n.value, ast.Name) and n.value.id in lcl_variables
+                and hasattr(n, "ctx") and isinstance(n.ctx, ast.Load)
+                and hasattr(n, "slice")
+            )
+        }
+        # add all 'x in var' cases
         for node in ast.walk(tree):
-            if isinstance(node, ast.Compare):
+            if isinstance(node, ast.Compare) and hasattr(node, "left") and isinstance(node.left, ast.Constant):
                 _args = [nc.id for c in node.comparators for nc in ast.walk(c) if
                          isinstance(nc, ast.Name) and nc.id in lcl_variables]
-                _names = sorted([
-                    node.value
-                    for node in ast.walk(tree)
-                    if hasattr(node, "value") and isinstance(node, ast.Constant)
-                ])
                 if len(_args):
-                    ret += _names
-        return ret
+                    ret.add(node.left.value)
+        return sorted(ret)
 
     # ------------------- #
     # dependency routines #
