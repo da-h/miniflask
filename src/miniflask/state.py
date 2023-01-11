@@ -434,8 +434,7 @@ class state_node:
                 if isinstance(node, ast.IfExp):
                     rvs = self._find_var_names(node.orelse, lcl_variables=self.local_arguments)
                     for lv in self._find_comp_names(node.test, self.local_arguments):
-                        if len(rvs):
-                            self.depends_alternatives[lv] = rvs
+                        self.depends_alternatives[lv] = rvs
 
     def str(self):
         return str(self.varid)

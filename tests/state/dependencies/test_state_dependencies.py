@@ -11,6 +11,8 @@ def test_potential_ast_bugs():
 def test_lambda_arguments_1():
     mf = setup()
     mf.load("lambdaarguments_module1")
+    assert mf.state_registrations["modules.lambdaarguments_module1.emptydependency"][-1].depends_on == ["doesntexists"]
+    assert mf.state_registrations["modules.lambdaarguments_module1.emptydependency"][-1].depends_alternatives == {"doesntexists": []}
     assert mf.state_registrations["modules.lambdaarguments_module1.var1"][-1].depends_on == []
     assert mf.state_registrations["modules.lambdaarguments_module1.var1"][-1].depends_alternatives == {}
     assert mf.state_registrations["modules.lambdaarguments_module1.var2"][-1].depends_on == ["var1"]
