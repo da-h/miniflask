@@ -1,5 +1,9 @@
 name: Update Documentation
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.number }}-${{ github.event.type }}
+  cancel-in-progress: true
+
 on:
   push:
     branches:
@@ -13,7 +17,7 @@ jobs:
     name: "Update Documentation"
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
       - name: Deploy Documentation
         uses: ./.github/actions/build-documentation
         env:
