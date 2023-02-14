@@ -183,6 +183,7 @@ class Unit:  # pylint: disable=too-few-public-methods
         self.name = name
         self.get_converter = get_converter
         self.set_converter = set_converter
+        self._unitclass = self
 
         # units is a list of lists
         # - the first element of each list the canonical ending for each unit-form
@@ -200,6 +201,11 @@ class Unit:  # pylint: disable=too-few-public-methods
         if data is None:
             data = {}
         return UnitValue(self, {self.units[unit]: value, **data})
+
+    def __str__(self):
+        return f"<{self.name}-Unit>"
+    def __repr__(self):
+        return str(self)
 
 
 # unit value class

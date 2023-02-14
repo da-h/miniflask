@@ -955,6 +955,7 @@ class miniflask:
                 callable(val)
                 and not isinstance(val, type)
                 and not isinstance(val, EnumMeta)
+                and not isinstance(val, Unit)
                 and parsefn
             )
             node = state_node(
@@ -1022,7 +1023,7 @@ class miniflask:
         # otherwise the value is a required argument (to be tested later)
         if is_optional:
             kwarg["default"] = None if nargs is None else []
-        elif not isinstance(val, type) and not isinstance(val, EnumMeta):
+        elif not isinstance(val, type) and not isinstance(val, EnumMeta) and not isinstance(val, Unit):
             kwarg["default"] = default if default is not None else val
         else:
             self.cli_required_arguments.append([varname])
@@ -1038,9 +1039,9 @@ class miniflask:
             kwarg["const"] = True
 
         # define the actual arguments
-        if argtype == UnitValue:
+        if argtype == UnitValue or argtype == Unit:
             kwarg["type"] = make_unitvalue_argparse(val)
-        if argtype in [int, str, float, str2bool, Enum, UnitValue]:
+        if argtype in [int, str, float, str2bool, Enum, UnitValue, Unit]:
             self.settings_parser.add_argument("--" + varname, **kwarg)
         else:
             raise ValueError(
