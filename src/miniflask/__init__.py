@@ -1,10 +1,9 @@
 from .miniflask import miniflask as init, print_info, get_default_args
 from .event import outervar
-from .modules import *
-from .state import like, optional
+from .state import optional
 
 # meta
-__version__       = "4.3.2"
+__version__       = "5.0.0"
 __title__         = "miniflask"
 __description__   = "Small research-oriented hook-based plugin engine."
 __url__           = "https://github.com/da-h/miniflask"

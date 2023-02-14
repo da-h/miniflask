@@ -1,10 +1,9 @@
-from pathlib import Path
 import miniflask  # noqa: E402
 
 
 def test_overwrite_setup(capsys):
     mf = miniflask.init(
-        module_dirs=str(Path(__file__).parent / "modules"),
+        ".modules",
         debug=False
     )
 
@@ -22,7 +21,7 @@ after main event
 
 def test_overwrite(capsys):
     mf = miniflask.init(
-        module_dirs=str(Path(__file__).parent / "modules"),
+        ".modules",
         debug=False
     )
 
@@ -40,7 +39,7 @@ after main event
 
 def test_overwrite_during_event(capsys):
     mf = miniflask.init(
-        module_dirs=str(Path(__file__).parent / "modules"),
+        ".modules",
         debug=False
     )
 
@@ -64,7 +63,7 @@ after main event
 
 def test_overwrite_with_attached(capsys):
     mf = miniflask.init(
-        module_dirs=str(Path(__file__).parent / "modules"),
+        ".modules",
         debug=False
     )
 

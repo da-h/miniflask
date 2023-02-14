@@ -1,24 +1,50 @@
 import re
 import argparse
+import inspect
 from argparse import Action
 from os import walk, path
-
+from pathlib import Path
+from pkgutil import resolve_name
+from dataclasses import dataclass
 from colored import attr, fg
 
 
+# get the absolute package name of the current file to cwd()
+# - i.e. $result can be loaded using `import $result`
+def get_full_base_module_name(directory):
+    directory = Path(directory).absolute()
+    base_import = directory.name
+
+    while (directory.parent / "__init__.py").exists():
+        directory = directory.parent
+        base_import = directory.name + "." + base_import
+
+    return base_import
+
+
 # get modules in a directory
-def getModulesAvail(module_dirs, f=None):
+def getModulesAvail(python_import_paths, f=None):
     if f is None:
         f = {}
-    for base_module_name, directory in module_dirs.items():
-        base_module_name = base_module_name.replace(".", "_")
-        directory = str(directory)  # in case directory is given as PosixPath etc.
+    for base_module_id, base_module_path in python_import_paths.items():
+        if base_module_path.startswith("."):
+            stack_frame = inspect.stack()[2]  # the frame in which miniflask.init has been called
+            callee_module_path = Path(stack_frame.filename).parent
+            base_module_path = get_full_base_module_name(callee_module_path) + base_module_path
+        module = resolve_name(base_module_path)
+        directory = module.__path__[0]
+
         for (dirpath, dirnames, filenames) in walk(directory):
             local_import_name = dirpath[len(directory) + 1:].replace(path.sep, ".")
-            module_name_id = base_module_name + "." + local_import_name
+            if local_import_name:
+                module_id = base_module_id + "." + local_import_name
+                module_path = base_module_path + "." + local_import_name
+            else:
+                module_id = base_module_id
+                module_path = base_module_path
 
             # empty module id is not allowed
-            if len(module_name_id) == 0:
+            if len(module_id) == 0:
                 continue
 
             # ignore sub directories
@@ -31,13 +57,12 @@ def getModulesAvail(module_dirs, f=None):
                 continue
 
             # module found
-            f[module_name_id] = {
-                'base_id': base_module_name,
-                'id': module_name_id,
+            f[module_id] = {
+                'id': module_id,
                 'lowpriority': path.exists(path.join(dirpath, ".lowpriority")),
-                'importname': local_import_name,
-                'importpath': directory,
+                'importname': module_path
             }
+
     return f
 
 
@@ -47,7 +72,7 @@ def highlight_loading_module(x):
     return fg('light_gray') + ".".join(x[:-1]) + ("" if len(x) == 1 else ".") + attr('reset') + fg('green') + attr('bold') + x[-1] + attr('reset')
 
 
-highlight_error = lambda: fg('red') + attr('bold') + "Error:" + attr('reset') + " "
+highlight_error = lambda x="Error:": fg('red') + attr('bold') + x + attr('reset') + " "
 highlight_name = lambda x: fg('blue') + attr('bold') + x + attr('reset')
 highlight_module = lambda x: fg('green') + attr('bold') + str(x) + attr('reset')
 highlight_loading = highlight_loading_module
@@ -144,3 +169,92 @@ class EnumAction(Action):  # pylint: disable=too-few-public-methods
             if return_enum:
                 return enum
         setattr(namespace, self.dest, enum)
+
+
+# ===== #
+# Units #
+# ===== #
+
+# base unit class
+# (used to save the unit endings and the converter functions)
+class Unit:  # pylint: disable=too-few-public-methods
+
+    def __init__(self, name, get_converter, set_converter, units):
+        self.name = name
+        self.get_converter = get_converter
+        self.set_converter = set_converter
+
+        # units is a list of lists
+        # - the first element of each list the canonical ending for each unit-form
+        # - using the unit-endings, we define a dict that always translates to the first/canonical unit-ending
+        # - in case a unit-ending has been used twice, throw an error
+        self.units = {}
+        for keys in units:
+            k_uid = keys[0]
+            for k in keys:
+                if k in self.units:
+                    raise ValueError(f"All Unit-Synonymes must be unique, but {k} has been used already.")
+                self.units[k] = k_uid
+
+    def __call__(self, value, unit, data=None):
+        if data is None:
+            data = {}
+        return UnitValue(self, {self.units[unit]: value, **data})
+
+
+# unit value class
+# (used to actually save the value)
+@dataclass
+class UnitValue:
+    _unitclass: Unit
+    data: dict
+
+    def __getattr__(self, name):
+        if name in self.data:
+            return self.data[name]
+        name = self._unitclass.units[name]
+        if name in self.data:
+            return self.data[name]
+        return self._unitclass.get_converter(self, self._unitclass.units[name])
+
+    def __setattr__(self, name, val):
+        if name in ["_unitclass", "data"]:
+            object.__setattr__(self, name, val)
+        elif name in self.data:
+            self.data[name] = val
+        else:
+            name = self._unitclass.units[name]
+            self._unitclass.set_converter(self, name, val)
+
+    def __str__(self):
+        return f"{', '.join(str(v)+str(k) for k,v in self.data.items())}"
+
+    def __repr__(self):
+        return "UnitValue(" + f"{', '.join(str(v)+str(k) for k,v in self.data.items())}" + ")"
+
+
+# factory for objects
+# (used by argparse to convert strings to unit values)
+def make_unitvalue_argparse(unitvalue):
+    class UnitValueArgparse:  # pylint: disable=too-few-public-methods
+        def __new__(cls, string):
+
+            # iterate over units, to check which format has been used for the given string
+            units = sorted(unitvalue._unitclass.units.keys(), key=len, reverse=True)
+            for u in units:
+                if string.endswith(u):
+
+                    # convert string to number
+                    number_str = string[:-len(u)]
+                    try:
+                        number = int(number_str)
+                    except ValueError:
+                        number = float(number_str)
+
+                    # construct unit from argument
+                    return UnitValue(unitvalue._unitclass, {unitvalue._unitclass.units[u]: number})
+
+            units_str = ",".join(units)
+            raise ValueError(f"I do not know how to convert {string} to a Unit. Possible endings are {units_str}.")
+
+    return UnitValueArgparse

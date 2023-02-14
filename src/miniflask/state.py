@@ -1,6 +1,8 @@
+import ast
 import sys
 import re
 from collections.abc import MutableMapping
+from inspect import getsource
 
 from colored import fg, attr
 
@@ -37,7 +39,7 @@ relative_import_re = re.compile(r"(\.+)(.*)")
 
 
 class state(MutableMapping):
-    def __init__(self, module_name, internal_state_dict, state_default):  # pylint: disable=super-init-not-called
+    def __init__(self, module_name, internal_state_dict, state_dependencies):  # pylint: disable=super-init-not-called
         r"""!... is a local dict
         Global Variables, but Fancy. ;)
 
@@ -93,7 +95,7 @@ class state(MutableMapping):
         """  # noqa: W291
 
         self.all = internal_state_dict
-        self.default = state_default
+        self.dependencies = state_dependencies
         self.module_id = module_name
         self.fuzzy_names = {}
         # self.temporary = temporary_state(self)
@@ -136,7 +138,7 @@ class state(MutableMapping):
         ```
         """  # noqa: W291
 
-        return state(module_name, self.all, self.default)
+        return state(module_name, self.all, self.dependencies)
 
     def temporary(self, variables):
         r"""
@@ -355,27 +357,6 @@ def _create_excpetion_notunique(found_varids, name):
     return StateKeyError("Variable-Identifier '%s' is not unique. Found %i variables:\n\t%s\n\n    Call:\n        %s" % (highlight_module(name), len(found_varids), "\n\t".join(found_varids), name))
 
 
-class like:
-    def __init__(self, varname, alt, scope=None, scope_name=None):
-        if scope_name is None:
-            scope_name = scope
-        global_varname = varname if scope is None else scope + "." + varname
-        self.varname = scope_name + "." + varname if scope_name is not None else varname
-        self.alt = alt
-        self.fn = lambda state, event: state[global_varname] if global_varname in state else alt  # noqa: E731 no-lambda
-
-    def __call__(self, state, event):  # pylint: disable=redefined-outer-name
-        return self.fn(state, event)
-
-    def str(self, asciicodes=True, color_attr=attr):
-        if not asciicodes:
-            color_attr = lambda x: ''  # noqa: E731 no-lambda
-        return color_attr('dim') + "'" + str(self.varname) + "' or '" + str(self.alt) + "' ⟶   " + color_attr('reset') + str(self.default)
-
-    def __str__(self):
-        return self.str()
-
-
 class as_is_callable():  # pylint: disable=too-few-public-methods
     def __init__(self, obj):
         self.obj = obj
@@ -394,7 +375,191 @@ class optional:
     def str(self, asciicodes=True, color_attr=attr):
         if not asciicodes:
             color_attr = lambda x: ''  # noqa: E731 no-lambda
-        return color_attr('dim') + "'" + str(self.type) + "' or '" + "None" + "' ⟶   " + color_attr('reset') + str(self.default)
+        return color_attr('dim') + "'" + str(self.type) + "' or '" + "None" + "' ⟶   " + color_attr('reset') + str(self.dependencies)
 
     def __str__(self):
         return self.str()
+
+
+class state_node:
+
+    _lambda_str_regex = re.compile(r"^{?\s*(\"[^\"]*\")|('[^']*')\s*:\s*lambda\s*\w*:.*}?")
+    local_arguments = []
+    depends_on = []
+    depends_alternatives = []
+
+    def __init__(self, varid, mf, caller_traceback, cliargs=False, parsefn=False, is_ovewriting=False, missing_argument_message=None, fn=None):
+        self.varid = varid
+        self.mf = mf
+        self.caller_traceback = caller_traceback
+        self.cliargs = cliargs
+        self.parsefn = parsefn
+        self.is_ovewriting = is_ovewriting
+        self.cli_overwritten = False
+        self.missing_argument_message = missing_argument_message
+
+        self.depends_on = []
+        self.depends_alternatives = {}
+
+        self.fn = fn
+        self.fn_src = getsource(self.fn) if self.fn is not None else None
+
+        if self.fn_src is not None:
+            _fn_src = self.fn_src.strip()
+            _ast_mode = "exec"
+            if self._lambda_str_regex.match(_fn_src):
+                # function source of a lambda looks a little different, because a whole line is returned by 'getsource'
+                # we assume a k, v pair is given, only missing the brackets for a valid syntax
+                # Note: if the lambda is not written in a standalone line, it will break the following tweak
+                _fn_src = "{\n" + _fn_src + "\n}"
+                _ast_mode = "eval"
+            # find lambda or def expression
+            fn_lbd_iter = list(iter(
+                node
+                for node in ast.walk(ast.parse(_fn_src, mode=_ast_mode))
+                if isinstance(node, (ast.FunctionDef, ast.Lambda))
+            ))
+            # check if exactly one expression is found
+            if len(fn_lbd_iter) == 0:
+                raise RuntimeError(f"Exactly one expression needs to be defined, found {len(fn_lbd_iter)}.")
+            if len(fn_lbd_iter) > 1:
+                raise RuntimeError(f"Only one expression is allowed per line, found {len(fn_lbd_iter)}.")
+            fn_lbd_node = fn_lbd_iter[0]
+            # get argument names for def/lambda expression
+            self.local_arguments = [n.arg for n in fn_lbd_node.args.args]
+            # find all dependencies in the source code, which use local arguments
+            self.depends_on = self._find_var_names(fn_lbd_node, lcl_variables=self.local_arguments)
+            # find all alternative-dependencies
+            for node in ast.walk(fn_lbd_node):
+                if isinstance(node, ast.IfExp):
+                    rvs = self._find_var_names(node.orelse, lcl_variables=self.local_arguments)
+                    for lv in self._find_comp_names(node.test, self.local_arguments):
+                        self.depends_alternatives[lv] = rvs
+
+    def str(self):
+        return str(self.varid)
+
+    def __str__(self):
+        return self.str()
+
+    def __repr__(self):
+        content = [self.str()]
+        if self.fn_src is not None:
+            content.append(f"fn=λ {self.fn_src}")
+        if len(self.depends_on) > 0:
+            content.append(f"depends_on={self.depends_on}")
+        return f"variable({', '.join(content)})"
+
+    # ------------------- #
+    # AST routines #
+    # ------------------- #
+
+    @staticmethod
+    def _find_var_names(tree: ast.AST, lcl_variables=None):
+        lcl_variables = set([]) if lcl_variables is None else set(lcl_variables)
+        return sorted({
+            node.slice.value
+            for node in ast.walk(tree)
+            if hasattr(node, "value") and isinstance(node.value, ast.Name) and node.value.id in lcl_variables
+        })
+
+    @staticmethod
+    def _find_comp_names(tree: ast.AST, lcl_variables):
+        # find all regular loaded local variables with slices
+        ret = {
+            n.slice.value for n in ast.walk(tree) if (
+                hasattr(n, "value") and isinstance(n.value, ast.Name) and n.value.id in lcl_variables
+                and hasattr(n, "ctx") and isinstance(n.ctx, ast.Load)
+                and hasattr(n, "slice")
+            )
+        }
+        # add all 'x in var' cases
+        for node in ast.walk(tree):
+            if isinstance(node, ast.Compare) and hasattr(node, "left") and isinstance(node.left, ast.Constant):
+                _args = [nc.id for c in node.comparators for nc in ast.walk(c) if
+                         isinstance(nc, ast.Name) and nc.id in lcl_variables]
+                if len(_args):
+                    ret.add(node.left.value)
+        return sorted(ret)
+
+    # ------------------- #
+    # dependency routines #
+    # ------------------- #
+    @staticmethod
+    def calculate_affects_lists(node_dict):
+        for node in node_dict.values():
+            node.affects = []
+        for node in node_dict.values():
+            for depends_on_varid in node.depends_on:
+                node_dict[depends_on_varid].affects.append(node.varid)
+
+    @staticmethod
+    def topological_sort(node_dict):  # noqa: C901
+        nodes = list(node_dict.values())
+        varid2index = {node.varid: i for i, node in enumerate(nodes)}
+        visited = [False for i in range(len(nodes))]
+        sorted_nodes, cycles, unresolved = [], [], []
+
+        # the following code implements DFS using a stack of nodes-to-traverse
+        stack = [(node_i, []) for node_i in range(len(nodes) - 1, -1, -1)]
+        while len(stack) > 0:
+            node_i, parentnodes = stack.pop()
+
+            if node_i == "add_to_sorted_nodes":
+                sorted_nodes.append(parentnodes)
+                continue
+
+            node = nodes[node_i]
+
+            if node in parentnodes:
+                cycles.append(parentnodes + [node])
+                continue
+
+            parentnodes = parentnodes + [node]
+
+            if visited[node_i]:
+                continue
+
+            visited[node_i] = True
+            stack.append(("add_to_sorted_nodes", node))
+
+            dependency_stack = []
+            for dependency in node.depends_on:
+                if dependency not in node.mf.state:
+
+                    # in case dependency has an alternative, we can ignore this if all alternatives exist
+                    if dependency in node.depends_alternatives:
+                        alternatives_exist = True
+                        for alternative_dependency in node.depends_alternatives[dependency]:
+                            if alternative_dependency not in node.mf.state:
+                                alternatives_exist = False
+                                break
+                        if alternatives_exist:
+                            continue
+
+                    unresolved.append((node, dependency))
+                    continue
+                if hasattr(node.mf.state, "fuzzy_names"):
+                    dependency_varid = node.mf.state.fuzzy_names[dependency]
+                else:
+                    dependency_varid = dependency
+                dependency_i = varid2index[dependency_varid]
+                dependency_stack.append((dependency_i, parentnodes))
+
+            dependency_stack.reverse()
+            stack = stack + dependency_stack
+
+        return sorted_nodes, cycles, unresolved
+
+    @staticmethod
+    def evaluate(nodes, global_state):
+        for node in nodes:
+            if node.cli_overwritten or node.fn_src is None:
+                continue
+            if node.fn:
+                # Note: This is very precise, we could also assume the first
+                # arguments needs to be 'state', regardless of its name
+                if "state" in node.local_arguments:
+                    global_state[node.varid] = node.fn(node.mf.state)
+                else:
+                    global_state[node.varid] = node.fn()

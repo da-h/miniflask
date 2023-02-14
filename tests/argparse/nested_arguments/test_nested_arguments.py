@@ -1,5 +1,4 @@
 import re
-from pathlib import Path
 import miniflask  # noqa: E402
 
 
@@ -12,7 +11,7 @@ def ansi_escape(s):
 
 def init_mf():
     mf = miniflask.init(
-        module_dirs=str(Path(__file__).parent / "modules"),
+        ".modules",
         debug=True
     )
     mf.load("all")
@@ -31,7 +30,7 @@ modules.all
     ├── modules.parentdir.module1
     ├── modules.parentdir.module2
     ╰── modules.parentdir.module3.submodule.subsubmodule
-number 0
+number 9
 modules.otherdir.otherdir_var 0
 modules.otherdir.module2.module2_var 1
 modules.otherdir.module2.submodule.submodule_var 2
@@ -66,7 +65,7 @@ modules.all
     ├── modules.parentdir.module1
     ├── modules.parentdir.module2
     ╰── modules.parentdir.module3.submodule.subsubmodule
-number 0
+number 9
 modules.otherdir.otherdir_var 42
 modules.otherdir.module2.module2_var 43
 modules.otherdir.module2.submodule.submodule_var 44
@@ -100,7 +99,7 @@ modules.all
     ├── modules.parentdir.module1
     ├── modules.parentdir.module2
     ╰── modules.parentdir.module3.submodule.subsubmodule
-number 0
+number 9
 modules.otherdir.otherdir_var 42
 modules.otherdir.module2.module2_var 43
 modules.otherdir.module2.submodule.submodule_var 2
@@ -145,7 +144,7 @@ modules.all
     ├── modules.parentdir.module1
     ├── modules.parentdir.module2
     ╰── modules.parentdir.module3.submodule.subsubmodule
-number 0
+number 9
 modules.otherdir.otherdir_var 42
 modules.otherdir.module2.module2_var 43
 modules.otherdir.module2.submodule.submodule_var 2
@@ -194,7 +193,7 @@ modules.all
     ├── modules.parentdir.module1
     ├── modules.parentdir.module2
     ╰── modules.parentdir.module3.submodule.subsubmodule
-number 0
+number 9
 modules.otherdir.otherdir_var 42
 modules.otherdir.module2.module2_var 43
 modules.otherdir.module2.submodule.submodule_var 2
