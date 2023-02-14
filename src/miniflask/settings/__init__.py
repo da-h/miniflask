@@ -5,7 +5,7 @@ from collections import deque
 
 from colored import attr, fg
 
-from ..util import highlight_module, highlight_val, highlight_name, highlight_val_overwrite, highlight_event
+from ..util import highlight_module, highlight_val, highlight_name, highlight_val_overwrite, highlight_event, UnitValue
 
 
 html_module = lambda x: x  # noqa: E731 no-lambda
@@ -76,7 +76,7 @@ def listsettings(mf, state, asciicodes=True):
             k_hidden[-1] = color_module(k_hidden[-1])
 
         is_lambda = mf.state_registrations[k_orig][-1].fn is not None
-        value_str = attr_fn('dim') + "λ ⟶   " + attr_fn('reset') + str(v_precli) if is_lambda else v_precli.str(asciicodes=False) if hasattr(v_precli, 'str') else str(v_precli)
+        value_str = attr_fn('dim') + "λ ⟶   " + attr_fn('reset') + str(v_precli) if is_lambda or isinstance(v_precli, UnitValue) else v_precli.str(asciicodes=False) if hasattr(v_precli, 'str') else str(v_precli)
         append = "" if not overwritten else " ⟶   " + color_val_overwrite(str(v))
         text_list.append("│".join(k_hidden) + (" " * (max_k_len - k_len)) + " = " + color_val(value_str) + append)
 

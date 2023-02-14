@@ -25,7 +25,7 @@ from .exceptions import (
 from .event import event, event_obj
 from .state import state, as_is_callable, optional as optional_default, state_node
 from .dummy import miniflask_dummy
-from .util import getModulesAvail, EnumAction, get_relative_id
+from .util import getModulesAvail, EnumAction, get_relative_id, Unit, UnitValue, make_unitvalue_argparse
 from .util import (
     highlight_error,
     highlight_name,
@@ -41,7 +41,6 @@ from .util import (
     get_varid_from_fuzzy,
     get_full_base_module_name,
 )
-
 from .settings import listsettings
 
 
@@ -133,6 +132,7 @@ class miniflask:
             {}
         )  # saves the information of the respective variables (initial value, registration, etc.)
         self._state_overwrites_list = []
+        self.units = {}
         self.modules_loaded = {}
         self.modules_ignored = []
         self.modules_avail = getModulesAvail(self.module_repositories)
@@ -864,8 +864,8 @@ class miniflask:
                 lambda state: somefunction(state["myvariable"]) + state["othervariable"]
                 lambda state: state["myvariable"] * 5 if "myvariable" in state else state["othervariable"]
                 lambda state: state["myvariable"] * state["othervariable"] if "myvariable" in state and "othervariable" in state else state["yetanothervariable"]
-                ```
-
+        - [**Units**](../../08-API/02-miniflask-Instance/10-register_unit.md) (`Units`)  
+            Units are custom numbers with multiple representations.
 
         Note:
         This method is the base method for variable registrations.
@@ -1038,7 +1038,9 @@ class miniflask:
             kwarg["const"] = True
 
         # define the actual arguments
-        if argtype in [int, str, float, str2bool, Enum]:
+        if argtype == UnitValue:
+            kwarg["type"] = make_unitvalue_argparse(val)
+        if argtype in [int, str, float, str2bool, Enum, UnitValue]:
             self.settings_parser.add_argument("--" + varname, **kwarg)
         else:
             raise ValueError(
@@ -1060,9 +1062,126 @@ class miniflask:
 
         return kwarg
 
+    def register_unit(self, unit_id, get_converter, set_converter, units):
+        r"""
+        Custom numbers with multiple representations.
+
+        Args:
+        - `unit_id`: Unique id to distinguish different units.
+        - `converter`: A method with the signature `(src_value: Number, src_unit: str, dest_unit: str)`
+        - `units`: A list of lists. Each list specifies synonymes for units.
+
+        Examples:
+
+        **First, we define `time` to be a unit with four different representations with getter/setter functions to convert between these.**:  
+        (Note that you can save arbitrary data to `unitvalue.data` and define yourself how units behave).
+        ```python
+
+
+        # define how to transform data when initializing a unit
+        def init_time_unit(data):
+            units = list(data.keys())
+            assert len(units) == 1, f"Unitvalue should contain exactly one data point, but found {units}."
+            unit = units[0]
+            value = list(data.values())[0]
+            data = {"computation_list": []}
+            if unit == "m":
+                return {"s": 60 * value, **data}
+            elif unit == "h":
+                return {"s": 60 * 60 * value, **data}
+            elif unit == "d":
+                return {"s": 24 * 60 * 60 * value, **data}
+            raise ValueError(f"Could not determine initial values from {repr(data)}.")
+
+
+        def get_time_unit(unitvalue, targetunit):
+
+            # we use seconds as base unit und convert any start to that value
+            if "s" not in unitvalue.data:
+                unitvalue.data = init_time_unit(unitvalue.data)
+
+            unitvalue.data["computation_list"].append(targetunit)
+
+            if targetunit == "s":
+                return unitvalue.data["s"]
+            if targetunit == "m":
+                return unitvalue.data["s"] / 60
+            elif targetunit == "h":
+                return unitvalue.data["s"] / 60 / 60
+            elif targetunit == "d":
+                return unitvalue.data["s"] / 60 / 60 / 24
+
+            raise ValueError(f"Could not query {targetunit} from {repr(unitvalue)}")
+
+
+        def set_time_unit(unitvalue, targetunit, newvalue):
+
+            # we use seconds as base unit und convert any start to that value
+            if "s" not in unitvalue.data:
+                unitvalue.data = init_time_unit(unitvalue.data)
+
+            unitvalue.data["computation_list"].append(targetunit)
+
+            if targetunit == "s":
+                unitvalue.data["s"] += newvalue
+                return
+            elif targetunit == "m":
+                unitvalue.data["s"] += 60 * newvalue
+                return
+            elif targetunit == "h":
+                unitvalue.data["s"] += 60 * 60 * newvalue
+                return
+            elif targetunit == "d":
+                unitvalue.data["s"] += 24 * 60 * 60 * newvalue
+                return
+
+            raise ValueError(f"Could not query {targetunit} from {repr(unitvalue)}")
+
+        time = mf.register_unit("time", get_time_unit, set_time_unit, [
+            ["m", "minute", "minutes"],
+            ["h", "hour", "hours"],
+            ["s", "second", "seconds"],
+            ["d", "day", "days"]
+        ])
+        ```
+
+        **In CLI, we can overwrite this unit using**:
+        - `--time 1.5d` (1.5 days)
+        - `--time 24h` (24 hour)
+        - `--time 500m` (500 minutes)
+
+        **Using `u in v` Notation, we can specify the base unit to convert all calculations to.**:
+        - `--time 12h in d` (0.5 days)
+        - `--time 1.5d in h` (18 hours)
+
+        **To register a unit, pass it to `register_defaults` as follows**:
+        ```python
+        mf.register_defaults({
+            "time": time(6.0, "h"),
+            "time2": time(6.0, "h in d"), # in notation works here as well
+        })
+        ```
+
+        **Querying other representations can be done easily, once defined:**
+        ```python
+        state["time"].unit # the base unit name
+        state["time"].second
+        state["time"].minute
+        state["time"].hour
+        state["time"].day
+        ```
+        """  # noqa: W291
+        if unit_id in self.units:
+            raise ValueError(f"Unit with name {unit_id} is already defined.")
+
+        u = Unit(unit_id, get_converter, set_converter, units)
+        self.units[unit_id] = u
+        return u
+
     # ======= #
     # runtime #
     # ======= #
+
     def stop_parse(self):
         r"""
         Stops loading of any new modules immediately and halts any further executions.
