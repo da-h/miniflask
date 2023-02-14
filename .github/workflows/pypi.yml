@@ -14,10 +14,10 @@ jobs:
         uses: actions/checkout@v3
       - uses: actions/setup-node@v3
         with:
-          node-version: '16'
+          node-version: "16"
       - name: Autoadd release Tags
         uses: sbrodehl/action-autotag@v2
-        id:   autotag
+        id: autotag
         with:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           source_file: "src/miniflask/__init__.py"
@@ -31,7 +31,7 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           tag_name: ${{ steps.autotag.outputs.tagname }}
-          release_name: "Miniflask ${{ steps.autotag.outputs.tagname }}"
+          name: "Miniflask ${{ steps.autotag.outputs.tagname }}"
           generate_release_notes: true
       - name: Show version
         if: steps.autotag.outputs.tagsha
@@ -40,7 +40,7 @@ jobs:
         if: steps.autotag.outputs.tagsha
         uses: actions/setup-python@v1
         with:
-            python-version: '3.x'
+          python-version: "3.x"
       - name: Install dependencies
         if: steps.autotag.outputs.tagsha
         run: python setup.py sdist
@@ -48,7 +48,6 @@ jobs:
         if: steps.autotag.outputs.tagsha
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
-            user: __token__
-            password: ${{ secrets.pypi_password }}
-
+          user: __token__
+          password: ${{ secrets.pypi_password }}
 # Guide: https://help.github.com/en/actions/language-and-framework-guides/using-python-with-github-actions
