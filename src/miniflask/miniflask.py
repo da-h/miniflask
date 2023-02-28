@@ -1608,7 +1608,8 @@ class miniflask:
             print("optional arguments (and their defaults):"),
             print(
                 listsettings(
-                    state("", self.state, self.state_registrations), self.event
+                    self,
+                    state("", self.state, self.state_registrations),
                 )
             ),
         )
