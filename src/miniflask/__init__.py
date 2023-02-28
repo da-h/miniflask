@@ -3,7 +3,7 @@ from .event import outervar
 from .state import optional
 
 # meta
-__version__       = "5.1.0"
+__version__       = "5.1.1"
 __title__         = "miniflask"
 __description__   = "Small research-oriented hook-based plugin engine."
 __url__           = "https://github.com/da-h/miniflask"

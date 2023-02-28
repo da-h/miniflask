@@ -204,6 +204,7 @@ class Unit:  # pylint: disable=too-few-public-methods
 
     def __str__(self):
         return f"<{self.name}-Unit>"
+
     def __repr__(self):
         return str(self)
 

@@ -1039,7 +1039,7 @@ class miniflask:
             kwarg["const"] = True
 
         # define the actual arguments
-        if argtype == UnitValue or argtype == Unit:
+        if argtype in (UnitValue, Unit):
             kwarg["type"] = make_unitvalue_argparse(val)
         if argtype in [int, str, float, str2bool, Enum, UnitValue, Unit]:
             self.settings_parser.add_argument("--" + varname, **kwarg)
@@ -1608,7 +1608,8 @@ class miniflask:
             print("optional arguments (and their defaults):"),
             print(
                 listsettings(
-                    state("", self.state, self.state_registrations), self.event
+                    self,
+                    state("", self.state, self.state_registrations),
                 )
             ),
         )
