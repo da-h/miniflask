@@ -375,7 +375,8 @@ class optional:
     def str(self, asciicodes=True, color_attr=attr):
         if not asciicodes:
             color_attr = lambda x: ''  # noqa: E731 no-lambda
-        return color_attr('dim') + "'" + str(self.type) + "' or '" + "None" + "' ⟶   " + color_attr('reset') + str(self.dependencies)
+        alt = "None" if isinstance(self.type, list) else "[]"
+        return color_attr('dim') + "'" + str(self.type) + "' or '" + alt + "' ⟶   " + color_attr('reset')
 
     def __str__(self):
         return self.str()
