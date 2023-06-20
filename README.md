@@ -1,30 +1,34 @@
-MiniFlask
-=========
+<h3 align="center">
+    <br/>
+    <img src="" width="300" alt="Logo"/><br/><br/>
+    A long time ago in a galaxy full of plugin-engines ...
+</h3>
+
+<p align="center"> 
+    Miniflask is a small research-oriented hook-based plugin engine for<a href="https://pypi.org/project/miniflask/">Python</a>.
+</p>
+
+<p align="center">
 [![python-3 badge](https://img.shields.io/pypi/v/miniflask)](https://pypi.org/project/miniflask/)
 [![python-3 badge](https://img.shields.io/pypi/pyversions/miniflask)](https://pypi.org/project/miniflask/)
 [![CI build status](https://github.com/da-h/miniflask/workflows/Deploy%20to%20PyPI/badge.svg)](https://github.com/da-h/miniflask/actions?query=workflow%3A%22Deploy+to+PyPI%22)
+</p>
 
-Miniflask is a **small** research-oriented **plugin**-engine for **python**.
-> A long time ago in a galaxy full of plugin-engines ...
-
-
-Quick Start
------------
+## Quick Start
 
 For a quick look into miniflask, just install it using
+
 ```bash
 pip install miniflask
 ```
 
-[Read the Documentation](https://da-h.github.io/miniflask)
-----------------------
+## [Read the Documentation](https://da-h.github.io/miniflask)
 
-Short Example
--------------
-
+## Short Example
 
 **Module Definition**  
 Let's start a new project first by creating a new directory:
+
 ```bash
 > ls
 main.py
@@ -35,6 +39,7 @@ modules/
 ```
 
 Let's define a simple module, `modules/module1/__init__.py`:
+
 ```python
 def main(state, event):
     print("main event called by module1")
@@ -44,6 +49,7 @@ def register(mf):
 ```
 
 Let's define another module, `modules/module2/__init__.py`:
+
 ```python
 def main(state, event):
     print("main event called by module2")
@@ -56,9 +62,8 @@ def register(mf):
     mf.register_event('main', main, unique=False)
 ```
 
-
-
 Our main.py looks like this:
+
 ```python
 import miniflask
 
@@ -67,9 +72,9 @@ mf = miniflask.init(".modules")
 mf.run()
 ```
 
-
 **Usage**:  
 Now, we can use our program in the following ways:
+
 ```sh
 > python main.py
 There is nothing to do.
@@ -94,9 +99,7 @@ it uses a variable var: 9001
 main event called by module1
 ```
 
-
-Contributing
----------------
+## Contributing
 
 1. [Fork it!](https://github.com/da-h/miniflask/fork)
 2. Create your feature branch (`git checkout -b feature/fooBar`)
@@ -104,6 +107,6 @@ Contributing
 4. Push to the branch (`git push origin feature/fooBar`)
 5. Create a new Pull Request
 
-License
--------
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)](https://opensource.org/licenses/MIT) - See [LICENSE](LICENSE) for details.  
+## License
+
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)](https://opensource.org/licenses/MIT) - See [LICENSE](LICENSE) for details.
